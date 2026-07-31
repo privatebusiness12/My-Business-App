@@ -3,102 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Private Business - ক্রয়, বিক্রয় ও অ্যাডভান্সড ফোল্ডার হিসাব</title>
+  <title>Private Business - আধুনিক ড্যাশবোর্ড</title>
+  
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- PDF তৈরির লাইব্রেরি -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #f4f6f9; margin: 0; padding: 12px; color: #333; }
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --bg-main: #f8fafc;
+      --surface: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif; transition: all 0.2s ease-in-out; }
+    body { background-color: var(--bg-main); margin: 0; padding: 16px; color: var(--text-main); }
     
     /* লগইন পেজ */
     #loginSection {
-      max-width: 400px; margin: 80px auto; background: #fff; padding: 25px;
-      border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); text-align: center;
+      max-width: 420px; margin: 80px auto; background: var(--surface); padding: 32px;
+      border-radius: var(--radius); box-shadow: var(--shadow-lg); text-align: center; border: 1px solid var(--border-color);
     }
-    #loginSection h3 { margin-top: 0; color: #2c3e50; }
-    #loginSection input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; }
-    #loginSection button { width: 100%; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    #loginError { color: red; font-size: 13px; margin-top: 10px; display: none; }
+    #loginSection h3 { margin-top: 0; color: var(--text-main); font-size: 22px; font-weight: 700; }
+    #loginSection input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border-color); border-radius: 8px; outline: none; }
+    #loginSection input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
+    #loginSection button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    #loginSection button:hover { background: var(--primary-hover); }
+    #loginError { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
 
     /* মূল ড্যাশবোর্ড */
     #appSection { display: none; }
-    .container { max-width: 750px; margin: 0 auto; background: #fff; padding: 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .container { max-width: 850px; margin: 0 auto; background: var(--surface); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-md); border: 1px solid var(--border-color); }
     
-    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #27ae60; padding-bottom: 10px; flex-wrap: wrap; gap: 8px; }
-    h2 { color: #2c3e50; margin: 0; font-size: 18px; }
-    .btn-header { padding: 6px 12px; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; margin-left: 5px; font-weight: bold; }
-    .lang-btn { background: #3498db; }
-    .logout-btn { background: #e74c3c; }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); gap: 12px; flex-wrap: wrap; }
+    h2 { color: var(--text-main); margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .header-actions { display: flex; gap: 8px; }
+    .btn-header { padding: 8px 16px; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .lang-btn { background: #3b82f6; }
+    .lang-btn:hover { background: #2563eb; }
+    .logout-btn { background: var(--danger); }
+    .logout-btn:hover { background: #dc2626; }
 
     /* মেনু কার্ড গ্রিড */
-    .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; margin-bottom: 24px; }
     .btn-card {
-      background: #ffffff; padding: 12px 6px; border-radius: 10px; text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; border: 1px solid #e2e8f0; transition: all 0.2s;
+      background: var(--surface); padding: 16px 8px; border-radius: var(--radius); text-align: center;
+      box-shadow: var(--shadow-sm); cursor: pointer; border: 1px solid var(--border-color);
     }
-    .btn-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .btn-card.active { border: 2px solid #27ae60; background-color: #f0fff4; }
-    .btn-card.purchase-active { border: 2px solid #e67e22; background-color: #fffaf0; }
-    .btn-card .icon { font-size: 22px; display: block; margin-bottom: 4px; }
-    .btn-card h3 { font-size: 12px; margin: 0; color: #2c3e50; font-weight: 600; }
+    .btn-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .btn-card.active { border: 2px solid var(--primary); background-color: #eef2ff; color: var(--primary); }
+    .btn-card.purchase-active { border: 2px solid var(--warning); background-color: #fffbeb; }
+    .btn-card.deposit-active { border: 2px solid var(--purple); background-color: #f5f3ff; }
+    .btn-card .icon { font-size: 24px; display: block; margin-bottom: 6px; }
+    .btn-card h3 { font-size: 12px; margin: 0; color: var(--text-main); font-weight: 600; }
+    .btn-card.active h3 { color: var(--primary); }
     
     /* সামারি কার্ড */
-    .summary-box { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-    .summary-card { flex: 1; min-width: 90px; background: #eef2f7; padding: 10px; border-radius: 8px; text-align: center; }
-    .summary-card h4 { margin: 0; font-size: 11px; color: #555; }
-    .summary-card p { margin: 5px 0 0; font-weight: bold; font-size: 13px; color: #2c3e50; }
+    .summary-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .summary-card { background: #f1f5f9; padding: 16px; border-radius: var(--radius); text-align: left; border: 1px solid var(--border-color); }
+    .summary-card h4 { margin: 0; font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-card p { margin: 8px 0 0; font-weight: 700; font-size: 18px; color: var(--text-main); }
 
     /* সেকশন ব্লক */
-    .section-block { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; margin-bottom: 20px; display: none; }
-    .section-block.active-section { display: block; }
+    .section-block { background: #ffffff; padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 24px; display: none; box-shadow: var(--shadow-sm); }
+    .section-block.active-section { display: block; animation: fadeIn 0.3s ease-in-out; }
 
-    .form-group { margin-bottom: 10px; }
-    label { font-weight: bold; display: block; margin-bottom: 4px; font-size: 13px; }
-    input, select, button { width: 100%; padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-    .row-2 { display: flex; gap: 8px; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-group { margin-bottom: 14px; }
+    label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-main); }
+    input, select { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; outline: none; background: #fafafa; }
+    input:focus, select:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+    
+    .row-2 { display: flex; gap: 12px; }
     .row-2 .form-group { flex: 1; }
     
-    .submit-btn { background-color: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 15px; }
-    .submit-btn.purchase-btn { background-color: #e67e22; }
+    .submit-btn { background-color: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; padding: 12px; border-radius: 8px; font-size: 14px; margin-top: 8px; width: 100%; }
+    .submit-btn:hover { background-color: var(--primary-hover); }
+    .submit-btn.purchase-btn { background-color: var(--warning); color: #000; }
+    .submit-btn.purchase-btn:hover { background-color: #d97706; color: #fff; }
+    .submit-btn.deposit-btn { background-color: var(--purple); }
+    .submit-btn.deposit-btn:hover { background-color: #7c3aed; }
     
     /* সার্চ বার স্টাইল */
-    .search-box { background: #eef2f7; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #cbd5e1; }
-    .search-box input { border: 2px solid #3498db; font-size: 15px; }
+    .search-box { background: #f8fafc; padding: 16px; border-radius: var(--radius); margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .search-box input { border: 1px solid var(--primary); font-size: 14px; background: #fff; }
 
     /* রেকর্ড ও ব্যাজ স্টাইল */
-    .list-title { margin-top: 10px; border-bottom: 2px solid #27ae60; padding-bottom: 5px; font-size: 16px; }
-    .record-card { background: #fff; border-left: 5px solid #27ae60; padding: 10px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-    .record-card.purchase-card { border-left-color: #e67e22; }
-    .record-card.due-card { border-left-color: #e74c3c; }
-    .record-card div { margin-bottom: 3px; font-size: 13px; }
+    .list-title { margin-top: 0; padding-bottom: 8px; font-size: 16px; font-weight: 700; border-bottom: 2px solid var(--primary); display: inline-block; margin-bottom: 16px; }
+    .record-card { background: #fff; border: 1px solid var(--border-color); border-left: 5px solid var(--primary); padding: 14px 16px; margin-bottom: 12px; border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+    .record-card.purchase-card { border-left-color: var(--warning); }
+    .record-card.due-card { border-left-color: var(--danger); }
+    .record-card div { margin-bottom: 6px; font-size: 13.5px; line-height: 1.5; }
     
-    .badge { padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block; }
-    .badge-total { background: #e8f8f0; color: #27ae60; }
-    .badge-due { background: #fde8e8; color: #e74c3c; }
-    .badge-vehicle { background: #eef2f7; color: #2c3e50; border: 1px solid #cbd5e1; }
-    .badge-profit { background: #d4edda; color: #155724; }
+    .badge { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; display: inline-block; }
+    .badge-total { background: #e0e7ff; color: var(--primary); }
+    .badge-due { background: #fee2e2; color: var(--danger); }
+    .badge-vehicle { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+    .badge-profit { background: #d1fae5; color: #065f46; }
 
-    .card-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-    .btn-action { padding: 5px 10px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; color: white; width: auto; font-weight: bold; }
-    .btn-pay { background-color: #27ae60; }
-    .btn-pdf { background-color: #e67e22; }
-    .btn-delete { background-color: #e74c3c; }
+    .card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .btn-action { padding: 6px 12px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; }
+    .btn-pay { background-color: var(--success); }
+    .btn-pay:hover { background-color: #059669; }
+    .btn-pdf { background-color: #0284c7; }
+    .btn-pdf:hover { background-color: #0369a1; }
+    .btn-delete { background-color: var(--danger); }
+    .btn-delete:hover { background-color: #dc2626; }
+
+    /* টেবিল স্টাইল */
+    table.custom-table { width: 100%; border-collapse: collapse; margin-top: 12px; background: #fff; border-radius: 8px; overflow: hidden; }
+    table.custom-table th, table.custom-table td { border: 1px solid var(--border-color); padding: 12px; text-align: center; font-size: 13px; }
+    table.custom-table th { background-color: #f8fafc; color: var(--text-main); font-weight: 600; }
 
     /* ফোল্ডার গ্যালারি স্টাইল */
-    .folder-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
-    .folder-card { background: #fff; border: 2px dashed #3498db; padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; }
-    .folder-card:hover { background: #ebf5fb; }
-    .folder-card.profit-folder { border-color: #27ae60; background: #f0fff4; }
-    .folder-card.purchase-folder { border-color: #e67e22; background: #fffaf0; }
-    .folder-card.custom-folder { border-color: #9b59b6; background: #fbf4ff; }
-    .folder-card .f-icon { font-size: 30px; display: block; margin-bottom: 5px; }
-    .folder-card h4 { margin: 0; font-size: 13px; color: #2c3e50; }
+    .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-top: 12px; }
+    .folder-card { background: #fff; border: 1px solid var(--border-color); padding: 18px 12px; border-radius: var(--radius); text-align: center; cursor: pointer; box-shadow: var(--shadow-sm); }
+    .folder-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .folder-card.profit-folder { border-left: 4px solid var(--success); }
+    .folder-card.purchase-folder { border-left: 4px solid var(--warning); }
+    .folder-card.custom-folder { border-left: 4px solid var(--purple); }
+    .folder-card .f-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+    .folder-card h4 { margin: 0; font-size: 13px; color: var(--text-main); font-weight: 600; }
 
     /* মোডাল স্টাইল */
-    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-    .modal-content { background: #fff; margin: 10% auto; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
+    .modal-content { background: #fff; margin: 10% auto; padding: 24px; border-radius: 16px; width: 90%; max-width: 420px; box-shadow: var(--shadow-lg); }
 
     #pdfMemo, #pdfProfitMemo, #pdfSupplierMemo { display: none; padding: 20px; font-family: Arial, sans-serif; }
     #pdfMemo table, #pdfProfitMemo table, #pdfSupplierMemo table { width: 100%; border-collapse: collapse; margin-top: 15px; }
@@ -123,7 +172,7 @@
     <div class="container">
       <div class="header-bar">
         <h2 id="txtAppTitle">🏗️ হিসাব ও ফোল্ডার ড্যাশবোর্ড</h2>
-        <div>
+        <div class="header-actions">
           <button type="button" class="btn-header lang-btn" id="langToggleBtn" onclick="toggleLanguage()">🌐 English</button>
           <button type="button" class="btn-header logout-btn" id="logoutBtn">লগআউট</button>
         </div>
@@ -138,6 +187,10 @@
         <div class="btn-card" id="cardNewPurchase" onclick="switchFeature('purchase')">
           <span class="icon">📦</span>
           <h3 id="mNewPurchase">নতুন ক্রয় (পণ্য)</h3>
+        </div>
+        <div class="btn-card" id="cardBillDeposit" onclick="switchFeature('deposit')">
+          <span class="icon">💳</span>
+          <h3 id="mBillDeposit">বিল জমা ট্র্যাকার</h3>
         </div>
         <div class="btn-card" id="cardFolders" onclick="switchFeature('folders')">
           <span class="icon">📁</span>
@@ -165,17 +218,17 @@
         </div>
         <div class="summary-card">
           <h4 id="lblTotalPurchase">মোট পণ্য ক্রয়</h4>
-          <p id="sumPurchaseTotal" style="color:#e67e22;">০ ৳</p>
+          <p id="sumPurchaseTotal" style="color:var(--warning);">০ ৳</p>
         </div>
         <div class="summary-card">
           <h4 id="lblNetProfit">মোট লাভ</h4>
-          <p id="sumNetProfit" style="color:#27ae60;">০ ৳</p>
+          <p id="sumNetProfit" style="color:var(--success);">০ ৳</p>
         </div>
       </div>
       
       <!-- ১. নতুন বিক্রি এনট্রি ফরম -->
       <div id="formSection" class="section-block active-section">
-        <h3 id="txtSaleHeader" style="margin-top:0; color:#27ae60; font-size:15px;">📝 নতুন বিক্রির তথ্য ও লাভ এনট্রি</h3>
+        <h3 id="txtSaleHeader" style="margin-top:0; color:var(--primary); font-size:16px; font-weight:700;">📝 নতুন বিক্রির তথ্য ও লাভ এনট্রি</h3>
         <form id="sellForm">
           <div class="form-group">
             <label id="lblSaleDate">তারিখ:</label>
@@ -230,7 +283,7 @@
             </div>
             <div class="form-group">
               <label id="lblEstProfit">আনুমানিক লাভ:</label>
-              <input type="number" id="estimatedProfit" step="any" readonly style="color:#27ae60; font-weight:bold;" />
+              <input type="number" id="estimatedProfit" step="any" readonly style="color:var(--success); font-weight:bold;" />
             </div>
           </div>
 
@@ -266,7 +319,7 @@
 
       <!-- ২. পণ্য ক্রয় এনট্রি ফরম (Purchase Form) -->
       <div id="purchaseFormSection" class="section-block">
-        <h3 id="txtPurchaseHeader" style="margin-top:0; color:#e67e22; font-size:15px;">📦 পণ্য ক্রয় ও সাপ্লায়ার পেমেন্ট হিসাব</h3>
+        <h3 id="txtPurchaseHeader" style="margin-top:0; color:var(--warning); font-size:16px; font-weight:700;">📦 পণ্য ক্রয় ও সাপ্লায়ার পেমেন্ট হিসাব</h3>
         <form id="purchaseForm">
           <div class="form-group">
             <label id="lblPDate">তারিখ:</label>
@@ -306,10 +359,63 @@
         </form>
       </div>
 
-      <!-- ৩. টাকার হিসাব ও ফোল্ডার সেকশন (আলাদা ফোল্ডার সিস্টেম) -->
+      <!-- ৩. নতুন ফিচার: বিল জমা ও ট্র্যাকার সেকশন (Deposit Section) -->
+      <div id="billDepositSection" class="section-block">
+        <h3 id="txtDepositHeader" style="margin-top:0; color:var(--purple); font-size:16px; font-weight:700;">💳 মোট বিল জমা ও হিস্ট্রি ট্র্যাকার</h3>
+        
+        <button type="button" class="btn-action btn-pay" id="btnToggleDepositForm" onclick="toggleDepositForm()" style="background:var(--purple); margin-bottom:14px; padding:10px 18px; font-size:14px; width:100%;">
+          ➕ নতুন জমা যুক্ত করুন
+        </button>
+
+        <!-- নতুন জমা যুক্ত করার ফর্ম -->
+        <div id="depositFormBox" style="display:none; background:#f5f3ff; padding:16px; border-radius:var(--radius); margin-bottom:16px; border:1px solid #e9d5ff;">
+          <form id="billDepositForm">
+            <div class="form-group">
+              <label id="lblDepDate">জমার তারিখ:</label>
+              <input type="date" id="depDate" required />
+            </div>
+            <div class="form-group">
+              <label id="lblDepAmount">মোট জমা (টাকা):</label>
+              <input type="number" id="depAmount" step="any" placeholder="যেমন: ৫০০০০" required />
+            </div>
+            <div class="form-group">
+              <label id="lblDepCategory">জমার মাধ্যম:</label>
+              <select id="depCategory" onchange="checkDepositCategory()">
+                <option value="ক্যাশ">💵 ক্যাশ (Cash)</option>
+                <option value="ব্যাংক">🏦 ব্যাংক (Bank Transfer)</option>
+                <option value="মোবাইল ব্যাংকিং">📱 মোবাইল ব্যাংকিং (bKash/Nagad)</option>
+              </select>
+            </div>
+            <div class="form-group" id="depSpecificGroup" style="display:none;">
+              <label id="lblDepSpecific">ব্যাংক/মোবাইল ব্যাংকিং নাম (অপশনাল):</label>
+              <input type="text" id="depSpecific" placeholder="যেমন: ডাচ্-বাংলা ব্যাংক / বিকাশ" />
+            </div>
+            <button type="submit" class="submit-btn deposit-btn" id="saveDepositBtn">জমা সেভ করুন</button>
+          </form>
+        </div>
+
+        <h4 id="txtDepositListTitle" style="margin-top:15px; color:var(--text-main);">📊 মোট জমার ইতিহাস (History)</h4>
+        <div style="overflow-x:auto;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th id="thDepDate">তারিখ</th>
+                <th id="thDepAmount">পরিমাণ (৳)</th>
+                <th id="thDepMethod">জমার মাধ্যম</th>
+                <th id="thDepAction">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="billDepositTableBody">
+              <!-- ডাটা সেভ হলে এখানে দেখাবে -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ৪. টাকার হিসাব ও ফোল্ডার সেকশন (আলাদা ফোল্ডার সিস্টেম) -->
       <div id="folderSection" class="section-block">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 id="txtFolderHeader" style="margin:0; color:#3498db; font-size:15px;">📁 ফোল্ডার সমূহের তালিকা (আলাদা হিসাব)</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <h3 id="txtFolderHeader" style="margin:0; color:var(--primary); font-size:16px; font-weight:700;">📁 ফোল্ডার সমূহের তালিকা (আলাদা হিসাব)</h3>
           <button type="button" class="btn-action btn-pay" id="btnNewFolder" onclick="openCustomFolderModal()">➕ নতুন ফোল্ডার খুলুন</button>
         </div>
         
@@ -317,46 +423,46 @@
           <div class="folder-card profit-folder" onclick="openProfitFolder()">
             <span class="f-icon">📈</span>
             <h4 id="fProfitTitle">লাভ-ক্ষতির ফোল্ডার</h4>
-            <small style="color:#27ae60;" id="folderNetProfit">০ ৳</small>
+            <small style="color:var(--success); font-weight:bold;" id="folderNetProfit">০ ৳</small>
           </div>
           <div class="folder-card purchase-folder" onclick="openFolder('Purchases')">
             <span class="f-icon">🛒</span>
             <h4 id="fPurchaseTitle">সাপ্লায়ার ও ক্রয় ফোল্ডার</h4>
-            <small style="color:#e67e22;" id="folderPurchaseTotal">০ ৳</small>
+            <small style="color:var(--warning); font-weight:bold;" id="folderPurchaseTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('Cash')">
             <span class="f-icon">💵</span>
             <h4 id="fCashTitle">ক্যাশ লেনদেন ফোল্ডার</h4>
-            <small style="color:#27ae60;" id="folderCashTotal">০ ৳</small>
+            <small style="color:var(--success); font-weight:bold;" id="folderCashTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('Bank')">
             <span class="f-icon">🏦</span>
             <h4 id="fBankTitle">ব্যাংক লেনদেন ফোল্ডার</h4>
-            <small style="color:#27ae60;" id="folderBankTotal">০ ৳</small>
+            <small style="color:var(--success); font-weight:bold;" id="folderBankTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('Mobile Banking')">
             <span class="f-icon">📱</span>
             <h4 id="fMFSTitle">মোবাইল ব্যাংকিং ফোল্ডার</h4>
-            <small style="color:#27ae60;" id="folderMFSTotal">০ ৳</small>
+            <small style="color:var(--success); font-weight:bold;" id="folderMFSTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('DueCollection')">
             <span class="f-icon">📥</span>
             <h4 id="fDueTitle">বাকি ও উশুল ফোল্ডার</h4>
-            <small style="color:#27ae60;" id="folderDueTotal">০ ৳</small>
+            <small style="color:var(--success); font-weight:bold;" id="folderDueTotal">০ ৳</small>
           </div>
         </div>
       </div>
 
-      <!-- ৪. সার্চ ও তারিখের রিপোর্ট সেকশন -->
+      <!-- ৫. সার্চ ও তারিখের রিপোর্ট সেকশন -->
       <div id="reportSection" class="section-block">
-        <h3 id="txtSearchHeader" style="margin-top:0; color:#3498db; font-size:15px;">🔍 লাইভ সার্চ ও চালান রিপোর্ট</h3>
+        <h3 id="txtSearchHeader" style="margin-top:0; color:var(--primary); font-size:16px; font-weight:700;">🔍 লাইভ সার্চ ও চালান রিপোর্ট</h3>
         
         <div class="search-box">
           <label id="lblSearch">চালান নং / ফোন নং / গাড়ি নং / নাম / তারিখ দিয়ে খুঁজুন:</label>
           <input type="text" id="searchQuery" placeholder="যেমন: CH-101, 01700..., ঢাকা মেট্রো, ১০/১০/২০২০..." onkeyup="handleLiveSearch()" />
         </div>
 
-        <h4 id="txtDateFilterTitle" style="margin: 15px 0 5px; color:#555;">📅 তারিখ অনুযায়ী ফিল্টারড রিপোর্ট:</h4>
+        <h4 id="txtDateFilterTitle" style="margin: 16px 0 8px; color:var(--text-muted);">📅 তারিখ অনুযায়ী ফিল্টারড রিপোর্ট:</h4>
         <div class="row-2">
           <div class="form-group">
             <label id="lblStartDate">শুরুর তারিখ:</label>
@@ -367,22 +473,22 @@
             <input type="date" id="endDate" />
           </div>
         </div>
-        <button type="button" class="submit-btn" id="btnFilterReport" style="background:#3498db;" onclick="filterReport()">রিপোর্ট বের করুন</button>
+        <button type="button" class="submit-btn" id="btnFilterReport" onclick="filterReport()">রিপোর্ট বের করুন</button>
       </div>
 
-      <!-- ৫. রেকর্ড তালিকা ও বিস্তারিত সার্চ সামারি সেকশন -->
+      <!-- ৬. রেকর্ড তালিকা ও বিস্তারিত সার্চ সামারি সেকশন -->
       <div id="listSection" class="section-block">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h3 class="list-title" id="listTitle" style="margin-top:0;">📋 সম্প্রতি বিক্রয়ের তালিকা</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <h3 class="list-title" id="listTitle">📋 সম্প্রতি বিক্রয়ের তালিকা</h3>
           <button id="btnExportProfitPDF" class="btn-action btn-pdf" style="display:none;" onclick="generateProfitPDF()">📄 লাভ-ক্ষতি PDF</button>
         </div>
 
-        <div id="reportSummaryCard" style="display:none; background:#e8f4f8; padding:12px; border-radius:8px; margin:10px 0; border:1px solid #b3e5fc;">
-          <h4 id="txtStatHeader" style="margin:0 0 5px 0; color:#0277bd;">📊 ফিল্টারড চালানের পরিসংখ্যান:</h4>
-          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold;">
-            <span><span id="lblStatTrucks">🚚 মোট গাড়ি:</span> <span id="rTotalTrucks" style="color:#d32f2f;">০ টি</span></span>
-            <span><span id="lblStatQty">📦 মোট মাল:</span> <span id="rTotalQty" style="color:#388e3c;">০</span></span>
-            <span><span id="lblStatSales">💰 মোট বিক্রি:</span> <span id="rTotalAmount" style="color:#0288d1;">০ ৳</span></span>
+        <div id="reportSummaryCard" style="display:none; background:#f0f9ff; padding:14px; border-radius:var(--radius); margin:12px 0; border:1px solid #bae6fd;">
+          <h4 id="txtStatHeader" style="margin:0 0 8px 0; color:#0369a1; font-size:13px;">📊 ফিল্টারড চালানের পরিসংখ্যান:</h4>
+          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; flex-wrap:wrap; gap:8px;">
+            <span><span id="lblStatTrucks">🚚 মোট গাড়ি:</span> <span id="rTotalTrucks" style="color:var(--danger);">০ টি</span></span>
+            <span><span id="lblStatQty">📦 মোট মাল:</span> <span id="rTotalQty" style="color:var(--success);">০</span></span>
+            <span><span id="lblStatSales">💰 মোট বিক্রি:</span> <span id="rTotalAmount" style="color:#0284c7;">০ ৳</span></span>
           </div>
         </div>
 
@@ -395,9 +501,9 @@
   <!-- বাকি জমা মোডাল -->
   <div id="duePayModal" class="modal">
     <div class="modal-content">
-      <h3 id="txtPayModalTitle" style="margin-top:0; color:#27ae60;">➕ বাকি টাকা জমা নিন</h3>
+      <h3 id="txtPayModalTitle" style="margin-top:0; color:var(--success);">➕ বাকি টাকা জমা নিন</h3>
       <input type="hidden" id="payDocId" />
-      <p id="modalCustInfo" style="font-size:13px; font-weight:bold;"></p>
+      <p id="modalCustInfo" style="font-size:13px; font-weight:bold; background:#f1f5f9; padding:10px; border-radius:6px;"></p>
       
       <div class="form-group">
         <label id="lblPayDate">জমার তারিখ:</label>
@@ -419,9 +525,9 @@
         <label id="lblModalAccountName">ব্যাংক/মোবাইল ব্যাংকিং নাম (অপশনাল):</label>
         <input type="text" id="modalAccountName" placeholder="যেমন: bKash Personal, BRAC Bank..." />
       </div>
-      <div class="row-2" style="margin-top:15px;">
-        <button type="button" class="submit-btn" id="btnSubmitPay" onclick="submitDuePayment()">জমা সেভ করুন</button>
-        <button type="button" class="submit-btn" id="btnCancelPay" style="background:#e74c3c;" onclick="closeModal()">বাতিল</button>
+      <div class="row-2" style="margin-top:16px;">
+        <button type="button" class="submit-btn" id="btnSubmitPay" style="background:var(--success);" onclick="submitDuePayment()">জমা সেভ করুন</button>
+        <button type="button" class="submit-btn" id="btnCancelPay" style="background:var(--danger);" onclick="closeModal()">বাতিল</button>
       </div>
     </div>
   </div>
@@ -429,14 +535,14 @@
   <!-- কাস্টম ফোল্ডার মোডাল -->
   <div id="customFolderModal" class="modal">
     <div class="modal-content">
-      <h3 id="txtFolderModalTitle" style="margin-top:0; color:#9b59b6;">📂 নতুন ফোল্ডার যুক্ত করুন</h3>
+      <h3 id="txtFolderModalTitle" style="margin-top:0; color:var(--purple);">📂 নতুন ফোল্ডার যুক্ত করুন</h3>
       <div class="form-group">
         <label id="lblFolderName">ফোল্ডারের নাম:</label>
         <input type="text" id="customFolderName" placeholder="যেমন: গাড়ির ভাড়া, নতুন প্রজেক্ট..." required />
       </div>
-      <div class="row-2" style="margin-top:15px;">
-        <button type="button" class="submit-btn" id="btnSaveFolder" style="background:#9b59b6;" onclick="saveCustomFolder()">ফোল্ডার সেভ করুন</button>
-        <button type="button" class="submit-btn" id="btnCancelFolder" style="background:#e74c3c;" onclick="closeFolderModal()">বাতিল</button>
+      <div class="row-2" style="margin-top:16px;">
+        <button type="button" class="submit-btn" id="btnSaveFolder" style="background:var(--purple);" onclick="saveCustomFolder()">ফোল্ডার সেভ করুন</button>
+        <button type="button" class="submit-btn" id="btnCancelFolder" style="background:var(--danger);" onclick="closeFolderModal()">বাতিল</button>
       </div>
     </div>
   </div>
@@ -550,6 +656,7 @@
     let salesRecords = [];
     let purchaseRecords = [];
     let customFoldersList = [];
+    let billDepositsList = [];
     let currentLang = 'bn'; 
 
     const translations = {
@@ -560,6 +667,7 @@
         logout: "লগআউট",
         newSale: "নতুন বিক্রি",
         newPurchase: "নতুন ক্রয় (পণ্য)",
+        billDeposit: "বিল জমা ট্র্যাকার",
         folders: "ফোল্ডার সমূহ",
         saleList: "বিক্রয়ের তালিকা",
         dueList: "বাকির খাতা",
@@ -591,6 +699,18 @@
         pTotalCost: "মোট পরিশোধ/ক্রয় খরচ (৳):",
         pMethod: "পেমেন্ট মাধ্যম:",
         savePurchase: "পণ্য ক্রয় ও পেমেন্ট সেভ করুন",
+        depositHeader: "💳 মোট বিল জমা ও হিস্ট্রি ট্র্যাকার",
+        btnToggleDeposit: "➕ নতুন জমা যুক্ত করুন",
+        depDate: "জমার তারিখ:",
+        depAmount: "মোট জমা (টাকা):",
+        depCategory: "জমার মাধ্যম:",
+        depSpecific: "ব্যাংক/মোবাইল ব্যাংকিং নাম (অপশনাল):",
+        saveDeposit: "জমা সেভ করুন",
+        depositListTitle: "📊 মোট জমার ইতিহাস (History)",
+        thDepDate: "তারিখ",
+        thDepAmount: "পরিমাণ (৳)",
+        thDepMethod: "জমার মাধ্যম",
+        thDepAction: "অ্যাকশন",
         folderHeader: "📁 ফোল্ডার সমূহের তালিকা (আলাদা হিসাব)",
         btnNewFolder: "➕ নতুন ফোল্ডার খুলুন",
         fProfitTitle: "লাভ-ক্ষতির ফোল্ডার",
@@ -629,6 +749,7 @@
         logout: "Logout",
         newSale: "New Sale",
         newPurchase: "New Purchase",
+        billDeposit: "Bill Deposit Tracker",
         folders: "Folders",
         saleList: "Sales List",
         dueList: "Due Ledger",
@@ -660,6 +781,18 @@
         pTotalCost: "Total Purchase Cost (৳):",
         pMethod: "Payment Method:",
         savePurchase: "Save Purchase Entry",
+        depositHeader: "💳 Bill Deposit & History Tracker",
+        btnToggleDeposit: "➕ Add New Deposit",
+        depDate: "Deposit Date:",
+        depAmount: "Amount (BDT):",
+        depCategory: "Payment Method:",
+        depSpecific: "Bank/MFS Name (Optional):",
+        saveDeposit: "Save Deposit",
+        depositListTitle: "📊 Total Deposit History",
+        thDepDate: "Date",
+        thDepAmount: "Amount (৳)",
+        thDepMethod: "Method",
+        thDepAction: "Action",
         folderHeader: "📁 Folder Directory (Separate)",
         btnNewFolder: "➕ Add New Folder",
         fProfitTitle: "Profit & Loss Folder",
@@ -708,6 +841,7 @@
       document.getElementById('langToggleBtn').innerText = (currentLang === 'bn') ? '🌐 English' : '🌐 বাংলা';
       applyLanguage();
       renderSalesRecords(salesRecords);
+      renderDepositTable();
     };
 
     function applyLanguage() {
@@ -719,6 +853,7 @@
 
       document.getElementById('mNewSale').innerText = t.newSale;
       document.getElementById('mNewPurchase').innerText = t.newPurchase;
+      document.getElementById('mBillDeposit').innerText = t.billDeposit;
       document.getElementById('mFolders').innerText = t.folders;
       document.getElementById('mSaleList').innerText = t.saleList;
       document.getElementById('mDueList').innerText = t.dueList;
@@ -753,6 +888,19 @@
       document.getElementById('lblPTotalCost').innerText = t.pTotalCost;
       document.getElementById('lblPMethod').innerText = t.pMethod;
       document.getElementById('savePurchaseBtn').innerText = t.savePurchase;
+
+      document.getElementById('txtDepositHeader').innerText = t.depositHeader;
+      document.getElementById('btnToggleDepositForm').innerText = t.btnToggleDeposit;
+      document.getElementById('lblDepDate').innerText = t.depDate;
+      document.getElementById('lblDepAmount').innerText = t.depAmount;
+      document.getElementById('lblDepCategory').innerText = t.depCategory;
+      document.getElementById('lblDepSpecific').innerText = t.depSpecific;
+      document.getElementById('saveDepositBtn').innerText = t.saveDeposit;
+      document.getElementById('txtDepositListTitle').innerText = t.depositListTitle;
+      document.getElementById('thDepDate').innerText = t.thDepDate;
+      document.getElementById('thDepAmount').innerText = t.thDepAmount;
+      document.getElementById('thDepMethod').innerText = t.thDepMethod;
+      document.getElementById('thDepAction').innerText = t.thDepAction;
 
       document.getElementById('txtFolderHeader').innerText = t.folderHeader;
       document.getElementById('btnNewFolder').innerText = t.btnNewFolder;
@@ -817,7 +965,7 @@
 
     window.switchFeature = function(feature) {
       const t = translations[currentLang];
-      document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('active', 'purchase-active'));
+      document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('active', 'purchase-active', 'deposit-active'));
       document.querySelectorAll('.section-block').forEach(s => s.classList.remove('active-section'));
       document.getElementById('btnExportProfitPDF').style.display = 'none';
       document.getElementById('reportSummaryCard').style.display = 'none';
@@ -828,6 +976,9 @@
       } else if (feature === 'purchase') {
         document.getElementById('cardNewPurchase').classList.add('purchase-active');
         document.getElementById('purchaseFormSection').classList.add('active-section');
+      } else if (feature === 'deposit') {
+        document.getElementById('cardBillDeposit').classList.add('deposit-active');
+        document.getElementById('billDepositSection').classList.add('active-section');
       } else if (feature === 'list') {
         document.getElementById('cardRecentSales').classList.add('active');
         document.getElementById('listSection').classList.add('active-section');
@@ -875,6 +1026,7 @@
     document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
     document.getElementById('saleDate').valueAsDate = new Date();
     document.getElementById('pDate').valueAsDate = new Date();
+    document.getElementById('depDate').valueAsDate = new Date();
 
     const qtyIn = document.getElementById("quantity"), buyRateIn = document.getElementById("buyRate"), rateIn = document.getElementById("rate");
     const totalIn = document.getElementById("totalPrice"), profitIn = document.getElementById("estimatedProfit"), paidIn = document.getElementById("paidAmount"), dueIn = document.getElementById("dueAmount");
@@ -970,6 +1122,98 @@
       finally { saveBtn.innerText = translations[currentLang].savePurchase; saveBtn.disabled = false; }
     });
 
+    /* ================= বিল জমা ট্র্যাকার সংক্রান্ত লজিক ================= */
+    window.toggleDepositForm = function() {
+      const box = document.getElementById("depositFormBox");
+      box.style.display = box.style.display === "block" ? "none" : "block";
+    };
+
+    window.checkDepositCategory = function() {
+      const cat = document.getElementById("depCategory").value;
+      const grp = document.getElementById("depSpecificGroup");
+      const lbl = document.getElementById("lblDepSpecific");
+      const inp = document.getElementById("depSpecific");
+
+      if (cat === "ব্যাংক") {
+        grp.style.display = "block";
+        lbl.innerText = currentLang === 'bn' ? "ব্যাংকের নাম (অপশনাল):" : "Bank Name (Optional):";
+        inp.placeholder = currentLang === 'bn' ? "যেমন: ডাচ্-বাংলা ব্যাংক, ইসলামী ব্যাংক" : "e.g. DBBL, City Bank";
+      } else if (cat === "মোবাইল ব্যাংকিং") {
+        grp.style.display = "block";
+        lbl.innerText = currentLang === 'bn' ? "মোবাইল ব্যাংকিং নাম (অপশনাল):" : "MFS Name (Optional):";
+        inp.placeholder = currentLang === 'bn' ? "যেমন: বিকাশ, নগদ, রকেট" : "e.g. bKash, Nagad";
+      } else {
+        grp.style.display = "none";
+        inp.value = "";
+      }
+    };
+
+    document.getElementById("billDepositForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById("saveDepositBtn");
+      saveBtn.innerText = currentLang === 'bn' ? "সেভ হচ্ছে..." : "Saving...";
+      saveBtn.disabled = true;
+
+      try {
+        const cat = document.getElementById("depCategory").value;
+        const spec = document.getElementById("depSpecific").value.trim();
+        let methodText = cat;
+        if (spec !== "") {
+          methodText += " (" + spec + ")";
+        }
+
+        await addDoc(collection(db, "bill_collections"), {
+          date: document.getElementById("depDate").value,
+          amount: Number(document.getElementById("depAmount").value),
+          category: cat,
+          specific: spec,
+          methodText: methodText,
+          createdAt: new Date()
+        });
+
+        alert(currentLang === 'bn' ? "জমার বিবরণ সফলভাবে সেভ হয়েছে!" : "Deposit saved successfully!");
+        document.getElementById("billDepositForm").reset();
+        document.getElementById("depSpecificGroup").style.display = "none";
+        document.getElementById('depDate').valueAsDate = new Date();
+        toggleDepositForm();
+        loadAllData();
+      } catch (err) { alert("Error saving deposit!"); }
+      finally { saveBtn.innerText = translations[currentLang].saveDeposit; saveBtn.disabled = false; }
+    });
+
+    function renderDepositTable() {
+      const tbody = document.getElementById("billDepositTableBody");
+      const isBn = currentLang === 'bn';
+
+      if (billDepositsList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">${isBn ? 'কোনো জমার ইতিহাস পাওয়া যায়নি।' : 'No deposit history found.'}</td></tr>`;
+        return;
+      }
+
+      let html = "";
+      billDepositsList.forEach(d => {
+        html += `
+          <tr>
+            <td>${d.date}</td>
+            <td style="font-weight:bold; color:var(--purple);">${d.amount} ৳</td>
+            <td>${d.methodText || d.category}</td>
+            <td>
+              <button class="btn-action btn-delete" onclick="deleteDepositRecord('${d.id}')">🗑️ ${isBn ? 'ডিলেট' : 'Delete'}</button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    window.deleteDepositRecord = async (id) => {
+      if (confirm(currentLang === 'bn' ? "এই জমা রেকর্ডটি মুছে ফেলতে চান?" : "Are you sure you want to delete this deposit record?")) {
+        await deleteDoc(doc(db, "bill_collections", id));
+        loadAllData();
+      }
+    };
+    /* =================================================================== */
+
     async function loadAllData() {
       try {
         const qSales = query(collection(db, "material_sales"), orderBy("createdAt", "desc"));
@@ -987,9 +1231,15 @@
         customFoldersList = [];
         snapCustom.forEach(d => customFoldersList.push({ id: d.id, ...d.data() }));
 
+        const qDeposits = query(collection(db, "bill_collections"), orderBy("createdAt", "desc"));
+        const snapDeposits = await getDocs(qDeposits);
+        billDepositsList = [];
+        snapDeposits.forEach(d => billDepositsList.push({ id: d.id, ...d.data() }));
+
         calculateFolderTotals();
         renderCustomFoldersUI();
         renderSalesRecords(salesRecords);
+        renderDepositTable();
       } catch (e) { console.error(e); }
     }
 
@@ -1024,7 +1274,7 @@
       const isBn = currentLang === 'bn';
 
       if (records.length === 0) { 
-        list.innerHTML = `<p style='text-align:center;'>${isBn ? "কোনো রেকর্ড পাওয়া যায়নি।" : "No records found."}</p>`; 
+        list.innerHTML = `<p style='text-align:center; color:var(--text-muted);'>${isBn ? "কোনো রেকর্ড পাওয়া যায়নি।" : "No records found."}</p>`; 
         summaryCard.style.display = 'none';
         return; 
       }
@@ -1050,13 +1300,13 @@
         html += `
           <div class="record-card ${isDue ? 'due-card' : ''}">
             <div><span class="badge badge-total">${isBn ? 'চালান' : 'Challan'}: ${d.challanNo}</span> | <span class="badge badge-vehicle">🚛 ${isBn ? 'গাড়ি' : 'Vehicle'}: ${d.vehicleNo || 'N/A'}</span></div>
-            <div><strong>${isBn ? 'ক্রেতা' : 'Customer'}:</strong> ${d.customerName}<span style="color:#0288d1; font-weight:bold;">${phoneText}</span> | <strong>${isBn ? 'মাল' : 'Item'}:</strong> ${d.itemType} (${d.quantity})</div>
+            <div><strong>${isBn ? 'ক্রেতা' : 'Customer'}:</strong> ${d.customerName}<span style="color:#0284c7; font-weight:bold;">${phoneText}</span> | <strong>${isBn ? 'মাল' : 'Item'}:</strong> ${d.itemType} (${d.quantity})</div>
             <div>
               <strong>${isBn ? 'মোট মূল্য' : 'Total'}:</strong> ${d.totalPrice} ৳ | 
               <strong>${isBn ? 'লাভ' : 'Profit'}:</strong> <span class="badge badge-profit">${profit} ৳</span> | 
               <strong>${isBn ? 'বাকি' : 'Due'}:</strong> <span class="badge badge-due">${d.dueAmount || 0} ৳</span>
             </div>
-            <small style="color:#777;">${isBn ? 'তারিখ' : 'Date'}: ${d.saleDate} | ${isBn ? 'মেথড' : 'Method'}: ${d.paymentMethod === 'Due' ? (isBn ? 'বাকি' : 'Credit') : d.paymentMethod}${accInfo}</small>
+            <small style="color:var(--text-muted);">${isBn ? 'তারিখ' : 'Date'}: ${d.saleDate} | ${isBn ? 'মেথড' : 'Method'}: ${d.paymentMethod === 'Due' ? (isBn ? 'বাকি' : 'Credit') : d.paymentMethod}${accInfo}</small>
             <div class="card-actions">
               ${isDue ? `<button class="btn-action btn-pay" onclick="openPayModal('${d.id}', '${d.customerName}', '${d.dueAmount}')">➕ ${isBn ? 'বাকি জমা' : 'Collect Due'}</button>` : ''}
               <button class="btn-action btn-pdf" onclick="generatePDF('${d.challanNo}', '${d.customerName}', '${d.customerPhone || 'N/A'}', '${d.vehicleNo || ''}', '${d.itemType}', '${d.quantity}', '${d.rate}', '${d.totalPrice}', '${d.paidAmount}', '${d.dueAmount}', '${d.saleDate}')">📄 ${isBn ? 'মেমো PDF' : 'PDF Memo'}</button>
@@ -1071,7 +1321,7 @@
     function renderPurchaseRecords() {
       const list = document.getElementById("recordsList");
       const isBn = currentLang === 'bn';
-      if (purchaseRecords.length === 0) { list.innerHTML = `<p style='text-align:center;'>${isBn ? "কোনো ক্রয়ের রেকর্ড পাওয়া যায়নি।" : "No purchase records found."}</p>`; return; }
+      if (purchaseRecords.length === 0) { list.innerHTML = `<p style='text-align:center; color:var(--text-muted);'>${isBn ? "কোনো ক্রয়ের রেকর্ড পাওয়া যায়নি।" : "No purchase records found."}</p>`; return; }
 
       let html = "";
       purchaseRecords.forEach(d => {
@@ -1080,7 +1330,7 @@
           <div class="record-card purchase-card">
             <div><strong>${isBn ? 'সাপ্লাইয়ার' : 'Supplier'}:</strong> ${d.supplier} | <strong>${isBn ? 'পণ্য' : 'Item'}:</strong> ${d.item} (${d.quantity})</div>
             <div><strong>${isBn ? 'মোট পরিশোধ' : 'Total Paid'}:</strong> <span class="badge badge-due">${d.totalCost} ৳</span> | <strong>${isBn ? 'মেথড' : 'Method'}:</strong> ${d.paymentMethod}${accInfo}</div>
-            <small style="color:#777;">${isBn ? 'তারিখ' : 'Date'}: ${d.pDate}</small>
+            <small style="color:var(--text-muted);">${isBn ? 'তারিখ' : 'Date'}: ${d.pDate}</small>
             <div class="card-actions">
               <button class="btn-action btn-pdf" onclick="generateSupplierPDF('${d.supplier}', '${d.item}', '${d.quantity}', '${d.totalCost}', '${d.paymentMethod}', '${d.accountName || '-'}', '${d.pDate}')">📄 ${isBn ? 'পেমেন্ট PDF' : 'Voucher PDF'}</button>
               <button class="btn-action btn-delete" onclick="deletePurchaseRecord('${d.id}')">🗑️ ${isBn ? 'ডিলেট' : 'Delete'}</button>
@@ -1160,7 +1410,7 @@
         div.innerHTML = `
           <span class="f-icon">📁</span>
           <h4>${f.name}</h4>
-          <small style="color:#9b59b6;">${currentLang === 'bn' ? 'কাস্টম ফোল্ডার' : 'Custom Folder'}</small>
+          <small style="color:var(--purple); font-weight:bold;">${currentLang === 'bn' ? 'কাস্টম ফোল্ডার' : 'Custom Folder'}</small>
         `;
         container.appendChild(div);
       });
@@ -1173,9 +1423,9 @@
 
       document.getElementById('listTitle').innerText = `📁 ${name}`;
       document.getElementById("recordsList").innerHTML = `
-        <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #9b59b6; text-align:center;">
+        <div style="background:#fff; padding:16px; border-radius:var(--radius); border:1px solid var(--purple); text-align:center;">
           <h4>📂 ${name}</h4>
-          <p>${currentLang === 'bn' ? 'এটি আপনার তৈরি করা কাস্টম ফোল্ডার।' : 'This is your custom created folder.'}</p>
+          <p style="color:var(--text-muted);">${currentLang === 'bn' ? 'এটি আপনার তৈরি করা কাস্টম ফোল্ডার।' : 'This is your custom created folder.'}</p>
         </div>
       `;
     };
@@ -1194,13 +1444,13 @@
       purchaseRecords.forEach(p => purchaseT += p.totalCost || 0);
 
       document.getElementById("recordsList").innerHTML = `
-        <div style="background:#fff; padding:15px; border-radius:8px; border:1px solid #27ae60;">
+        <div style="background:#fff; padding:16px; border-radius:var(--radius); border:1px solid var(--success);">
           <h4>📊 ${isBn ? 'লাভ-ক্ষতির সামারি হিসাব:' : 'Profit & Loss Summary:'}</h4>
           <hr>
           <p>• ${isBn ? 'সর্বমোট বিক্রি:' : 'Total Sales:'} <strong>${salesT} ৳</strong></p>
           <p>• ${isBn ? 'সর্বমোট পণ্য ক্রয় খরচ:' : 'Total Purchases:'} <strong>${purchaseT} ৳</strong></p>
           <p>• ${isBn ? 'মোট পণ্য বিক্রি লাভ:' : 'Sales Profit:'} <strong>${profitT} ৳</strong></p>
-          <h3 style="color:${profitT >= 0 ? '#27ae60' : '#e74c3c'};">${isBn ? 'নিট আনুমানিক লাভ:' : 'Net Estimated Profit:'} ${profitT} ৳</h3>
+          <h3 style="color:${profitT >= 0 ? 'var(--success)' : 'var(--danger)'}; margin-bottom:0;">${isBn ? 'নিট আনুমানিক লাভ:' : 'Net Estimated Profit:'} ${profitT} ৳</h3>
         </div>
       `;
     };
