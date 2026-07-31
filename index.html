@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Private Business - নির্মাণ সামগ্রী হিসাব</title>
+  
+  <!-- PDF তৈরির লাইব্রেরি -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 12px; color: #333; }
+    
+    /* লগইন পেজ স্টাইল */
+    #loginSection {
+      max-width: 400px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    #loginSection h3 { margin-top: 0; color: #2c3e50; }
+    #loginSection input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; }
+    #loginSection button { width: 100%; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    #loginError { color: red; font-size: 13px; margin-top: 10px; display: none; }
+
+    /* মূল ড্যাশবোর্ড স্টাইল */
+    #appSection { display: none; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    
+    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #27ae60; padding-bottom: 10px; }
+    h2 { color: #2c3e50; margin: 0; font-size: 18px; }
+    .btn-header { padding: 6px 12px; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; margin-left: 5px; }
+    .lang-btn { background: #3498db; }
+    .logout-btn { background: #e74c3c; }
+    
+    /* সামারি কার্ড */
+    .summary-box { display: flex; gap: 8px; margin-bottom: 15px; }
+    .summary-card { flex: 1; background: #eef2f7; padding: 10px; border-radius: 8px; text-align: center; }
+    .summary-card h4 { margin: 0; font-size: 11px; color: #555; }
+    .summary-card p { margin: 5px 0 0; font-weight: bold; font-size: 14px; color: #2c3e50; }
+
+    .form-group { margin-bottom: 10px; }
+    label { font-weight: bold; display: block; margin-bottom: 4px; font-size: 13px; }
+    input, select, button { width: 100%; padding: 9px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .row-2 { display: flex; gap: 8px; }
+    .row-2 .form-group { flex: 1; }
+    
+    .submit-btn { background-color: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 15px; }
+    .submit-btn:hover { background-color: #219150; }
+    
+    .list-title { margin-top: 20px; border-bottom: 2px solid #27ae60; padding-bottom: 5px; font-size: 16px; }
+    .record-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 10px; margin-bottom: 10px; border-radius: 6px; position: relative; }
+    .record-card div { margin-bottom: 3px; font-size: 13px; }
+    .total-badge { background: #e8f8f0; color: #27ae60; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    .due-badge { background: #fde8e8; color: #e74c3c; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    .paid-badge { background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    
+    .card-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .btn-action { padding: 4px 8px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; color: white; width: auto; }
+    .btn-pdf { background-color: #e67e22; }
+    .btn-delete { background-color: #e74c3c; }
+
+    #pdfMemo { display: none; padding: 20px; font-family: Arial, sans-serif; }
+    #pdfMemo table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    #pdfMemo th, #pdfMemo td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+
+  <!-- ১. লগইন সেকশন -->
+  <div id="loginSection">
+    <h3>🔒 প্রাইভেট বিজনেস লগইন</h3>
+    <p style="font-size: 12px; color: #666;">অ্যাপটি ব্যবহার করতে ইমেইল ও পাসওয়ার্ড দিন</p>
+    <form id="loginForm">
+      <input type="email" id="loginEmail" placeholder="আপনার ইমেইল" required />
+      <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড" required />
+      <button type="submit" id="btnLogin">লগইন করুন</button>
+      <div id="loginError">ইমেইল বা পাসওয়ার্ড ভুল হয়েছে!</div>
+    </form>
+  </div>
+
+  <!-- ২. মূল ড্যাশবোর্ড সেকশন -->
+  <div id="appSection">
+    <div class="container">
+      <div class="header-bar">
+        <h2 id="appTitle">🏗️ বিক্রয় ও হিসাব ড্যাশবোর্ড</h2>
+        <div>
+          <button type="button" class="btn-header lang-btn" id="langToggle">English</button>
+          <button type="button" class="btn-header logout-btn" id="logoutBtn">লগআউট</button>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-card">
+          <h4 id="sumTotalLbl">মোট বিক্রি</h4>
+          <p id="sumTotal">০ ৳</p>
+        </div>
+        <div class="summary-card">
+          <h4 id="sumPaidLbl">মোট জমা</h4>
+          <p id="sumPaid" style="color:#27ae60;">০ ৳</p>
+        </div>
+        <div class="summary-card">
+          <h4 id="sumDueLbl">মোট বাকি</h4>
+          <p id="sumDue" style="color:#e74c3c;">০ ৳</p>
+        </div>
+      </div>
+      
+      <form id="sellForm">
+        <div class="form-group">
+          <label id="lblDate" for="saleDate">তারিখ:</label>
+          <input type="date" id="saleDate" required />
+        </div>
+
+        <div class="form-group">
+          <label id="lblCustomer" for="customerName">ক্রেতার নাম:</label>
+          <input type="text" id="customerName" placeholder="যেমন: আব্দুর রহিম" required />
+        </div>
+
+        <div class="form-group">
+          <label id="lblVehicle" for="vehicleNo">গাড়ি নম্বর:</label>
+          <input type="text" id="vehicleNo" placeholder="যেমন: ঢাকা মেট্রো-ট ১১-২২৩৩" required />
+        </div>
+        
+        <div class="form-group">
+          <label id="lblItem" for="itemType">মালামালের ধরন:</label>
+          <select id="itemType"></select>
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label id="lblQuantity" for="quantity">পরিমাণ:</label>
+            <input type="number" id="quantity" placeholder="যেমন: ১০০০" step="any" required />
+          </div>
+          <div class="form-group">
+            <label id="lblRate" for="rate">দর/রেট:</label>
+            <input type="number" id="rate" placeholder="যেমন: ১২" step="any" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label id="lblPrice" for="totalPrice">মোট মূল্য:</label>
+          <input type="number" id="totalPrice" placeholder="০" step="any" required />
+        </div>
+
+        <div class="row-2">
+          <div class="form-group">
+            <label id="lblPaid" for="paidAmount">নগদ জমা:</label>
+            <input type="number" id="paidAmount" placeholder="০" step="any" required />
+          </div>
+          <div class="form-group">
+            <label id="lblDue" for="dueAmount">বাকি টাকা:</label>
+            <input type="number" id="dueAmount" placeholder="০" step="any" readonly />
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="saveBtn">হিসাব সংরক্ষণ করুন</button>
+      </form>
+
+      <h3 class="list-title" id="listTitle">📋 সম্প্রতি বিক্রয়ের তালিকা</h3>
+      <div id="recordsList">ডাটা লোড হচ্ছে...</div>
+    </div>
+  </div>
+
+  <div id="pdfMemo">
+    <h2 style="text-align:center; margin:0;" id="memoTitle">প্রাইভেট বিজনেস (Private Business)</h2>
+    <p style="text-align:center; margin-top:2px; font-size:12px;">ইট, বালি ও পাথর বিক্রেতা</p>
+    <hr>
+    <p><strong>তারিখ:</strong> <span id="mDate"></span></p>
+    <p><strong>ক্রেতার নাম:</strong> <span id="mCustomer"></span></p>
+    <p><strong>গাড়ি নম্বর:</strong> <span id="mVehicle"></span></p>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>মালামাল</th>
+          <th>পরিমাণ</th>
+          <th>রেট</th>
+          <th>মোট (৳)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="mItem"></td>
+          <td id="mQty"></td>
+          <td id="mRate"></td>
+          <td id="mTotal"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:15px; text-align:right;">
+      <p><strong>নগদ জমা:</strong> <span id="mPaid"></span> ৳</p>
+      <p><strong>বাকি:</strong> <span id="mDue"></span> ৳</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcSH15bCRvUG3S-AViJ2nei0aY1n7jsMs",
+      authDomain: "private-business-e85ce.firebaseapp.com",
+      projectId: "private-business-e85ce",
+      storageBucket: "private-business-e85ce.firebasestorage.app",
+      messagingSenderId: "427471953861",
+      appId: "1:427471953861:web:7f563d77c4a217cc62f5ac",
+      measurementId: "G-CRVWB377L"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("appSection").style.display = "block";
+        loadRecords();
+      } else {
+        document.getElementById("loginSection").style.display = "block";
+        document.getElementById("appSection").style.display = "none";
+      }
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const pass = document.getElementById("loginPassword").value;
+      const errDiv = document.getElementById("loginError");
+      errDiv.style.display = "none";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        errDiv.style.display = "block";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+    document.getElementById('saleDate').valueAsDate = new Date();
+
+    const quantityInput = document.getElementById("quantity");
+    const rateInput = document.getElementById("rate");
+    const totalPriceInput = document.getElementById("totalPrice");
+    const paidAmountInput = document.getElementById("paidAmount");
+    const dueAmountInput = document.getElementById("dueAmount");
+
+    function calculateAmounts() {
+      const qty = parseFloat(quantityInput.value) || 0;
+      const rate = parseFloat(rateInput.value) || 0;
+      const total = qty * rate;
+      totalPriceInput.value = total.toFixed(2);
+
+      const paid = parseFloat(paidAmountInput.value) || 0;
+      const due = total - paid;
+      dueAmountInput.value = due > 0 ? due.toFixed(2) : 0;
+    }
+
+    quantityInput.addEventListener("input", calculateAmounts);
+    rateInput.addEventListener("input", calculateAmounts);
+    paidAmountInput.addEventListener("input", calculateAmounts);
+
+    let currentLang = 'bn';
+    const dictionary = {
+      bn: {
+        appTitle: "🏗️ বিক্রয় ও হিসাব ড্যাশবোর্ড",
+        lblDate: "তারিখ:",
+        lblCustomer: "ক্রেতার নাম:",
+        lblVehicle: "গাড়ি নম্বর:",
+        lblItem: "মালামালের ধরন:",
+        lblQuantity: "পরিমাণ:",
+        lblRate: "দর/রেট:",
+        lblPrice: "মোট মূল্য:",
+        lblPaid: "নগদ জমা:",
+        lblDue: "বাকি টাকা:",
+        saveBtn: "হিসাব সংরক্ষণ করুন",
+        listTitle: "📋 সম্প্রতি বিক্রয়ের তালিকা",
+        saving: "সেভ হচ্ছে...",
+        successMsg: "হিসাব সফলভাবে সেভ হয়েছে!",
+        items: [
+          { group: "ইট (Bricks)", options: ["১ম শ্রেণি ইট", "২য় শ্রেণি ইট", "অটো ইট", "পিকেট"] },
+          { group: "বালি (Sand)", options: ["ভিটা বালি", "সিলেট বালি", "লোকাল বালি"] },
+          { group: "পাথর (Stones)", options: ["বোল্ডার পাথর", "এলসি পাথর", "পাথরের চিপস"] }
+        ]
+      },
+      en: {
+        appTitle: "🏗️ Sales & Accounts Dashboard",
+        lblDate: "Date:",
+        lblCustomer: "Customer Name:",
+        lblVehicle: "Vehicle / Truck No:",
+        lblItem: "Material Type:",
+        lblQuantity: "Quantity:",
+        lblRate: "Rate:",
+        lblPrice: "Total Price:",
+        lblPaid: "Paid Amount:",
+        lblDue: "Due Amount:",
+        saveBtn: "Save Transaction",
+        listTitle: "📋 Recent Sales Records",
+        saving: "Saving...",
+        successMsg: "Record saved successfully!",
+        items: [
+          { group: "Bricks", options: ["1st Class Brick", "2nd Class Brick", "Auto Brick", "Picket"] },
+          { group: "Sand", options: ["Vita Sand", "Sylhet Sand", "Local Sand"] },
+          { group: "Stones", options: ["Boulder Stone", "LC Stone", "Stone Chips"] }
+        ]
+      }
+    };
+
+    function updateLanguage(lang) {
+      currentLang = lang;
+      const t = dictionary[lang];
+      document.getElementById('appTitle').innerText = t.appTitle;
+      document.getElementById('lblDate').innerText = t.lblDate;
+      document.getElementById('lblCustomer').innerText = t.lblCustomer;
+      document.getElementById('lblVehicle').innerText = t.lblVehicle;
+      document.getElementById('lblItem').innerText = t.lblItem;
+      document.getElementById('lblQuantity').innerText = t.lblQuantity;
+      document.getElementById('lblRate').innerText = t.lblRate;
+      document.getElementById('lblPrice').innerText = t.lblPrice;
+      document.getElementById('lblPaid').innerText = t.lblPaid;
+      document.getElementById('lblDue').innerText = t.lblDue;
+      document.getElementById('saveBtn').innerText = t.saveBtn;
+      document.getElementById('listTitle').innerText = t.listTitle;
+      document.getElementById('langToggle').innerText = lang === 'bn' ? 'English' : 'বাংলা';
+
+      const itemSelect = document.getElementById('itemType');
+      itemSelect.innerHTML = "";
+      t.items.forEach(g => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = g.group;
+        g.options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt; option.textContent = opt;
+          optgroup.appendChild(option);
+        });
+        itemSelect.appendChild(optgroup);
+      });
+    }
+
+    document.getElementById('langToggle').addEventListener('click', () => updateLanguage(currentLang === 'bn' ? 'en' : 'bn'));
+
+    document.getElementById("sellForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById("saveBtn");
+      saveBtn.innerText = dictionary[currentLang].saving; saveBtn.disabled = true;
+
+      try {
+        await addDoc(collection(db, "material_sales"), {
+          saleDate: document.getElementById("saleDate").value,
+          customerName: document.getElementById("customerName").value,
+          vehicleNo: document.getElementById("vehicleNo").value,
+          itemType: document.getElementById("itemType").value,
+          quantity: Number(document.getElementById("quantity").value),
+          rate: Number(document.getElementById("rate").value),
+          totalPrice: Number(document.getElementById("totalPrice").value),
+          paidAmount: Number(document.getElementById("paidAmount").value),
+          dueAmount: Number(document.getElementById("dueAmount").value),
+          createdAt: new Date()
+        });
+
+        alert(dictionary[currentLang].successMsg);
+        document.getElementById("sellForm").reset();
+        document.getElementById('saleDate').valueAsDate = new Date();
+        loadRecords();
+      } catch (error) {
+        alert("ত্রুটি: ডাটা সেভ হয়নি!");
+      } finally {
+        saveBtn.innerText = dictionary[currentLang].saveBtn; saveBtn.disabled = false;
+      }
+    });
+
+    async function loadRecords() {
+      const recordsList = document.getElementById("recordsList");
+      recordsList.innerHTML = "ডাটা লোড হচ্ছে...";
+      
+      try {
+        const q = query(collection(db, "material_sales"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+          recordsList.innerHTML = "<p>কোনো রেকর্ড পাওয়া যায়নি।</p>";
+          updateSummary(0, 0, 0);
+          return;
+        }
+
+        let html = "", grandTotal = 0, grandPaid = 0, grandDue = 0;
+
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const docId = docSnap.id;
+          
+          grandTotal += (data.totalPrice || 0);
+          grandPaid += (data.paidAmount || 0);
+          grandDue += (data.dueAmount || 0);
+
+          const unit = (data.itemType.includes("ইট") || data.itemType.includes("Brick") || data.itemType.includes("পিকেট")) ? "টি" : "CFT";
+
+          html += `
+            <div class="record-card">
+              <div><strong>ক্রেতা:</strong> ${data.customerName} | <strong>গাড়ি:</strong> ${data.vehicleNo || 'N/A'}</div>
+              <div><strong>মাল:</strong> ${data.itemType} (${data.quantity} ${unit})</div>
+              <div><strong>মোট:</strong> <span class="total-badge">${data.totalPrice} ৳</span> | <strong>জমা:</strong> <span class="paid-badge">${data.paidAmount || 0} ৳</span> | <strong>বাকি:</strong> <span class="due-badge">${data.dueAmount || 0} ৳</span></div>
+              <small style="color:#777;">তারিখ: ${data.saleDate}</small>
+              
+              <div class="card-actions">
+                <button class="btn-action btn-pdf" onclick="generatePDF('${data.customerName}', '${data.vehicleNo}', '${data.itemType}', '${data.quantity}', '${data.rate}', '${data.totalPrice}', '${data.paidAmount}', '${data.dueAmount}', '${data.saleDate}')">📄 মেমো PDF</button>
+                <button class="btn-action btn-delete" onclick="deleteRecord('${docId}')">🗑️ ডিলেট</button>
+              </div>
+            </div>
+          `;
+        });
+
+        recordsList.innerHTML = html;
+        updateSummary(grandTotal, grandPaid, grandDue);
+      } catch (error) {
+        recordsList.innerHTML = "<p style='color:red;'>ডাটা লোড করতে সমস্যা হয়েছে।</p>";
+      }
+    }
+
+    function updateSummary(total, paid, due) {
+      document.getElementById("sumTotal").innerText = total.toFixed(0) + " ৳";
+      document.getElementById("sumPaid").innerText = paid.toFixed(0) + " ৳";
+      document.getElementById("sumDue").innerText = due.toFixed(0) + " ৳";
+    }
+
+    window.deleteRecord = async (id) => {
+      if (confirm("আপনি কি নিশ্চিত যে এই হিসাবটি মুছে ফেলতে চান?")) {
+        await deleteDoc(doc(db, "material_sales", id));
+        loadRecords();
+      }
+    };
+
+    window.generatePDF = (cust, veh, item, qty, rate, total, paid, due, date) => {
+      document.getElementById("mCustomer").innerText = cust;
+      document.getElementById("mVehicle").innerText = veh;
+      document.getElementById("mItem").innerText = item;
+      document.getElementById("mQty").innerText = qty;
+      document.getElementById("mRate").innerText = rate;
+      document.getElementById("mTotal").innerText = total;
+      document.getElementById("mPaid").innerText = paid;
+      document.getElementById("mDue").innerText = due;
+      document.getElementById("mDate").innerText = date;
+
+      const element = document.getElementById("pdfMemo");
+      element.style.display = "block";
+      
+      const opt = {
+        margin:       10,
+        filename:     `Memo_${cust}_${date}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        element.style.display = "none";
+      });
+    };
+
+    updateLanguage('bn');
+  </script>
+</body>
+</html>
