@@ -36,12 +36,45 @@
     .btn-header { padding: 6px 12px; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 13px; margin-left: 5px; }
     .lang-btn { background: #3498db; }
     .logout-btn { background: #e74c3c; }
+
+    /* মেনু কার্ড গ্রিড (Dashboard Buttons) */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn-card {
+      background: #ffffff;
+      padding: 15px 10px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      cursor: pointer;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+    .btn-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .btn-card.active { border: 2px solid #27ae60; background-color: #f0fff4; }
+    .btn-card .icon { font-size: 26px; display: block; margin-bottom: 5px; }
+    .btn-card h3 { font-size: 13px; margin: 0; color: #2c3e50; font-weight: 600; }
     
     /* সামারি কার্ড */
     .summary-box { display: flex; gap: 8px; margin-bottom: 15px; }
     .summary-card { flex: 1; background: #eef2f7; padding: 10px; border-radius: 8px; text-align: center; }
     .summary-card h4 { margin: 0; font-size: 11px; color: #555; }
     .summary-card p { margin: 5px 0 0; font-weight: bold; font-size: 14px; color: #2c3e50; }
+
+    /* সেকশন কার্ডসমূহ */
+    .section-block {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .section-block.active-section { display: block; }
 
     .form-group { margin-bottom: 10px; }
     label { font-weight: bold; display: block; margin-bottom: 4px; font-size: 13px; }
@@ -52,8 +85,9 @@
     .submit-btn { background-color: #27ae60; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 15px; }
     .submit-btn:hover { background-color: #219150; }
     
-    .list-title { margin-top: 20px; border-bottom: 2px solid #27ae60; padding-bottom: 5px; font-size: 16px; }
-    .record-card { background: #f8f9fa; border-left: 5px solid #27ae60; padding: 10px; margin-bottom: 10px; border-radius: 6px; position: relative; }
+    .list-title { margin-top: 10px; border-bottom: 2px solid #27ae60; padding-bottom: 5px; font-size: 16px; }
+    .record-card { background: #fff; border-left: 5px solid #27ae60; padding: 10px; margin-bottom: 10px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .record-card.due-card { border-left-color: #e74c3c; }
     .record-card div { margin-bottom: 3px; font-size: 13px; }
     .total-badge { background: #e8f8f0; color: #27ae60; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
     .due-badge { background: #fde8e8; color: #e74c3c; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
@@ -94,7 +128,28 @@
         </div>
       </div>
 
-      <div class="summary-box">
+      <!-- নেভিগেশন বাটন/কার্ডসমূহ -->
+      <div class="menu-grid">
+        <div class="btn-card active" id="cardNewSale" onclick="switchFeature('sale')">
+          <span class="icon">🛒</span>
+          <h3 id="btnNewSale">নতুন বিক্রি</h3>
+        </div>
+        <div class="btn-card" id="cardRecentSales" onclick="switchFeature('list')">
+          <span class="icon">📋</span>
+          <h3 id="btnRecentSales">বিক্রয়ের তালিকা</h3>
+        </div>
+        <div class="btn-card" id="cardReport" onclick="switchFeature('report')">
+          <span class="icon">📊</span>
+          <h3 id="btnReport">হিসাব ও রিপোর্ট</h3>
+        </div>
+        <div class="btn-card" id="cardDueList" onclick="switchFeature('due')">
+          <span class="icon">📕</span>
+          <h3 id="btnDueList">বাকির খাতা</h3>
+        </div>
+      </div>
+
+      <!-- হিসাব সামারি -->
+      <div class="summary-box" id="summaryBox">
         <div class="summary-card">
           <h4 id="sumTotalLbl">মোট বিক্রি</h4>
           <p id="sumTotal">০ ৳</p>
@@ -109,59 +164,83 @@
         </div>
       </div>
       
-      <form id="sellForm">
-        <div class="form-group">
-          <label id="lblDate" for="saleDate">তারিখ:</label>
-          <input type="date" id="saleDate" required />
-        </div>
+      <!-- ১. নতুন বিক্রি এনট্রি ফরম সেকশন -->
+      <div id="formSection" class="section-block active-section">
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:15px; color:#27ae60;" id="formTitle">📝 নতুন বিক্রির তথ্য দিন</h3>
+        <form id="sellForm">
+          <div class="form-group">
+            <label id="lblDate" for="saleDate">তারিখ:</label>
+            <input type="date" id="saleDate" required />
+          </div>
 
-        <div class="form-group">
-          <label id="lblCustomer" for="customerName">ক্রেতার নাম:</label>
-          <input type="text" id="customerName" placeholder="যেমন: আব্দুর রহিম" required />
-        </div>
+          <div class="form-group">
+            <label id="lblCustomer" for="customerName">ক্রেতার নাম:</label>
+            <input type="text" id="customerName" placeholder="যেমন: আব্দুর রহিম" required />
+          </div>
 
-        <div class="form-group">
-          <label id="lblVehicle" for="vehicleNo">গাড়ি নম্বর:</label>
-          <input type="text" id="vehicleNo" placeholder="যেমন: ঢাকা মেট্রো-ট ১১-২২৩৩" required />
-        </div>
-        
-        <div class="form-group">
-          <label id="lblItem" for="itemType">মালামালের ধরন:</label>
-          <select id="itemType"></select>
-        </div>
+          <div class="form-group">
+            <label id="lblVehicle" for="vehicleNo">গাড়ি নম্বর:</label>
+            <input type="text" id="vehicleNo" placeholder="যেমন: ঢাকা মেট্রো-ট ১১-২২ ৩৩" required />
+          </div>
+          
+          <div class="form-group">
+            <label id="lblItem" for="itemType">মালামালের ধরন:</label>
+            <select id="itemType"></select>
+          </div>
 
+          <div class="row-2">
+            <div class="form-group">
+              <label id="lblQuantity" for="quantity">পরিমাণ:</label>
+              <input type="number" id="quantity" placeholder="যেমন: ১০০০" step="any" required />
+            </div>
+            <div class="form-group">
+              <label id="lblRate" for="rate">দর/রেট:</label>
+              <input type="number" id="rate" placeholder="যেমন: ১২" step="any" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label id="lblPrice" for="totalPrice">মোট মূল্য:</label>
+            <input type="number" id="totalPrice" placeholder="০" step="any" required />
+          </div>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label id="lblPaid" for="paidAmount">নগদ জমা:</label>
+              <input type="number" id="paidAmount" placeholder="০" step="any" required />
+            </div>
+            <div class="form-group">
+              <label id="lblDue" for="dueAmount">বাকি টাকা:</label>
+              <input type="number" id="dueAmount" placeholder="০" step="any" readonly />
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="saveBtn">হিসাব সংরক্ষণ করুন</button>
+        </form>
+      </div>
+
+      <!-- ২. ফিল্টার ও তারিখ ভিত্তিক রিপোর্ট সেকশন -->
+      <div id="reportSection" class="section-block">
+        <h3 style="margin-top:0; margin-bottom:12px; font-size:15px; color:#3498db;">📊 নির্দিষ্ট তারিখের হিসাব ও রিপোর্ট</h3>
         <div class="row-2">
           <div class="form-group">
-            <label id="lblQuantity" for="quantity">পরিমাণ:</label>
-            <input type="number" id="quantity" placeholder="যেমন: ১০০০" step="any" required />
+            <label>শুরুর তারিখ:</label>
+            <input type="date" id="startDate" />
           </div>
           <div class="form-group">
-            <label id="lblRate" for="rate">দর/রেট:</label>
-            <input type="number" id="rate" placeholder="যেমন: ১২" step="any" required />
+            <label>শেষ তারিখ:</label>
+            <input type="date" id="endDate" />
           </div>
         </div>
+        <button type="button" class="submit-btn" style="background:#3498db;" onclick="filterReport()">রিপোর্ট ফিল্টার করুন</button>
+      </div>
 
-        <div class="form-group">
-          <label id="lblPrice" for="totalPrice">মোট মূল্য:</label>
-          <input type="number" id="totalPrice" placeholder="০" step="any" required />
-        </div>
+      <!-- ৩. বিক্রয় তালিকা ও বাকির খাতা ফিল্টার সেকশন -->
+      <div id="listSection" class="section-block">
+        <h3 class="list-title" id="listTitle" style="margin-top:0;">📋 সম্প্রতি বিক্রয়ের তালিকা</h3>
+        <div id="recordsList">ডাটা লোড হচ্ছে...</div>
+      </div>
 
-        <div class="row-2">
-          <div class="form-group">
-            <label id="lblPaid" for="paidAmount">নগদ জমা:</label>
-            <input type="number" id="paidAmount" placeholder="০" step="any" required />
-          </div>
-          <div class="form-group">
-            <label id="lblDue" for="dueAmount">বাকি টাকা:</label>
-            <input type="number" id="dueAmount" placeholder="০" step="any" readonly />
-          </div>
-        </div>
-
-        <button type="submit" class="submit-btn" id="saveBtn">হিসাব সংরক্ষণ করুন</button>
-      </form>
-
-      <h3 class="list-title" id="listTitle">📋 সম্প্রতি বিক্রয়ের তালিকা</h3>
-      <div id="recordsList">ডাটা লোড হচ্ছে...</div>
     </div>
   </div>
 
@@ -217,6 +296,37 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    let allFetchedRecords = [];
+    let currentMode = 'all'; // 'all' or 'dueOnly'
+
+    // ফিচার সুইচ করার ফাংশন
+    window.switchFeature = function(feature) {
+      document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.section-block').forEach(s => s.classList.remove('active-section'));
+
+      if (feature === 'sale') {
+        document.getElementById('cardNewSale').classList.add('active');
+        document.getElementById('formSection').classList.add('active-section');
+      } else if (feature === 'list') {
+        currentMode = 'all';
+        document.getElementById('cardRecentSales').classList.add('active');
+        document.getElementById('listSection').classList.add('active-section');
+        document.getElementById('listTitle').innerText = dictionary[currentLang].listTitle;
+        renderRecords(allFetchedRecords);
+      } else if (feature === 'report') {
+        document.getElementById('cardReport').classList.add('active');
+        document.getElementById('reportSection').classList.add('active-section');
+        document.getElementById('listSection').classList.add('active-section');
+      } else if (feature === 'due') {
+        currentMode = 'dueOnly';
+        document.getElementById('cardDueList').classList.add('active');
+        document.getElementById('listSection').classList.add('active-section');
+        document.getElementById('listTitle').innerText = currentLang === 'bn' ? '📕 বাকির খাতা তালিকা' : '📕 Due Records List';
+        const dueOnlyRecords = allFetchedRecords.filter(r => (r.dueAmount || 0) > 0);
+        renderRecords(dueOnlyRecords);
+      }
+    };
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
         document.getElementById("loginSection").style.display = "none";
@@ -271,6 +381,11 @@
     const dictionary = {
       bn: {
         appTitle: "🏗️ বিক্রয় ও হিসাব ড্যাশবোর্ড",
+        btnNewSale: "নতুন বিক্রি",
+        btnRecentSales: "বিক্রয়ের তালিকা",
+        btnReport: "হিসাব ও রিপোর্ট",
+        btnDueList: "বাকির খাতা",
+        formTitle: "📝 নতুন বিক্রির তথ্য দিন",
         lblDate: "তারিখ:",
         lblCustomer: "ক্রেতার নাম:",
         lblVehicle: "গাড়ি নম্বর:",
@@ -292,6 +407,11 @@
       },
       en: {
         appTitle: "🏗️ Sales & Accounts Dashboard",
+        btnNewSale: "New Sale",
+        btnRecentSales: "Sales List",
+        btnReport: "Reports",
+        btnDueList: "Due Records",
+        formTitle: "📝 Enter New Sale Details",
         lblDate: "Date:",
         lblCustomer: "Customer Name:",
         lblVehicle: "Vehicle / Truck No:",
@@ -317,6 +437,11 @@
       currentLang = lang;
       const t = dictionary[lang];
       document.getElementById('appTitle').innerText = t.appTitle;
+      document.getElementById('btnNewSale').innerText = t.btnNewSale;
+      document.getElementById('btnRecentSales').innerText = t.btnRecentSales;
+      document.getElementById('btnReport').innerText = t.btnReport;
+      document.getElementById('btnDueList').innerText = t.btnDueList;
+      document.getElementById('formTitle').innerText = t.formTitle;
       document.getElementById('lblDate').innerText = t.lblDate;
       document.getElementById('lblCustomer').innerText = t.lblCustomer;
       document.getElementById('lblVehicle').innerText = t.lblVehicle;
@@ -327,7 +452,7 @@
       document.getElementById('lblPaid').innerText = t.lblPaid;
       document.getElementById('lblDue').innerText = t.lblDue;
       document.getElementById('saveBtn').innerText = t.saveBtn;
-      document.getElementById('listTitle').innerText = t.listTitle;
+      document.getElementById('listTitle').innerText = currentMode === 'dueOnly' ? (lang === 'bn' ? '📕 বাকির খাতা তালিকা' : '📕 Due Records List') : t.listTitle;
       document.getElementById('langToggle').innerText = lang === 'bn' ? 'English' : 'বাংলা';
 
       const itemSelect = document.getElementById('itemType');
@@ -384,45 +509,74 @@
         const q = query(collection(db, "material_sales"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         
-        if (querySnapshot.empty) {
-          recordsList.innerHTML = "<p>কোনো রেকর্ড পাওয়া যায়নি।</p>";
-          updateSummary(0, 0, 0);
-          return;
-        }
-
-        let html = "", grandTotal = 0, grandPaid = 0, grandDue = 0;
-
+        allFetchedRecords = [];
         querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const docId = docSnap.id;
-          
-          grandTotal += (data.totalPrice || 0);
-          grandPaid += (data.paidAmount || 0);
-          grandDue += (data.dueAmount || 0);
-
-          const unit = (data.itemType.includes("ইট") || data.itemType.includes("Brick") || data.itemType.includes("পিকেট")) ? "টি" : "CFT";
-
-          html += `
-            <div class="record-card">
-              <div><strong>ক্রেতা:</strong> ${data.customerName} | <strong>গাড়ি:</strong> ${data.vehicleNo || 'N/A'}</div>
-              <div><strong>মাল:</strong> ${data.itemType} (${data.quantity} ${unit})</div>
-              <div><strong>মোট:</strong> <span class="total-badge">${data.totalPrice} ৳</span> | <strong>জমা:</strong> <span class="paid-badge">${data.paidAmount || 0} ৳</span> | <strong>বাকি:</strong> <span class="due-badge">${data.dueAmount || 0} ৳</span></div>
-              <small style="color:#777;">তারিখ: ${data.saleDate}</small>
-              
-              <div class="card-actions">
-                <button class="btn-action btn-pdf" onclick="generatePDF('${data.customerName}', '${data.vehicleNo}', '${data.itemType}', '${data.quantity}', '${data.rate}', '${data.totalPrice}', '${data.paidAmount}', '${data.dueAmount}', '${data.saleDate}')">📄 মেমো PDF</button>
-                <button class="btn-action btn-delete" onclick="deleteRecord('${docId}')">🗑️ ডিলেট</button>
-              </div>
-            </div>
-          `;
+          allFetchedRecords.push({ id: docSnap.id, ...docSnap.data() });
         });
 
-        recordsList.innerHTML = html;
-        updateSummary(grandTotal, grandPaid, grandDue);
+        if (currentMode === 'dueOnly') {
+          renderRecords(allFetchedRecords.filter(r => (r.dueAmount || 0) > 0));
+        } else {
+          renderRecords(allFetchedRecords);
+        }
       } catch (error) {
         recordsList.innerHTML = "<p style='color:red;'>ডাটা লোড করতে সমস্যা হয়েছে।</p>";
       }
     }
+
+    function renderRecords(records) {
+      const recordsList = document.getElementById("recordsList");
+      
+      if (records.length === 0) {
+        recordsList.innerHTML = "<p style='text-align:center; padding:10px;'>কোনো রেকর্ড পাওয়া যায়নি।</p>";
+        updateSummary(0, 0, 0);
+        return;
+      }
+
+      let html = "", grandTotal = 0, grandPaid = 0, grandDue = 0;
+
+      records.forEach((data) => {
+        grandTotal += (data.totalPrice || 0);
+        grandPaid += (data.paidAmount || 0);
+        grandDue += (data.dueAmount || 0);
+
+        const unit = (data.itemType.includes("ইট") || data.itemType.includes("Brick") || data.itemType.includes("পিকেট")) ? "টি" : "CFT";
+        const isDue = (data.dueAmount || 0) > 0;
+
+        html += `
+          <div class="record-card ${isDue ? 'due-card' : ''}">
+            <div><strong>ক্রেতা:</strong> ${data.customerName} | <strong>গাড়ি:</strong> ${data.vehicleNo || 'N/A'}</div>
+            <div><strong>মাল:</strong> ${data.itemType} (${data.quantity} ${unit})</div>
+            <div><strong>মোট:</strong> <span class="total-badge">${data.totalPrice} ৳</span> | <strong>জমা:</strong> <span class="paid-badge">${data.paidAmount || 0} ৳</span> | <strong>বাকি:</strong> <span class="due-badge">${data.dueAmount || 0} ৳</span></div>
+            <small style="color:#777;">তারিখ: ${data.saleDate}</small>
+            
+            <div class="card-actions">
+              <button class="btn-action btn-pdf" onclick="generatePDF('${data.customerName}', '${data.vehicleNo}', '${data.itemType}', '${data.quantity}', '${data.rate}', '${data.totalPrice}', '${data.paidAmount}', '${data.dueAmount}', '${data.saleDate}')">📄 মেমো PDF</button>
+              <button class="btn-action btn-delete" onclick="deleteRecord('${data.id}')">🗑️ ডিলেট</button>
+            </div>
+          </div>
+        `;
+      });
+
+      recordsList.innerHTML = html;
+      updateSummary(grandTotal, grandPaid, grandDue);
+    }
+
+    window.filterReport = function() {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+
+      if (!start || !end) {
+        alert("অনুগ্রহ করে শুরুর তারিখ ও শেষ তারিখ দুটোই নির্বাচন করুন!");
+        return;
+      }
+
+      const filtered = allFetchedRecords.filter(r => {
+        return r.saleDate >= start && r.saleDate <= end;
+      });
+
+      renderRecords(filtered);
+    };
 
     function updateSummary(total, paid, due) {
       document.getElementById("sumTotal").innerText = total.toFixed(0) + " ৳";
