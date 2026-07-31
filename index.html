@@ -241,6 +241,7 @@
             <label>জমার মাধ্যম (Payment Method):</label>
             <select id="paymentMethod">
               <option value="Cash">💵 ক্যাশ (Cash)</option>
+              <option value="Due">📕 বাকি (Credit)</option>
               <option value="Bank">🏦 ব্যাংক ট্রান্সফার (Bank)</option>
               <option value="Mobile Banking">📱 মোবাইল ব্যাংকিং (bKash/Nagad)</option>
             </select>
@@ -537,6 +538,14 @@
     rateIn.addEventListener("input", calculateSaleAmounts);
     paidIn.addEventListener("input", calculateSaleAmounts);
 
+    // জমার মাধ্যমে 'বাকি' সিলেক্ট করলে নগদ জমা অটো ০ করার লজিক
+    document.getElementById("paymentMethod").addEventListener("change", function () {
+      if (this.value === "Due") {
+        paidIn.value = 0;
+        calculateSaleAmounts();
+      }
+    });
+
     // ড্রপডাউন সামগ্রী
     const items = [
       { group: "ইট (Bricks)", options: ["১ম শ্রেণি ইট", "২য় শ্রেণি ইট", "অটো ইট", "পিকেট"] },
@@ -649,7 +658,7 @@
               <strong>জমা:</strong> ${d.paidAmount || 0} ৳ | 
               <strong>বাকি:</strong> <span class="badge badge-due">${d.dueAmount || 0} ৳</span>
             </div>
-            <small style="color:#777;">তারিখ: ${d.saleDate} | মেথড: ${d.paymentMethod}</small>
+            <small style="color:#777;">তারিখ: ${d.saleDate} | মেথড: ${d.paymentMethod === 'Due' ? 'বাকি (Credit)' : d.paymentMethod}</small>
             <div class="card-actions">
               ${isDue ? `<button class="btn-action btn-pay" onclick="openPayModal('${d.id}', '${d.customerName}', '${d.dueAmount}')">➕ বাকি জমা</button>` : ''}
               <button class="btn-action btn-pdf" onclick="generatePDF('${d.challanNo}', '${d.customerName}', '${d.vehicleNo}', '${d.itemType}', '${d.quantity}', '${d.rate}', '${d.totalPrice}', '${d.paidAmount}', '${d.dueAmount}', '${d.saleDate}')">📄 মেমো</button>
@@ -692,7 +701,7 @@
         const amt = r.paidAmount || 0;
         if (r.paymentMethod === 'Bank') bankTotal += amt;
         else if (r.paymentMethod === 'Mobile Banking') mfsTotal += amt;
-        else cashTotal += amt;
+        else if (r.paymentMethod === 'Cash') cashTotal += amt;
 
         if (r.collections) r.collections.forEach(c => dueTotal += c.amount);
       });
@@ -746,7 +755,7 @@
         renderPurchaseRecords();
       } else {
         document.getElementById('listTitle').innerText = `📁 ${type} ফোল্ডারের তালিকা`;
-        renderSalesRecords(salesRecords.filter(r => r.paymentMethod === type || (!r.paymentMethod && type==='Cash')));
+        renderSalesRecords(salesRecords.filter(r => r.paymentMethod === type));
       }
     };
 
