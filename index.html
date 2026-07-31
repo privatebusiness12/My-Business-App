@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Private Business - ক্রয়, বিক্রয় ও অ্যাডভান্সড রিপোর্ট</title>
+  <title>Private Business - ক্রয়, বিক্রয় ও অ্যাডভান্সড ফোল্ডার হিসাব</title>
   
   <!-- PDF তৈরির লাইব্রেরি -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -266,7 +266,7 @@
 
       <!-- ২. পণ্য ক্রয় এনট্রি ফরম (Purchase Form) -->
       <div id="purchaseFormSection" class="section-block">
-        <h3 id="txtPurchaseHeader" style="margin-top:0; color:#e67e22; font-size:15px;">📦 পণ্য ক্রয় ও খরচের তথ্য (সাপ্লায়ার পেমেন্ট)</h3>
+        <h3 id="txtPurchaseHeader" style="margin-top:0; color:#e67e22; font-size:15px;">📦 পণ্য ক্রয় ও সাপ্লায়ার পেমেন্ট হিসাব</h3>
         <form id="purchaseForm">
           <div class="form-group">
             <label id="lblPDate">তারিখ:</label>
@@ -302,14 +302,14 @@
             <label id="lblPurchaseAccountName">কোন ব্যাংক/মোবাইল ব্যাংকিং (অপশনাল):</label>
             <input type="text" id="purchaseAccountName" placeholder="যেমন: Dutch Bangla, bKash Merchant..." />
           </div>
-          <button type="submit" class="submit-btn purchase-btn" id="savePurchaseBtn">পণ্য ক্রয় সেভ করুন</button>
+          <button type="submit" class="submit-btn purchase-btn" id="savePurchaseBtn">পণ্য ক্রয় ও পেমেন্ট সেভ করুন</button>
         </form>
       </div>
 
-      <!-- ৩. টাকার হিসাব ও ফোল্ডার সেকশন (Custom Folder সহ) -->
+      <!-- ৩. টাকার হিসাব ও ফোল্ডার সেকশন (আলাদা ফোল্ডার সিস্টেম) -->
       <div id="folderSection" class="section-block">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <h3 id="txtFolderHeader" style="margin:0; color:#3498db; font-size:15px;">📁 ফোল্ডার সমূহের তালিকা</h3>
+          <h3 id="txtFolderHeader" style="margin:0; color:#3498db; font-size:15px;">📁 ফোল্ডার সমূহের তালিকা (আলাদা হিসাব)</h3>
           <button type="button" class="btn-action btn-pay" id="btnNewFolder" onclick="openCustomFolderModal()">➕ নতুন ফোল্ডার খুলুন</button>
         </div>
         
@@ -321,27 +321,27 @@
           </div>
           <div class="folder-card purchase-folder" onclick="openFolder('Purchases')">
             <span class="f-icon">🛒</span>
-            <h4 id="fPurchaseTitle">পণ্য ক্রয় ও খরচ</h4>
+            <h4 id="fPurchaseTitle">সাপ্লায়ার ও ক্রয় ফোল্ডার</h4>
             <small style="color:#e67e22;" id="folderPurchaseTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('Cash')">
             <span class="f-icon">💵</span>
-            <h4 id="fCashTitle">ক্যাশ লেনদেন</h4>
+            <h4 id="fCashTitle">ক্যাশ লেনদেন ফোল্ডার</h4>
             <small style="color:#27ae60;" id="folderCashTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('Bank')">
             <span class="f-icon">🏦</span>
-            <h4 id="fBankTitle">ব্যাংক লেনদেন</h4>
+            <h4 id="fBankTitle">ব্যাংক লেনদেন ফোল্ডার</h4>
             <small style="color:#27ae60;" id="folderBankTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('Mobile Banking')">
             <span class="f-icon">📱</span>
-            <h4 id="fMFSTitle">মোবাইল ব্যাংকিং</h4>
+            <h4 id="fMFSTitle">মোবাইল ব্যাংকিং ফোল্ডার</h4>
             <small style="color:#27ae60;" id="folderMFSTotal">০ ৳</small>
           </div>
           <div class="folder-card" onclick="openFolder('DueCollection')">
             <span class="f-icon">📥</span>
-            <h4 id="fDueTitle">বাকি উশুল</h4>
+            <h4 id="fDueTitle">বাকি ও উশুল ফোল্ডার</h4>
             <small style="color:#27ae60;" id="folderDueTotal">০ ৳</small>
           </div>
         </div>
@@ -351,10 +351,9 @@
       <div id="reportSection" class="section-block">
         <h3 id="txtSearchHeader" style="margin-top:0; color:#3498db; font-size:15px;">🔍 লাইভ সার্চ ও চালান রিপোর্ট</h3>
         
-        <!-- লাইভ সার্চ বার -->
         <div class="search-box">
           <label id="lblSearch">চালান নং / ফোন নং / গাড়ি নং / নাম / তারিখ দিয়ে খুঁজুন:</label>
-          <input type="text" id="searchQuery" placeholder="যেমন: CH-101, 01700..., ঢাকা মেট্রো, ১০/১০/২০২৪..." onkeyup="handleLiveSearch()" />
+          <input type="text" id="searchQuery" placeholder="যেমন: CH-101, 01700..., ঢাকা মেট্রো, ১০/১০/২০২০..." onkeyup="handleLiveSearch()" />
         </div>
 
         <h4 id="txtDateFilterTitle" style="margin: 15px 0 5px; color:#555;">📅 তারিখ অনুযায়ী ফিল্টারড রিপোর্ট:</h4>
@@ -378,7 +377,6 @@
           <button id="btnExportProfitPDF" class="btn-action btn-pdf" style="display:none;" onclick="generateProfitPDF()">📄 লাভ-ক্ষতি PDF</button>
         </div>
 
-        <!-- ফিল্টার/সার্চের গাড়ি ও মালপত্রের সামারি কার্ড -->
         <div id="reportSummaryCard" style="display:none; background:#e8f4f8; padding:12px; border-radius:8px; margin:10px 0; border:1px solid #b3e5fc;">
           <h4 id="txtStatHeader" style="margin:0 0 5px 0; color:#0277bd;">📊 ফিল্টারড চালানের পরিসংখ্যান:</h4>
           <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold;">
@@ -552,9 +550,8 @@
     let salesRecords = [];
     let purchaseRecords = [];
     let customFoldersList = [];
-    let currentLang = 'bn'; // 'bn' = বাংলা, 'en' = English
+    let currentLang = 'bn'; 
 
-    // ভাষা অনুবাদ অবজেক্ট
     const translations = {
       bn: {
         loginTitle: "🔒 প্রাইভেট বিজনেস লগইন",
@@ -586,22 +583,22 @@
         dueAmount: "বাকি টাকা:",
         paymentMethod: "জমার মাধ্যম (Payment Method):",
         saveSale: "বিক্রি ও লাভ সংরক্ষণ করুন",
-        purchaseHeader: "📦 পণ্য ক্রয় ও খরচের তথ্য (সাপ্লায়ার পেমেন্ট)",
+        purchaseHeader: "📦 পণ্য ক্রয় ও সাপ্লায়ার পেমেন্ট হিসাব",
         pDate: "তারিখ:",
         pSupplier: "সাপ্লাইয়ার / বিক্রেতার নাম:",
         pItem: "পণ্য / মালামালের বিবরণ:",
         pQty: "পরিমাণ:",
         pTotalCost: "মোট পরিশোধ/ক্রয় খরচ (৳):",
         pMethod: "পেমেন্ট মাধ্যম:",
-        savePurchase: "পণ্য ক্রয় সেভ করুন",
-        folderHeader: "📁 ফোল্ডার সমূহের তালিকা",
+        savePurchase: "পণ্য ক্রয় ও পেমেন্ট সেভ করুন",
+        folderHeader: "📁 ফোল্ডার সমূহের তালিকা (আলাদা হিসাব)",
         btnNewFolder: "➕ নতুন ফোল্ডার খুলুন",
         fProfitTitle: "লাভ-ক্ষতির ফোল্ডার",
-        fPurchaseTitle: "পণ্য ক্রয় ও খরচ",
-        fCashTitle: "ক্যাশ লেনদেন",
-        fBankTitle: "ব্যাংক লেনদেন",
-        fMFSTitle: "মোবাইল ব্যাংকিং",
-        fDueTitle: "বাকি উশুল",
+        fPurchaseTitle: "সাপ্লায়ার ও ক্রয় ফোল্ডার",
+        fCashTitle: "ক্যাশ লেনদেন ফোল্ডার",
+        fBankTitle: "ব্যাংক লেনদেন ফোল্ডার",
+        fMFSTitle: "মোবাইল ব্যাংকিং ফোল্ডার",
+        fDueTitle: "বাকি ও উশুল ফোল্ডার",
         searchHeader: "🔍 লাইভ সার্চ ও চালান রিপোর্ট",
         searchLabel: "চালান নং / ফোন নং / গাড়ি নং / নাম / তারিখ দিয়ে খুঁজুন:",
         dateFilterTitle: "📅 তারিখ অনুযায়ী ফিল্টারড রিপোর্ট:",
@@ -663,14 +660,14 @@
         pTotalCost: "Total Purchase Cost (৳):",
         pMethod: "Payment Method:",
         savePurchase: "Save Purchase Entry",
-        folderHeader: "📁 Folder Directory",
+        folderHeader: "📁 Folder Directory (Separate)",
         btnNewFolder: "➕ Add New Folder",
         fProfitTitle: "Profit & Loss Folder",
-        fPurchaseTitle: "Product Purchase & Expenses",
-        fCashTitle: "Cash Transactions",
-        fBankTitle: "Bank Transactions",
-        fMFSTitle: "Mobile Banking",
-        fDueTitle: "Due Collection",
+        fPurchaseTitle: "Supplier & Purchase Folder",
+        fCashTitle: "Cash Transactions Folder",
+        fBankTitle: "Bank Transactions Folder",
+        fMFSTitle: "Mobile Banking Folder",
+        fDueTitle: "Due Collection Folder",
         searchHeader: "🔍 Live Search & Challan Report",
         searchLabel: "Search by Challan, Phone, Vehicle No, Name, or Date:",
         dateFilterTitle: "📅 Filter Report By Date:",
@@ -696,7 +693,6 @@
       }
     };
 
-    // ডায়নামিক ব্যাংক/মোবাইল ব্যাংকিং ইনপুট হ্যান্ডলার
     window.toggleAccountInput = function(selectId, groupId) {
       const selectVal = document.getElementById(selectId).value;
       const groupEl = document.getElementById(groupId);
@@ -707,7 +703,6 @@
       }
     };
 
-    // ভাষা পরিবর্তন ফাংশন
     window.toggleLanguage = function() {
       currentLang = (currentLang === 'bn') ? 'en' : 'bn';
       document.getElementById('langToggleBtn').innerText = (currentLang === 'bn') ? '🌐 English' : '🌐 বাংলা';
@@ -717,7 +712,6 @@
 
     function applyLanguage() {
       const t = translations[currentLang];
-      
       document.getElementById('txtLoginTitle').innerText = t.loginTitle;
       document.getElementById('btnLogin').innerText = t.btnLogin;
       document.getElementById('txtAppTitle').innerText = t.appTitle;
@@ -796,7 +790,6 @@
       renderItemDropdown();
     }
 
-    // ড্রপডাউন সামগ্রী রেন্ডার
     function renderItemDropdown() {
       const itemsBn = [
         { group: "ইট (Bricks)", options: ["১ম শ্রেণি ইট", "২য় শ্রেণি ইট", "অটো ইট", "পিকেট"] },
@@ -822,7 +815,6 @@
       });
     }
 
-    // স্বুইচিং
     window.switchFeature = function(feature) {
       const t = translations[currentLang];
       document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('active', 'purchase-active'));
@@ -884,7 +876,6 @@
     document.getElementById('saleDate').valueAsDate = new Date();
     document.getElementById('pDate').valueAsDate = new Date();
 
-    // লাভ ও মূল্য অটো গণনা
     const qtyIn = document.getElementById("quantity"), buyRateIn = document.getElementById("buyRate"), rateIn = document.getElementById("rate");
     const totalIn = document.getElementById("totalPrice"), profitIn = document.getElementById("estimatedProfit"), paidIn = document.getElementById("paidAmount"), dueIn = document.getElementById("dueAmount");
 
@@ -916,7 +907,6 @@
       }
     });
 
-    // বিক্রয় সেভ
     document.getElementById("sellForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const saveBtn = document.getElementById("saveBtn");
@@ -953,7 +943,6 @@
       finally { saveBtn.innerText = translations[currentLang].saveSale; saveBtn.disabled = false; }
     });
 
-    // পণ্য ক্রয় সেভ (সাপ্লায়ার পেমেন্ট)
     document.getElementById("purchaseForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const saveBtn = document.getElementById("savePurchaseBtn");
@@ -981,7 +970,6 @@
       finally { saveBtn.innerText = translations[currentLang].savePurchase; saveBtn.disabled = false; }
     });
 
-    // লোড ডাটা
     async function loadAllData() {
       try {
         const qSales = query(collection(db, "material_sales"), orderBy("createdAt", "desc"));
@@ -1005,7 +993,6 @@
       } catch (e) { console.error(e); }
     }
 
-    // 🔍 লাইভ সার্চ হ্যান্ডলার
     window.handleLiveSearch = function() {
       const q = document.getElementById("searchQuery").value.toLowerCase().trim();
       const filtered = salesRecords.filter(r => 
@@ -1018,7 +1005,6 @@
       renderSalesRecords(filtered);
     };
 
-    // 📅 তারিখ ফিল্টারড রিপোর্ট
     window.filterReport = function() {
       const start = document.getElementById("startDate").value;
       const end = document.getElementById("endDate").value;
@@ -1032,7 +1018,6 @@
       renderSalesRecords(filtered);
     };
 
-    // বিক্রয় রেন্ডার ও সামারি ক্যালকুলেশন
     function renderSalesRecords(records) {
       const list = document.getElementById("recordsList");
       const summaryCard = document.getElementById("reportSummaryCard");
@@ -1083,7 +1068,6 @@
       list.innerHTML = html;
     }
 
-    // ক্রয় রেকর্ড রেন্ডার (সাপ্লায়ার পেমেন্টসহ)
     function renderPurchaseRecords() {
       const list = document.getElementById("recordsList");
       const isBn = currentLang === 'bn';
@@ -1107,12 +1091,13 @@
       list.innerHTML = html;
     }
 
-    // হিসাব গণনা (ফোল্ডার ভিত্তিক)
     function calculateFolderTotals() {
-      let salesTotal = 0, profitTotal = 0, cashTotal = 0, bankTotal = 0, mfsTotal = 0, dueTotal = 0;
+      let salesTotal = 0, profitTotal = 0, cashTotal = 0, bankTotal = 0, mfsTotal = 0, dueTotal = 0, purchaseTotal = 0;
+      
       salesRecords.forEach(r => {
         salesTotal += (r.totalPrice || 0);
         profitTotal += (r.estimatedProfit || 0);
+        dueTotal += (r.dueAmount || 0);
         
         const amt = r.paidAmount || 0;
         if (r.paymentMethod === 'Bank') bankTotal += amt;
@@ -1121,7 +1106,6 @@
 
         if (r.collections) {
           r.collections.forEach(c => {
-            dueTotal += c.amount;
             if (c.method === 'Bank') bankTotal += c.amount;
             else if (c.method === 'Mobile Banking') mfsTotal += c.amount;
             else if (c.method === 'Cash') cashTotal += c.amount;
@@ -1129,7 +1113,6 @@
         }
       });
 
-      let purchaseTotal = 0;
       purchaseRecords.forEach(p => {
         purchaseTotal += (p.totalCost || 0);
         const pAmt = p.totalCost || 0;
@@ -1151,7 +1134,6 @@
       document.getElementById("folderDueTotal").innerText = dueTotal.toFixed(0) + suffix;
     }
 
-    // ➕ কাস্টম ফোল্ডার মোডাল ও লজিক
     window.openCustomFolderModal = () => { document.getElementById("customFolderModal").style.display = "block"; };
     window.closeFolderModal = () => { document.getElementById("customFolderModal").style.display = "none"; };
 
@@ -1230,15 +1212,17 @@
       document.getElementById('listSection').classList.add('active-section');
 
       if (type === 'Purchases') {
-        document.getElementById('listTitle').innerText = isBn ? "🛒 পণ্য ক্রয় ও খরচের ফোল্ডার" : "🛒 Product Purchase & Expenses";
+        document.getElementById('listTitle').innerText = isBn ? "🛒 সাপ্লায়ার ও ক্রয় ফোল্ডার" : "🛒 Supplier & Purchase Folder";
         renderPurchaseRecords();
+      } else if (type === 'DueCollection') {
+        document.getElementById('listTitle').innerText = isBn ? "📥 বাকি ও উশুল ফোল্ডার" : "📥 Due Collection Folder";
+        renderSalesRecords(salesRecords.filter(r => (r.dueAmount || 0) > 0));
       } else {
-        document.getElementById('listTitle').innerText = `📁 ${type} ${isBn ? 'ফোল্ডারের তালিকা' : 'Folder List'}`;
-        renderSalesRecords(salesRecords.filter(r => r.paymentMethod === type));
+        document.getElementById('listTitle').innerText = `📁 ${type} ${isBn ? 'ফোল্ডারের লেনদেন' : 'Folder Transactions'}`;
+        renderSalesRecords(salesRecords.filter(r => r.paymentMethod === type || (r.collections && r.collections.some(c => c.method === type))));
       }
     };
 
-    // বাকি জমা হ্যান্ডলার
     window.openPayModal = (id, name, due) => {
       const isBn = currentLang === 'bn';
       document.getElementById("payDocId").value = id;
@@ -1285,7 +1269,6 @@
       }
     };
 
-    // 📄 PDF মেমো জেনারেটর (বিক্রি)
     window.generatePDF = (challan, cust, phone, veh, item, qty, rate, total, paid, due, date) => {
       const isBn = currentLang === 'bn';
       document.getElementById("pdfSubTitle").innerText = isBn ? "ইট, বালি ও পাথর বিক্রেতা" : "Bricks, Sand & Stone Supplier";
@@ -1320,7 +1303,6 @@
       html2pdf().set({ margin: 10, filename: `Challan_${challan}.pdf`, jsPDF: { format: 'a5' } }).from(element).save().then(() => { element.style.display = "none"; });
     };
 
-    // 📄 PDF ভাউচার জেনারেটর (সাপ্লায়ার পেমেন্ট)
     window.generateSupplierPDF = (supplier, item, qty, totalCost, method, account, date) => {
       document.getElementById("spDate").innerText = date;
       document.getElementById("spMethod").innerText = method;
