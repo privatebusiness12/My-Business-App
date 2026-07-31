@@ -112,12 +112,13 @@
     .list-title { margin-top: 0; padding-bottom: 8px; font-size: 16px; font-weight: 700; border-bottom: 2px solid var(--primary); display: inline-block; margin-bottom: 16px; }
     .record-card { background: #fff; border: 1px solid var(--border-color); border-left: 5px solid var(--primary); padding: 14px 16px; margin-bottom: 12px; border-radius: var(--radius); box-shadow: var(--shadow-sm); }
     .record-card.purchase-card { border-left-color: var(--warning); }
+    .record-card.deposit-card { border-left-color: var(--purple); }
     .record-card.due-card { border-left-color: var(--danger); }
     .record-card div { margin-bottom: 6px; font-size: 13.5px; line-height: 1.5; }
     
     .badge { padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px; display: inline-block; }
     .badge-total { background: #e0e7ff; color: var(--primary); }
-    .badge-due { background: #fee2e2; color: var(--danger); }
+    .badge-due { background: #fee2e2; color:var(--danger); }
     .badge-vehicle { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
     .badge-profit { background: #d1fae5; color: #065f46; }
 
@@ -149,9 +150,9 @@
     .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
     .modal-content { background: #fff; margin: 10% auto; padding: 24px; border-radius: 16px; width: 90%; max-width: 420px; box-shadow: var(--shadow-lg); }
 
-    #pdfMemo, #pdfProfitMemo, #pdfSupplierMemo { display: none; padding: 20px; font-family: Arial, sans-serif; }
-    #pdfMemo table, #pdfProfitMemo table, #pdfSupplierMemo table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    #pdfMemo th, #pdfMemo td, #pdfProfitMemo th, #pdfProfitMemo td, #pdfSupplierMemo th, #pdfSupplierMemo td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    #pdfMemo, #pdfProfitMemo, #pdfSupplierMemo, #pdfDepositMemo { display: none; padding: 20px; font-family: Arial, sans-serif; }
+    #pdfMemo table, #pdfProfitMemo table, #pdfSupplierMemo table, #pdfDepositMemo table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    #pdfMemo th, #pdfMemo td, #pdfProfitMemo th, #pdfProfitMemo td, #pdfSupplierMemo th, #pdfSupplierMemo td, #pdfDepositMemo th, #pdfDepositMemo td { border: 1px solid #ddd; padding: 8px; text-align: left; }
   </style>
 </head>
 <body>
@@ -204,6 +205,11 @@
           <span class="icon">📕</span>
           <h3 id="mDueList">বাকির খাতা</h3>
         </div>
+        <!-- নতুন ফিচার: সর্বজনীন লেনদেন ইতিহাস -->
+        <div class="btn-card" id="cardAllHistory" onclick="switchFeature('allHistory')">
+          <span class="icon">📜</span>
+          <h3 id="mAllHistory">সর্বজনীন ইতিহাস</h3>
+        </div>
         <div class="btn-card" id="cardReport" onclick="switchFeature('report')">
           <span class="icon">📊</span>
           <h3 id="mReport">রিপোর্ট ও সার্চ</h3>
@@ -213,7 +219,7 @@
       <!-- সামারি বক্স -->
       <div class="summary-box">
         <div class="summary-card">
-          <h4 id="lblTotalSales">মোট বিক্রি</h4>
+          <h4 id="lblTotalSales">মোট জমা / বিক্রি</h4>
           <p id="sumTotal">০ ৳</p>
         </div>
         <div class="summary-card">
@@ -611,6 +617,37 @@
     </div>
   </div>
 
+  <!-- PDF বিল জমা ভাউচার টেমপ্লেট (নতুন) -->
+  <div id="pdfDepositMemo">
+    <h2 style="text-align:center; margin:0;">প্রাইভেট বিজনেস (Private Business)</h2>
+    <h3 style="text-align:center; margin-top:2px; color:#8b5cf6;" id="pdfDepTitle">💳 বিল জমা ভাউচার</h3>
+    <hr>
+    <div style="display:flex; justify-content:space-between;">
+      <p><strong>জমার তারিখ:</strong> <span id="dpDate"></span></p>
+      <p><strong>জমার মাধ্যম:</strong> <span id="dpMethod"></span></p>
+    </div>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>বিবরণ</th>
+          <th>মোট জমার পরিমাণ (৳)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>সরাসরি বিল জমা ট্র্যাকার (Deposit Entry)</td>
+          <td id="dpAmount" style="font-weight:bold; color:#8b5cf6;"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:30px; display:flex; justify-content:space-between; font-size:12px;">
+      <p>____________________<br>গ্রাহকের স্বাক্ষর</p>
+      <p>____________________<br>ক্যাশিয়ার / ক্যাশ গ্রহীতা</p>
+    </div>
+  </div>
+
   <!-- PDF লাভ ক্ষতি টেমপ্লেট -->
   <div id="pdfProfitMemo">
     <h2 style="text-align:center; margin:0;">প্রাইভেট বিজনেস (Private Business)</h2>
@@ -625,7 +662,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td id="tdTotalSalesLbl">সর্বমোট বিক্রি (Sales)</td><td id="prTotalSales">০</td></tr>
+        <tr><td id="tdTotalSalesLbl">সর্বমোট বিক্রি ও জমা (Sales & Deposits)</td><td id="prTotalSales">০</td></tr>
         <tr><td id="tdTotalPurLbl">সর্বমোট পণ্য ক্রয় খরচ (Purchases)</td><td id="prTotalPurchase">০</td></tr>
         <tr><td id="tdSalesProfLbl">মোট বিক্রিত পণ্যের লাভ (Profit from Sales)</td><td id="prSalesProfit">০</td></tr>
         <tr style="font-weight:bold; background-color:#e8f8f0;">
@@ -671,8 +708,9 @@
         folders: "ফোল্ডার সমূহ",
         saleList: "বিক্রয়ের তালিকা",
         dueList: "বাকির খাতা",
+        allHistory: "সর্বজনীন ইতিহাস",
         report: "রিপোর্ট ও সার্চ",
-        totalSales: "মোট বিক্রি",
+        totalSales: "মোট জমা / বিক্রি",
         totalPurchase: "মোট পণ্য ক্রয়",
         netProfit: "মোট লাভ",
         saleHeader: "📝 নতুন বিক্রির তথ্য ও লাভ এনট্রি",
@@ -728,6 +766,7 @@
         recentSalesList: "📋 সম্প্রতি বিক্রয়ের তালিকা",
         searchResultList: "🔎 সার্চ ও ফিল্টারড রেজাল্ট",
         dueListTitle: "📕 বাকির খাতা তালিকা",
+        allHistoryTitle: "📜 সর্বজনীন সমস্ত লেনদেনের ইতিহাস",
         statHeader: "📊 ফিল্টারড চালানের পরিসংখ্যান:",
         statTrucks: "🚚 মোট গাড়ি:",
         statQty: "📦 মোট মাল:",
@@ -753,8 +792,9 @@
         folders: "Folders",
         saleList: "Sales List",
         dueList: "Due Ledger",
+        allHistory: "All History",
         report: "Report & Search",
-        totalSales: "Total Sales",
+        totalSales: "Total Sales & Deposits",
         totalPurchase: "Total Purchases",
         netProfit: "Net Profit",
         saleHeader: "📝 New Sale Entry & Profit",
@@ -810,6 +850,7 @@
         recentSalesList: "📋 Recent Sales List",
         searchResultList: "🔎 Search & Filter Results",
         dueListTitle: "📕 Due Ledger List",
+        allHistoryTitle: "📜 Master All Transactions History",
         statHeader: "📊 Filtered Challan Statistics:",
         statTrucks: "🚚 Total Vehicles:",
         statQty: "📦 Total Quantity:",
@@ -857,6 +898,7 @@
       document.getElementById('mFolders').innerText = t.folders;
       document.getElementById('mSaleList').innerText = t.saleList;
       document.getElementById('mDueList').innerText = t.dueList;
+      document.getElementById('mAllHistory').innerText = t.allHistory;
       document.getElementById('mReport').innerText = t.report;
 
       document.getElementById('lblTotalSales').innerText = t.totalSales;
@@ -988,6 +1030,11 @@
         document.getElementById('cardFolders').classList.add('active');
         document.getElementById('folderSection').classList.add('active-section');
         calculateFolderTotals();
+      } else if (feature === 'allHistory') {
+        document.getElementById('cardAllHistory').classList.add('active');
+        document.getElementById('listSection').classList.add('active-section');
+        document.getElementById('listTitle').innerText = t.allHistoryTitle;
+        renderAllTransactionsHistory();
       } else if (feature === 'report') {
         document.getElementById('cardReport').classList.add('active');
         document.getElementById('reportSection').classList.add('active-section');
@@ -1198,6 +1245,7 @@
             <td style="font-weight:bold; color:var(--purple);">${d.amount} ৳</td>
             <td>${d.methodText || d.category}</td>
             <td>
+              <button class="btn-action btn-pdf" onclick="generateDepositPDF('${d.amount}', '${d.methodText || d.category}', '${d.date}')">📄 ${isBn ? 'PDF' : 'PDF'}</button>
               <button class="btn-action btn-delete" onclick="deleteDepositRecord('${d.id}')">🗑️ ${isBn ? 'ডিলেট' : 'Delete'}</button>
             </td>
           </tr>
@@ -1341,8 +1389,95 @@
       list.innerHTML = html;
     }
 
+    /* নতুন ফিচার: সর্বজনীন সমস্ত লেনদেনের ইতিহাস একসঙ্গে দেখানো */
+    function renderAllTransactionsHistory() {
+      const list = document.getElementById("recordsList");
+      const isBn = currentLang === 'bn';
+
+      let combined = [];
+
+      salesRecords.forEach(s => {
+        combined.push({
+          type: 'sale',
+          date: s.saleDate,
+          title: `${isBn ? 'বিক্রি চালান' : 'Sales Challan'}: ${s.challanNo}`,
+          desc: `${s.customerName} - ${s.itemType} (${s.quantity})`,
+          amount: s.totalPrice,
+          profit: s.estimatedProfit,
+          due: s.dueAmount,
+          method: s.paymentMethod,
+          raw: s
+        });
+      });
+
+      purchaseRecords.forEach(p => {
+        combined.push({
+          type: 'purchase',
+          date: p.pDate,
+          title: `${isBn ? 'পণ্য ক্রয়' : 'Purchase'}: ${p.supplier}`,
+          desc: `${p.item} (${p.quantity})`,
+          amount: p.totalCost,
+          method: p.paymentMethod,
+          raw: p
+        });
+      });
+
+      billDepositsList.forEach(d => {
+        combined.push({
+          type: 'deposit',
+          date: d.date,
+          title: `${isBn ? 'বিল জমা' : 'Bill Deposit'}`,
+          desc: `${d.methodText || d.category}`,
+          amount: d.amount,
+          method: d.category,
+          raw: d
+        });
+      });
+
+      combined.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (combined.length === 0) {
+        list.innerHTML = `<p style='text-align:center; color:var(--text-muted);'>${isBn ? "কোনো লেনদেনের ইতিহাস পাওয়া যায়নি।" : "No history found."}</p>`;
+        return;
+      }
+
+      let html = "";
+      combined.forEach(item => {
+        if (item.type === 'sale') {
+          html += `
+            <div class="record-card ${item.due > 0 ? 'due-card' : ''}">
+              <div><span class="badge badge-total">🛒 ${isBn ? 'বিক্রি' : 'Sale'}</span> | <strong>${item.title}</strong></div>
+              <div>${item.desc}</div>
+              <div><strong>${isBn ? 'মূল্য' : 'Amount'}:</strong> ${item.amount} ৳ | <strong>${isBn ? 'লাভ' : 'Profit'}:</strong> <span class="badge badge-profit">${item.profit} ৳</span></div>
+              <small style="color:var(--text-muted);">${isBn ? 'তারিখ' : 'Date'}: ${item.date} | ${item.method}</small>
+            </div>
+          `;
+        } else if (item.type === 'purchase') {
+          html += `
+            <div class="record-card purchase-card">
+              <div><span class="badge" style="background:#fef3c7; color:#b45309;">📦 ${isBn ? 'ক্রয়' : 'Purchase'}</span> | <strong>${item.title}</strong></div>
+              <div>${item.desc}</div>
+              <div><strong>${isBn ? 'মোট খরচ' : 'Cost'}:</strong> ${item.amount} ৳</div>
+              <small style="color:var(--text-muted);">${isBn ? 'তারিখ' : 'Date'}: ${item.date} | ${item.method}</small>
+            </div>
+          `;
+        } else if (item.type === 'deposit') {
+          html += `
+            <div class="record-card deposit-card">
+              <div><span class="badge" style="background:#f3e8ff; color:#7e22ce;">💳 ${isBn ? 'বিল জমা' : 'Deposit'}</span> | <strong>${item.title}</strong></div>
+              <div>${item.desc}</div>
+              <div><strong>${isBn ? 'জমা' : 'Amount'}:</strong> ${item.amount} ৳</div>
+              <small style="color:var(--text-muted);">${isBn ? 'তারিখ' : 'Date'}: ${item.date}</small>
+            </div>
+          `;
+        }
+      });
+
+      list.innerHTML = html;
+    }
+
     function calculateFolderTotals() {
-      let salesTotal = 0, profitTotal = 0, cashTotal = 0, bankTotal = 0, mfsTotal = 0, dueTotal = 0, purchaseTotal = 0;
+      let salesTotal = 0, profitTotal = 0, cashTotal = 0, bankTotal = 0, mfsTotal = 0, dueTotal = 0, purchaseTotal = 0, extraDepositTotal = 0;
       
       salesRecords.forEach(r => {
         salesTotal += (r.totalPrice || 0);
@@ -1363,6 +1498,13 @@
         }
       });
 
+      billDepositsList.forEach(d => {
+        extraDepositTotal += (d.amount || 0);
+        if (d.category === 'ব্যাংক') bankTotal += (d.amount || 0);
+        else if (d.category === 'মোবাইল ব্যাংকিং') mfsTotal += (d.amount || 0);
+        else cashTotal += (d.amount || 0);
+      });
+
       purchaseRecords.forEach(p => {
         purchaseTotal += (p.totalCost || 0);
         const pAmt = p.totalCost || 0;
@@ -1371,8 +1513,10 @@
         else if (p.paymentMethod === 'Cash') cashTotal -= pAmt;
       });
 
+      const grandTotalSalesAndDeposits = salesTotal + extraDepositTotal;
+
       const suffix = " ৳";
-      document.getElementById("sumTotal").innerText = salesTotal.toFixed(0) + suffix;
+      document.getElementById("sumTotal").innerText = grandTotalSalesAndDeposits.toFixed(0) + suffix;
       document.getElementById("sumPurchaseTotal").innerText = purchaseTotal.toFixed(0) + suffix;
       document.getElementById("sumNetProfit").innerText = profitTotal.toFixed(0) + suffix;
 
@@ -1439,15 +1583,17 @@
       document.getElementById('listTitle').innerText = isBn ? "📈 মোট লাভ-ক্ষতি রিপোর্ট ফোল্ডার" : "📈 Profit & Loss Report Folder";
       document.getElementById('btnExportProfitPDF').style.display = 'inline-block';
 
-      let salesT = 0, profitT = 0, purchaseT = 0;
+      let salesT = 0, profitT = 0, purchaseT = 0, extraDep = 0;
       salesRecords.forEach(r => { salesT += r.totalPrice || 0; profitT += r.estimatedProfit || 0; });
       purchaseRecords.forEach(p => purchaseT += p.totalCost || 0);
+      billDepositsList.forEach(d => extraDep += d.amount || 0);
 
       document.getElementById("recordsList").innerHTML = `
         <div style="background:#fff; padding:16px; border-radius:var(--radius); border:1px solid var(--success);">
           <h4>📊 ${isBn ? 'লাভ-ক্ষতির সামারি হিসাব:' : 'Profit & Loss Summary:'}</h4>
           <hr>
           <p>• ${isBn ? 'সর্বমোট বিক্রি:' : 'Total Sales:'} <strong>${salesT} ৳</strong></p>
+          <p>• ${isBn ? 'অন্যান্য বিল জমা:' : 'Other Deposits:'} <strong>${extraDep} ৳</strong></p>
           <p>• ${isBn ? 'সর্বমোট পণ্য ক্রয় খরচ:' : 'Total Purchases:'} <strong>${purchaseT} ৳</strong></p>
           <p>• ${isBn ? 'মোট পণ্য বিক্রি লাভ:' : 'Sales Profit:'} <strong>${profitT} ৳</strong></p>
           <h3 style="color:${profitT >= 0 ? 'var(--success)' : 'var(--danger)'}; margin-bottom:0;">${isBn ? 'নিট আনুমানিক লাভ:' : 'Net Estimated Profit:'} ${profitT} ৳</h3>
@@ -1567,24 +1713,35 @@
       html2pdf().set({ margin: 10, filename: `Supplier_Payment_${supplier}.pdf`, jsPDF: { format: 'a5' } }).from(element).save().then(() => { element.style.display = "none"; });
     };
 
+    window.generateDepositPDF = (amount, method, date) => {
+      document.getElementById("dpDate").innerText = date;
+      document.getElementById("dpMethod").innerText = method;
+      document.getElementById("dpAmount").innerText = amount + " ৳";
+
+      const element = document.getElementById("pdfDepositMemo");
+      element.style.display = "block";
+      html2pdf().set({ margin: 10, filename: `Deposit_Voucher_${date}.pdf`, jsPDF: { format: 'a5' } }).from(element).save().then(() => { element.style.display = "none"; });
+    };
+
     window.generateProfitPDF = () => {
       const isBn = currentLang === 'bn';
-      let salesT = 0, profitT = 0, purchaseT = 0;
+      let salesT = 0, profitT = 0, purchaseT = 0, extraDep = 0;
       salesRecords.forEach(r => { salesT += r.totalPrice || 0; profitT += r.estimatedProfit || 0; });
       purchaseRecords.forEach(p => purchaseT += p.totalCost || 0);
+      billDepositsList.forEach(d => extraDep += d.amount || 0);
 
       document.getElementById("pdfProfitTitle").innerText = isBn ? "📊 সামগ্রিক লাভ-ক্ষতি রিপোর্ট" : "📊 Overall Profit & Loss Report";
       document.getElementById("pdfLblReportDate").innerText = isBn ? "রিপোর্ট প্রকাশের তারিখ:" : "Report Date:";
       document.getElementById("thDesc").innerText = isBn ? "বিবরণ" : "Description";
       document.getElementById("thAmount").innerText = isBn ? "টাকার পরিমাণ (৳)" : "Amount (৳)";
 
-      document.getElementById("tdTotalSalesLbl").innerText = isBn ? "সর্বমোট বিক্রি (Sales)" : "Total Sales";
+      document.getElementById("tdTotalSalesLbl").innerText = isBn ? "সর্বমোট বিক্রি ও জমা (Sales & Deposits)" : "Total Sales & Deposits";
       document.getElementById("tdTotalPurLbl").innerText = isBn ? "সর্বমোট পণ্য ক্রয় খরচ (Purchases)" : "Total Purchases";
       document.getElementById("tdSalesProfLbl").innerText = isBn ? "মোট বিক্রিত পণ্যের লাভ (Profit from Sales)" : "Profit from Sales";
       document.getElementById("tdNetProfLbl").innerText = isBn ? "নিট লাভ / ক্ষতি (Net Profit)" : "Net Profit";
 
       document.getElementById("pReportDate").innerText = new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US');
-      document.getElementById("prTotalSales").innerText = salesT + " ৳";
+      document.getElementById("prTotalSales").innerText = (salesT + extraDep) + " ৳";
       document.getElementById("prTotalPurchase").innerText = purchaseT + " ৳";
       document.getElementById("prSalesProfit").innerText = profitT + " ৳";
       document.getElementById("prNetProfit").innerText = profitT + " ৳";
