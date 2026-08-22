@@ -335,6 +335,7 @@
 .br-report-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .br-report-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;color:#fff}
 .br-print{background:#0d6efd}.br-pdf{background:#6f42c1}.br-reset{background:#6c757d}
+.br-center-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.br-center-tab{border:1px solid #d7dee8;background:#fff;color:#334155;border-radius:10px;padding:10px 15px;font-weight:800;cursor:pointer}.br-center-tab.active{background:#0d6efd;color:#fff;border-color:#0d6efd}.br-report-panel{display:none}.br-report-panel.active{display:block}.report-center-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.report-center-card{border:1px solid #dbe3ef;border-radius:12px;background:#fff;padding:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}.report-center-card h4{margin:0 0 8px;color:#1e293b}.report-center-card p{margin:0 0 10px;color:#64748b;font-size:.86em}.report-center-actions{display:flex;gap:7px;flex-wrap:wrap}.report-center-actions button{border:0;border-radius:8px;padding:8px 10px;font-weight:800;cursor:pointer;color:#fff}.rc-print{background:#0d6efd}.rc-pdf{background:#6f42c1}.rc-all{background:#198754}.report-center-settings{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#f8fbff;border:1px solid #dbeafe;border-radius:10px;padding:12px;margin-bottom:14px}.report-center-settings select,.report-center-settings input{padding:9px;border:1px solid #d7dee8;border-radius:8px}.report-center-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px;margin-bottom:14px;color:#1e3a8a}
 .br-result-meta{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
 .br-pill{padding:7px 10px;border-radius:999px;background:#eef4ff;color:#174ea6;font-weight:700}
 .br-table-wrap{overflow:auto;max-height:65vh}
@@ -492,15 +493,6 @@
       </div>
     </div>
 
-    <div class="section-card print-toolbar" style="margin-top:15px">
-      <button class="print-all" onclick="printAllBusinessData()">📚 <span data-bn="সব ট্যাবের সকল হিসাব প্রিন্ট / PDF" data-en="Print / PDF All Tabs & Records">সব ট্যাবের সকল হিসাব প্রিন্ট / PDF</span></button>
-      <button class="print-pdf" onclick="printHomeDashboard()">📄 <span data-bn="ড্যাশবোর্ড PDF" data-en="Dashboard PDF">ড্যাশবোর্ড PDF</span></button>
-      <div class="print-settings">
-        <select id="dash-print-orientation" title="A4 orientation"><option value="portrait">A4 Portrait</option><option value="landscape">A4 Landscape</option></select>
-        <input id="dash-print-signature" type="text" placeholder="স্বাক্ষরের নাম (ঐচ্ছিক)">
-      </div>
-    </div>
-
     <!-- ৩. সেটিংস -->
     <div class="settings-trigger" onclick="toggleSettings()">
       <i class="fa-solid fa-gear" style="font-size: 1.2em; color: #007bff;"></i>
@@ -546,15 +538,6 @@
     <h2 id="page-title" style="margin-bottom: 15px; color: #007bff;"></h2>
     <div class="print-only-title" id="print-only-title"></div>
     <div class="print-meta" id="print-meta"><span id="print-generated-at"></span><span id="print-signature-name"></span></div>
-    <div id="print-toolbar" class="print-toolbar">
-      <button class="print-current" onclick="printCurrentPage()">🖨️ <span data-bn="এই ট্যাব প্রিন্ট" data-en="Print This Tab">এই ট্যাব প্রিন্ট</span></button>
-      <button class="print-pdf" onclick="printCurrentPage()">📄 <span data-bn="PDF হিসেবে সংরক্ষণ" data-en="Save as PDF">PDF হিসেবে সংরক্ষণ</span></button>
-      <button class="print-all" onclick="printAllBusinessData()">📚 <span data-bn="সব হিসাব প্রিন্ট/PDF" data-en="Print/PDF All Records">সব হিসাব প্রিন্ট/PDF</span></button>
-      <div class="print-settings">
-        <select id="print-orientation" title="A4 orientation"><option value="portrait">A4 Portrait</option><option value="landscape">A4 Landscape</option></select>
-        <input id="print-signature" type="text" placeholder="স্বাক্ষরের নাম (ঐচ্ছিক)">
-      </div>
-    </div>
     <div id="page-content"></div>
   </div>
 
@@ -2511,7 +2494,12 @@
       renderMaterialQuantitySummary();
 
       pageShell(['ব্যবসার রিপোর্ট','Business Report'],['যেকোনো তারিখ, চালান, গাড়ি, সাইট, নৌকা বা লেনদেনের তথ্য দিয়ে পুরো হিস্টরি খুঁজুন এবং আলাদা Print/PDF করুন।','Search complete history by date, challan, vehicle, site, boat or any transaction field and print/save PDF.'],
-      `<div class="section-card br-filter-card">
+      `<div class="br-center-tabs">
+        <button class="br-center-tab active" data-br-center="analysis" onclick="showBusinessReportPanel('analysis',this)">📊 ${T('হিসাব রিপোর্ট','Report Analysis')}</button>
+        <button class="br-center-tab" data-br-center="reports" onclick="showBusinessReportPanel('reports',this)">🖨️ ${T('রিপোর্ট','Reports')}</button>
+      </div>
+      <div id="br-analysis" class="br-report-panel active">
+      <div class="section-card br-filter-card">
         <h3><i class="fa-solid fa-magnifying-glass-chart"></i> ${T('হিস্টরি সার্চ ও রিপোর্ট','History Search & Report')}</h3>
         <div class="br-filter-grid">
           <div class="form-group"><label>${T('শুরুর তারিখ','From Date')}</label><input id="br-from" type="date"></div>
@@ -2535,22 +2523,109 @@
         </div>
         <div class="br-report-actions">
           <button class="btn-submit" onclick="renderBusinessReportResults()"><i class="fa-solid fa-filter"></i> ${T('হিসাব দেখুন','Apply Filters')}</button>
-          <button class="br-print" onclick="printFilteredBusinessReport(false)">🖨️ ${T('ফিল্টার করা রিপোর্ট প্রিন্ট','Print Filtered Report')}</button>
-          <button class="br-pdf" onclick="printFilteredBusinessReport(true)">📄 ${T('ফিল্টার করা রিপোর্ট PDF','Filtered Report PDF')}</button>
           <button class="br-reset" onclick="resetBusinessReportFilters()">↺ ${T('রিসেট','Reset')}</button>
-        </div>
-        <div class="section-card" style="margin-top:12px;background:#f8fbff;border:1px solid #dbeafe;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-          <strong>${T('প্রিন্ট সেটিংস','Print Settings')}:</strong>
-          <select id="br-print-orientation" style="padding:9px;border:1px solid #d7dee8;border-radius:8px"><option value="landscape">A4 Landscape</option><option value="portrait">A4 Portrait</option></select>
-          <input id="br-signature" placeholder="${T('স্বাক্ষরের নাম (ঐচ্ছিক)','Signature name (optional)')}" style="padding:9px;border:1px solid #d7dee8;border-radius:8px;min-width:210px">
-          <span style="font-size:.85em;color:#64748b">${T('প্রিন্টে তারিখ ও সময় স্বয়ংক্রিয়ভাবে থাকবে।','Print date and time will be added automatically.')}</span>
+          <button class="btn-submit" onclick="showBusinessReportPanel('reports',document.querySelector('[data-br-center=reports]'))">🖨️ ${T('রিপোর্ট ট্যাবে যান','Go to Reports')}</button>
         </div>
       </div>
       <div id="br-result-meta" class="br-result-meta"></div>
-      <div class="section-card"><div id="br-detail"></div></div>`);
+      <div class="section-card"><div id="br-detail"></div></div>
+      </div>
+      <div id="br-reports" class="br-report-panel">
+        <div class="report-center-settings">
+          <strong>🖨️ ${T('রিপোর্ট প্রিন্ট সেটিংস','Report Print Settings')}</strong>
+          <select id="rc-print-orientation"><option value="portrait">A4 Portrait</option><option value="landscape">A4 Landscape</option></select>
+          <input id="rc-signature" placeholder="${T('স্বাক্ষরের নাম (ঐচ্ছিক)','Signature name (optional)')}">
+          <span style="font-size:.85em;color:#64748b">${T('প্রিন্ট তারিখ ও সময় স্বয়ংক্রিয়ভাবে থাকবে। PDF করতে Print dialog-এ Save as PDF নির্বাচন করুন।','Print date and time are automatic. Choose Save as PDF in the print dialog to create a PDF.')}</span>
+        </div>
+        <div class="report-center-note">${T('এখন থেকে প্রিন্ট/PDF-এর সব অপশন এই “রিপোর্ট” ট্যাব থেকেই ব্যবহার করবেন। প্রতিটি খাতার আলাদা রিপোর্ট এবং সব রিপোর্ট একসাথে করার অপশন নিচে আছে। আপনার Firebase/Firestore-এর ডাটা অপরিবর্তিত থাকবে।','Use this Reports tab for all printing/PDF. Each ledger has its own report, plus one option for all reports together. Existing Firebase/Firestore data is not deleted or overwritten.')}</div>
+        <div class="report-center-grid">
+          ${reportCenterCard('purchase','📒','কেনার খাতা','Purchase Ledger')}
+          ${reportCenterCard('sale','🧾','বেচার খাতা','Sales Ledger')}
+          ${reportCenterCard('expense','💸','খরচের খাতা','Expense Ledger')}
+          ${reportCenterCard('payment','💳','পেমেন্ট ইতিহাস','Payment History')}
+          ${reportCenterCard('cash','💵','ক্যাশ খাতা','Cash Ledger')}
+          ${reportCenterCard('bank','🏦','ব্যাংক ও ওয়ালেট','Bank & Wallet')}
+          ${reportCenterCard('stock','📦','স্টকের হিসাব','Stock Management')}
+          ${reportCenterCard('shipment','🚚','মালপত্র ট্র্যাকিং','Shipment Tracking')}
+          ${reportCenterCard('contact','👥','যোগাযোগ','Contacts')}
+          ${reportCenterCard('product','🧰','প্রোডাক্ট লিস্ট','Product List')}
+          ${reportCenterCard('employee','👷','কর্মচারী হিসাব','Employee Management')}
+          ${reportCenterCard('reminder','🔔','তাগাদা রিমাইন্ডার','Due Reminders')}
+          ${reportCenterCard('note','📝','নোটপ্যাড','Notepad')}
+          ${reportCenterCard('invoice','🧾','চালান','Invoices')}
+          ${reportCenterCard('profit','📈','লাভ-ক্ষতির হিসাব','Profit & Loss')}
+        </div>
+        <div class="section-card" style="margin-top:14px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0">
+          <h3 style="margin:0 0 6px">📚 ${T('সকল রিপোর্ট একসাথে','All Reports Together')}</h3>
+          <p style="margin:0 0 12px;color:#475569">${T('কেনা, বেচা, খরচ, পেমেন্ট, ক্যাশ, ব্যাংক, স্টক, ট্র্যাকিং, যোগাযোগসহ সব রিপোর্ট এক A4 রিপোর্টে থাকবে।','Purchase, sales, expenses, payments, cash, bank, stock, tracking, contacts and other reports in one A4 report.')}</p>
+          <div class="report-center-actions" style="justify-content:center">
+            <button class="rc-all" onclick="printAllBusinessData()">📚 ${T('সকল রিপোর্ট প্রিন্ট','Print All Reports')}</button>
+            <button class="rc-pdf" onclick="printAllBusinessData()">📄 ${T('সকল রিপোর্ট PDF','All Reports PDF')}</button>
+          </div>
+        </div>
+      </div>`);
       businessReportRows=buildBusinessReportRows();
       renderBusinessReportResults();
     }
+    function showBusinessReportPanel(panel,btn){
+      document.querySelectorAll('[data-br-center]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-br-center')===panel);});
+      var a=document.getElementById('br-analysis'),r=document.getElementById('br-reports');
+      if(a)a.classList.toggle('active',panel==='analysis');
+      if(r)r.classList.toggle('active',panel==='reports');
+      if(panel==='reports' && typeof renderBusinessReportResults==='function') renderBusinessReportResults();
+    }
+    function reportCenterCard(key,icon,bn,en){
+      return '<div class="report-center-card"><h4>'+icon+' '+T(bn,en)+'</h4><p>'+T('এই খাতার তথ্য আলাদাভাবে প্রিন্ট বা PDF করুন।','Print or save this ledger separately.')+'</p><div class="report-center-actions"><button class="rc-print" onclick="printSingleBusinessReport(&quot;'+key+'&quot;,false)">🖨️ '+T('প্রিন্ট','Print')+'</button><button class="rc-pdf" onclick="printSingleBusinessReport(&quot;'+key+'&quot;,true)">📄 PDF</button></div></div>';
+    }
+    function getReportCenterSettings(){
+      var o=(document.getElementById('rc-print-orientation')||{}).value||'portrait';
+      var s=((document.getElementById('rc-signature')||{}).value||'').trim();
+      var d=new Date();
+      var g=d.toLocaleString('bn-BD',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      return {orientation:o,signature:s,generated:g};
+    }
+    function printSingleBusinessReport(key,asPdf){
+      var cfg={
+        purchase:{title:'কেনার খাতা',en:'Purchase Ledger',arr:purchaseList,keys:['date','challan','supplier','phone','item','qty','unit','total','paid','due','transportName']},
+        sale:{title:'বেচার খাতা',en:'Sales Ledger',arr:salesList,keys:['date','memo','customer','phone','site','item','qty','unit','total','paid','due','transportName']},
+        expense:{title:'খরচের খাতা',en:'Expense Ledger',arr:expenseList,keys:['date','category','title','method','amount','note']},
+        payment:{title:'পেমেন্ট ইতিহাস',en:'Payment History',arr:(paymentHistory||[]).concat(generalDuePayments||[]),keys:['date','name','typeBn','amount','note']},
+        cash:{title:'ক্যাশ খাতা',en:'Cash Ledger',arr:cashList,keys:['date','type','title','amount']},
+        bank:{title:'ব্যাংক ও ওয়ালেট',en:'Bank & Wallet',arr:bankAccounts,keys:['name','type','accNo','balance']},
+        shipment:{title:'মালপত্র ট্র্যাকিং',en:'Shipment Tracking',arr:shipmentList,keys:['trackingNo','date','status','item','qty','unit','customer','supplier','transportName','from','to','expectedDate']},
+        contact:{title:'যোগাযোগ',en:'Contacts',arr:contactList,keys:['name','phone','type','address','note']},
+        product:{title:'প্রোডাক্ট লিস্ট',en:'Product List',arr:productList,keys:['name','sku','unit','buy','sell','min']},
+        employee:{title:'কর্মচারী হিসাব',en:'Employee Management',arr:employeeList,keys:['name','phone','role','salary','advance']},
+        reminder:{title:'তাগাদা রিমাইন্ডার',en:'Due Reminders',arr:reminderList,keys:['name','phone','date','amount','note','done']},
+        note:{title:'নোটপ্যাড',en:'Notepad',arr:noteList,keys:['title','body','date','pinned']},
+        invoice:{title:'চালান',en:'Invoices',arr:invoiceList,keys:['no','date','customer','phone','site','item','qty','rate','total','note']}
+      };
+      var st=getReportCenterSettings(), c=cfg[key];
+      if(key==='stock'){ return printStockReport(st); }
+      if(key==='profit'){ return printProfitLossReport(st); }
+      if(!c)return;
+      var arr=Array.isArray(c.arr)?c.arr:[];
+      var table=printTableFromArray(T(c.title,c.en),arr,c.keys);
+      var w=window.open('','_blank');
+      if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
+      var html='<div class="report-head"><h1>'+esc(T(c.title,c.en))+'</h1><p>'+esc(T('প্রিন্ট তারিখ ও সময়','Printed on'))+': '+esc(st.generated)+'</p></div>'+table+'<div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(T(c.title,c.en))+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:14px}.report-head h1{margin:0 0 5px}.report-head p{margin:0;font-size:10px;color:#555}.report-section{margin-bottom:20px;break-inside:auto}.report-section h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#eef2f7}.signature-block{text-align:right;margin-top:30px;break-inside:avoid}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center;font-size:10px}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+    }
+    function printStockReport(st){
+      var a=calculateStock();
+      var totalCft=a.reduce(function(s,x){return s+x.cftQty},0),totalTon=a.reduce(function(s,x){return s+x.tonQty},0);
+      var rows=a.map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+x.cftQty.toFixed(2)+'</td><td>'+x.tonQty.toFixed(3)+'</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.min+'</td></tr>';}).join('')||'<tr><td colspan="5">'+T('কোনো স্টক নেই','No stock')+'</td></tr>';
+      var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
+      var html='<div class="report-head"><h1>'+T('স্টকের হিসাব','Stock Management')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div><div class="summary"><b>'+T('মোট CFT','Total CFT')+': '+totalCft.toFixed(2)+'</b> &nbsp; <b>'+T('মোট Metric Ton','Total Metric Ton')+': '+totalTon.toFixed(3)+' t</b></div><table><thead><tr><th>'+T('পণ্য','Product')+'</th><th>CFT</th><th>Metric Ton</th><th>'+T('দর','Rate')+'</th><th>'+T('সর্বনিম্ন','Minimum')+'</th></tr></thead><tbody>'+rows+'</tbody></table><div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:12px}.report-head h1{margin:0 0 5px}.report-head p{font-size:10px;color:#555}.summary{border:1px solid #ccc;padding:9px;margin:10px 0}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px}th{background:#eef2f7}.signature-block{text-align:right;margin-top:30px}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+    }
+    function printProfitLossReport(st){
+      var sales=(salesList||[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0),purchase=(purchaseList||[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0),expense=(expenseList||[]).reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0),net=sales-purchase-expense;
+      var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
+      var html='<div class="report-head"><h1>'+T('লাভ-ক্ষতির হিসাব','Profit & Loss')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div><table><tr><th>'+T('মোট বিক্রয়','Total Sales')+'</th><th>'+T('মোট ক্রয়','Total Purchase')+'</th><th>'+T('মোট খরচ','Total Expense')+'</th><th>'+T('লাভ/ক্ষতি','Profit/Loss')+'</th></tr><tr><td>'+sales.toFixed(2)+' ৳</td><td>'+purchase.toFixed(2)+' ৳</td><td>'+expense.toFixed(2)+' ৳</td><td>'+net.toFixed(2)+' ৳</td></tr></table><div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:8px;text-align:center}th{background:#eef2f7}.signature-block{text-align:right;margin-top:30px}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+    }
+
     function setBusinessReportType(type,btn){
       businessReportType=type;
       document.querySelectorAll('[data-br-type]').forEach(function(b){b.classList.remove('active')});
@@ -2698,7 +2773,7 @@
       scheduleCloudSave(); saveAllExtra(); closeCorrectionEditor(); renderCorrections(); if(type==='purchase'&&document.getElementById('purchase-records'))renderPurchaseTable(); if(type==='sale'&&document.getElementById('sales-records'))renderSalesTable(); alert(T('তথ্য সফলভাবে সংশোধন করা হয়েছে।','Record corrected successfully.'));
     }
 
-    function openInvoiceGenerator(){pageShell(['চালান তৈরি','Invoice Generator'],['কাস্টমার ও পণ্যের তথ্য দিয়ে প্রিন্টযোগ্য চালান তৈরি ও সংরক্ষণ করুন।','Create and save a printable invoice with customer and product details.'],`<div class="section-card"><div class="module-grid"><input id="iv-no" placeholder="Invoice No."><input id="iv-date" type="date" value="${getTodayDate()}"><input id="iv-customer" placeholder="${T('কাস্টমার','Customer')}"><input id="iv-phone" placeholder="${T('মোবাইল','Phone')}"><input id="iv-site" placeholder="${T('সাইট/ঠিকানা','Site/Address')}"><input id="iv-item" placeholder="${T('পণ্য','Product')}"><input id="iv-qty" type="number" placeholder="${T('পরিমাণ','Quantity')}"><input id="iv-rate" type="number" placeholder="${T('দর','Rate')}"><textarea id="iv-note" placeholder="${T('নোট','Note')}"></textarea><button class="btn-submit" onclick="saveInvoice()">${T('চালান সংরক্ষণ','Save Invoice')}</button><button class="btn-submit" onclick="printInvoicePreview()">🖨 ${T('প্রিন্ট','Print')}</button></div></div><div class="section-card" id="invoice-preview"></div><div class="section-card"><h3>${T('সংরক্ষিত চালান','Saved Invoices')}</h3><div id="iv-list"></div></div>`);renderInvoiceList();}
+    function openInvoiceGenerator(){pageShell(['চালান তৈরি','Invoice Generator'],['কাস্টমার ও পণ্যের তথ্য দিয়ে প্রিন্টযোগ্য চালান তৈরি ও সংরক্ষণ করুন।','Create and save a printable invoice with customer and product details.'],`<div class="section-card"><div class="module-grid"><input id="iv-no" placeholder="Invoice No."><input id="iv-date" type="date" value="${getTodayDate()}"><input id="iv-customer" placeholder="${T('কাস্টমার','Customer')}"><input id="iv-phone" placeholder="${T('মোবাইল','Phone')}"><input id="iv-site" placeholder="${T('সাইট/ঠিকানা','Site/Address')}"><input id="iv-item" placeholder="${T('পণ্য','Product')}"><input id="iv-qty" type="number" placeholder="${T('পরিমাণ','Quantity')}"><input id="iv-rate" type="number" placeholder="${T('দর','Rate')}"><textarea id="iv-note" placeholder="${T('নোট','Note')}"></textarea><button class="btn-submit" onclick="saveInvoice()">${T('চালান সংরক্ষণ','Save Invoice')}</button></div></div><div class="section-card" id="invoice-preview"></div><div class="section-card"><h3>${T('সংরক্ষিত চালান','Saved Invoices')}</h3><div id="iv-list"></div></div>`);renderInvoiceList();}
     function invoiceData(){var q=+document.getElementById('iv-qty').value||0,r=+document.getElementById('iv-rate').value||0;return{id:uid(),no:document.getElementById('iv-no').value||('INV-'+Date.now()),date:document.getElementById('iv-date').value,customer:document.getElementById('iv-customer').value,phone:document.getElementById('iv-phone').value,site:document.getElementById('iv-site').value,item:document.getElementById('iv-item').value,qty:q,rate:r,total:q*r,note:document.getElementById('iv-note').value};}
     function saveInvoice(){var x=invoiceData();if(!x.customer||!x.item)return alert(T('কাস্টমার ও পণ্য দিন','Enter customer and product'));invoiceList.push(x);saveAllExtra();showInvoice(x);renderInvoiceList();}
     function showInvoice(x){document.getElementById('invoice-preview').innerHTML='<div id="print-invoice"><h2>'+T('চালান','Invoice')+' #'+esc(x.no)+'</h2><p>'+esc(x.date)+' | '+esc(x.customer)+' | '+esc(x.phone)+'</p><p>'+esc(x.site)+'</p><table><tr><th>'+T('পণ্য','Product')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('দর','Rate')+'</th><th>'+T('মোট','Total')+'</th></tr><tr><td>'+esc(x.item)+'</td><td>'+x.qty+'</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.total.toFixed(2)+'</td></tr></table><h3 style="text-align:right">'+T('সর্বমোট','Grand Total')+': '+x.total.toFixed(2)+' ৳</h3><p>'+esc(x.note)+'</p></div>';}
@@ -2943,7 +3018,7 @@
       var net=totalSales-totalPurchase-totalExpense;
       var allPaymentsTotal=sumAllRecordedPayments();
       var currentDue=calculateOutstandingDue();
-      var allPrintSettings=getPrintSettings('print');
+      var allPrintSettings=(document.getElementById('br-reports')&&document.getElementById('br-reports').classList.contains('active'))?getReportCenterSettings():getPrintSettings('print');
        var materialRows=materialQuantitySummary(), totalCft=materialRows.reduce(function(a,x){return a+x.cft},0), totalTon=materialRows.reduce(function(a,x){return a+x.ton},0), totalPc=materialRows.reduce(function(a,x){return a+x.pc},0);
        var materialHtml='<div class="report-section"><h2>'+T('মালের মোট পরিমাণ','Material Quantity Summary')+'</h2><table><tr><th>'+T('মোট CFT','Total CFT')+'</th><th>'+T('মোট টন','Total Metric Ton')+'</th><th>'+T('মোট পিচ','Total Pieces')+'</th></tr><tr><td>'+totalCft.toFixed(2)+'</td><td>'+totalTon.toFixed(2)+' t</td><td>'+totalPc.toFixed(2)+'</td></tr></table><br><table><thead><tr><th>'+T('মাল','Material')+'</th><th>CFT</th><th>'+T('টন','Metric Ton')+'</th><th>'+T('পিচ','Pieces')+'</th><th>'+T('অন্যান্য','Other')+'</th></tr></thead><tbody>';
        materialRows.forEach(function(x){materialHtml+='<tr><td>'+esc(x.item)+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(2)+'</td><td>'+x.pc.toFixed(2)+'</td><td>'+x.other.toFixed(2)+'</td></tr>';});
@@ -2970,7 +3045,7 @@
         '</div>';
       var w=window.open('','_blank');
       if(!w){alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));return;}
-      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#f1f5f9}.report-section{margin-bottom:20px;break-inside:auto}h1{text-align:center}h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px}@page{size:A4 landscape;margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#f1f5f9}.report-section{margin-bottom:20px;break-inside:auto}h1{text-align:center}h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px}@page{size:A4 '+allPrintSettings.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
     }
     initFirebaseAuth();
 </script>
