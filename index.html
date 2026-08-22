@@ -2308,6 +2308,12 @@
     function storeGet(k, fallback){ try{return JSON.parse(localStorage.getItem(k)||'null')||fallback;}catch(e){return fallback;} }
     function storeSet(k,v){ localStorage.setItem(k, JSON.stringify(v)); scheduleCloudSave(); }
     var contactList=storeGet('biz_contacts',[]), productList=storeGet('biz_products',[]), employeeList=storeGet('biz_employees',[]), reminderList=storeGet('biz_reminders',[]), noteList=storeGet('biz_notes',[]), invoiceList=storeGet('biz_invoices',[]);
+    // Stock conversion settings (CFT -> Metric Ton). Initialize before any stock screen opens.
+    var stockConversionRules = storeGet('biz_stock_conversion',{sylhet:50, local:50, other:50});
+    if(!stockConversionRules || typeof stockConversionRules!=='object') stockConversionRules={sylhet:50,local:50,other:50};
+    stockConversionRules.sylhet=parseFloat(stockConversionRules.sylhet)||50;
+    stockConversionRules.local=parseFloat(stockConversionRules.local)||50;
+    stockConversionRules.other=parseFloat(stockConversionRules.other)||50;
     function T(b,e){return currentLang==='en'?e:b;}
     function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});}
     function pageShell(title,sub,body){document.getElementById('home-view').classList.remove('active-view');document.getElementById('sub-page-view').classList.add('active-view');document.getElementById('page-title').innerText=T(title[0],title[1]);document.getElementById('print-only-title').innerText=T(title[0],title[1]);document.getElementById('page-content').innerHTML='<div class="module-hero"><h2>'+T(title[0],title[1])+'</h2><p>'+T(sub[0],sub[1])+'</p></div>'+body;applyLanguageToCurrentView();}
