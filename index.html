@@ -342,6 +342,8 @@
 .stock-cft{color:#475569}
 @media(max-width:800px){.br-filter-grid,.stock-convert-grid{grid-template-columns:1fr 1fr}.br-filter-grid .wide{grid-column:span 2}}
 @media(max-width:520px){.br-filter-grid,.stock-convert-grid{grid-template-columns:1fr}.br-filter-grid .wide{grid-column:span 1}}
+
+.edit-record-btn{border:0;border-radius:8px;padding:7px 10px;cursor:pointer;background:#eef2ff;color:#3730a3;font-weight:700}.delete-record-btn{border:0;border-radius:8px;padding:7px 10px;cursor:pointer;background:#fee2e2;color:#b91c1c;font-weight:700}.stock-filter-bar{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;align-items:end}.stock-filter-bar input,.stock-filter-bar select{width:100%;padding:11px;border:1px solid #dbe3ee;border-radius:10px}.stock-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0}.stock-mini{padding:14px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#eef6ff);border:1px solid #e2e8f0}.stock-mini b{display:block;font-size:20px}.stock-movement{font-size:12px;color:#64748b}.edit-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px}.edit-modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.edit-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.edit-field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:#475569}.edit-field input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:9px}.edit-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.edit-modal-actions button{padding:10px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}@media(max-width:700px){.stock-filter-bar,.edit-fields,.stock-summary-grid{grid-template-columns:1fr}.edit-modal{padding:15px}}
 </style>
 </head>
 <body>
@@ -2390,24 +2392,13 @@
           <div style="display:flex;align-items:end;gap:8px"><button class="btn-submit" onclick="saveStockConversionRules()">${T('হার সংরক্ষণ','Save Rates')}</button><button class="btn-action" onclick="resetStockConversionRules()">${T('ডিফল্ট','Default')}</button></div>
         </div>
       </div>
-      <div class="kpi-grid" id="stock-kpi"></div>
+      <div class="stock-filter-bar"><div><label>পণ্য খুঁজুন</label><input id="stock-search" oninput="renderStock()" placeholder="সিলেট বালি / লোকাল বালি..."></div><div><label>স্ট্যাটাস</label><select id="stock-status" onchange="renderStock()"><option value="all">সব</option><option value="normal">স্বাভাবিক</option><option value="low">কম/শূন্য</option></select></div><div><label>স্টক একক</label><input value="CFT + Metric Ton" disabled></div><div><button class="btn-action" onclick="openStockManagement()">↻ রিফ্রেশ</button></div></div><div id="stock-kpi"></div>
       <div class="section-card"><div class="table-responsive"><table><thead><tr>
         <th>${T('পণ্য','Product')}</th><th>${T('মজুত CFT','Stock CFT')}</th><th>${T('মজুত মেট্রিক টন','Stock Metric Ton')}</th><th>${T('kg/CFT','kg/CFT')}</th><th>${T('ন্যূনতম','Reorder')}</th><th>${T('অবস্থা','Status')}</th><th>${T('আনুমানিক মূল্য','Value')}</th>
       </tr></thead><tbody id="stock-records"></tbody></table></div></div>`);
       renderStock();
     }
-    function renderStock(){
-      var a=calculateStock(),tb=document.getElementById('stock-records'),k=document.getElementById('stock-kpi');
-      if(!tb)return;
-      var low=a.filter(function(x){return x.tonQty<=0 || (x.min>0 && x.cftQty<=x.min);}).length;
-      var val=a.reduce(function(sum,x){var p=productList.find(function(p){return p.name===x.name});return sum+x.tonQty*(p?((p.unit==='Ton'||p.unit==='টন')?p.buy:(p.buy||0)*1000/getStockConversionRate(x.name)):0)},0);
-      var totalTon=a.reduce(function(sum,x){return sum+x.tonQty},0);
-      k.innerHTML='<div class="kpi-card"><b>'+a.length+'</b><span>'+T('পণ্য','Products')+'</span></div><div class="kpi-card"><b>'+low+'</b><span>'+T('কম/শূন্য স্টক','Low/Empty Stock')+'</span></div><div class="kpi-card"><b>'+totalTon.toFixed(3)+' t</b><span>'+T('মোট মেট্রিক টন','Total Metric Ton')+'</span></div><div class="kpi-card"><b>'+val.toFixed(2)+' ৳</b><span>'+T('আনুমানিক স্টক মূল্য','Stock Value')+'</span></div>';
-      tb.innerHTML=a.map(function(x){
-        var p=productList.find(function(p){return p.name===x.name}),low=x.tonQty<=0 || (x.min>0&&x.cftQty<=x.min);
-        return '<tr><td><b>'+esc(x.name)+'</b></td><td class="stock-cft">'+x.cftQty.toFixed(2)+' CFT</td><td class="stock-ton">'+x.tonQty.toFixed(3)+' t</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.min+'</td><td>'+T(low?'কম/শূন্য':'স্বাভাবিক',low?'Low/Empty':'Normal')+'</td><td>'+((p?p.buy:0)*x.cftQty).toFixed(2)+' ৳</td></tr>'
-      }).join('')||'<tr><td colspan="7">'+T('স্টকের তথ্য নেই','No stock data')+'</td></tr>';
-    }
+    function renderStock(){var a=calculateStock(),tb=document.getElementById('stock-records'),k=document.getElementById('stock-kpi');if(!tb)return;var q=(document.getElementById('stock-search')?.value||'').toLowerCase(),status=document.getElementById('stock-status')?.value||'all';var filtered=a.filter(function(x){var low=x.tonQty<=0||(x.min>0&&x.cftQty<=x.min);return(!q||x.name.toLowerCase().includes(q))&&(status==='all'||(status==='low'&&low)||(status==='normal'&&!low));});var low=a.filter(function(x){return x.tonQty<=0||(x.min>0&&x.cftQty<=x.min);}).length,totalTon=a.reduce(function(s,x){return s+x.tonQty},0),totalCft=a.reduce(function(s,x){return s+x.cftQty},0);var val=a.reduce(function(s,x){var p=productList.find(function(p){return p.name===x.name});return s+x.tonQty*(p?((p.unit==='Ton'||p.unit==='টন')?p.buy:(p.buy||0)*1000/getStockConversionRate(x.name)):0)},0);k.innerHTML='<div class="stock-summary-grid"><div class="stock-mini"><b>'+a.length+'</b><span>'+T('পণ্য','Products')+'</span></div><div class="stock-mini"><b>'+totalCft.toFixed(2)+'</b><span>CFT</span></div><div class="stock-mini"><b>'+totalTon.toFixed(3)+' t</b><span>'+T('মেট্রিক টন','Metric Ton')+'</span></div><div class="stock-mini"><b>'+low+'</b><span>'+T('কম/শূন্য','Low/Empty')+'</span></div><div class="stock-mini"><b>'+val.toFixed(2)+' ৳</b><span>'+T('স্টক মূল্য','Stock Value')+'</span></div></div>';tb.innerHTML=filtered.map(function(x){var p=productList.find(function(p){return p.name===x.name}),low=x.tonQty<=0||(x.min>0&&x.cftQty<=x.min);return '<tr><td><b>'+esc(x.name)+'</b><br><small class="stock-movement">'+T('ক্রয়-বিক্রয় থেকে স্বয়ংক্রিয় হিসাব','Auto calculated from purchases/sales')+'</small></td><td>'+x.cftQty.toFixed(2)+' CFT</td><td><b>'+x.tonQty.toFixed(3)+' t</b></td><td>'+x.rate.toFixed(2)+'</td><td>'+x.min+'</td><td>'+T(low?'কম/শূন্য':'স্বাভাবিক',low?'Low/Empty':'Normal')+'</td><td>'+((p?p.buy:0)*x.cftQty).toFixed(2)+' ৳</td></tr>';}).join('')||'<tr><td colspan="7">'+T('কোনো স্টক পাওয়া যায়নি। কেনার খাতায় ক্রয় এন্ট্রি যোগ করুন।','No stock found. Add a purchase entry first.')+'</td></tr>';}
 
     var businessReportRows=[];
     var businessReportType='all';
