@@ -335,7 +335,7 @@
 .br-report-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .br-report-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;color:#fff}
 .br-print{background:#0d6efd}.br-pdf{background:#6f42c1}.br-reset{background:#6c757d}
-.br-center-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.br-center-tab{border:1px solid #d7dee8;background:#fff;color:#334155;border-radius:10px;padding:10px 15px;font-weight:800;cursor:pointer}.br-center-tab.active{background:#0d6efd;color:#fff;border-color:#0d6efd}.br-report-panel{display:none}.br-report-panel.active{display:block}.report-center-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.report-center-card{border:1px solid #dbe3ef;border-radius:12px;background:#fff;padding:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}.report-center-card h4{margin:0 0 8px;color:#1e293b}.report-center-card p{margin:0 0 10px;color:#64748b;font-size:.86em}.report-center-actions{display:flex;gap:7px;flex-wrap:wrap}.report-center-actions button{border:0;border-radius:8px;padding:8px 10px;font-weight:800;cursor:pointer;color:#fff}.rc-print{background:#0d6efd}.rc-pdf{background:#6f42c1}.rc-all{background:#198754}.report-center-settings{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#f8fbff;border:1px solid #dbeafe;border-radius:10px;padding:12px;margin-bottom:14px}.report-center-settings select,.report-center-settings input{padding:9px;border:1px solid #d7dee8;border-radius:8px}.report-totals{margin:8px 0 12px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc}.report-totals h3{margin:0 0 7px;font-size:12px}.report-total-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.report-total-grid>div{padding:7px;border:1px solid #dbe3ee;background:#fff;border-radius:6px;text-align:center}.report-total-grid b{display:block;font-size:9px;color:#475569}.report-total-grid strong{display:block;font-size:12px;margin-top:3px}@media(max-width:700px){.report-total-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media print{.report-totals{break-inside:avoid}.report-total-grid{grid-template-columns:repeat(4,minmax(0,1fr))}} .report-center-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px;margin-bottom:14px;color:#1e3a8a}
+.br-center-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.br-center-tab{border:1px solid #d7dee8;background:#fff;color:#334155;border-radius:10px;padding:10px 15px;font-weight:800;cursor:pointer}.br-center-tab.active{background:#0d6efd;color:#fff;border-color:#0d6efd}.br-report-panel{display:none}.br-report-panel.active{display:block}.report-center-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.report-center-card{border:1px solid #dbe3ef;border-radius:12px;background:#fff;padding:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}.report-center-card h4{margin:0 0 8px;color:#1e293b}.report-center-card p{margin:0 0 10px;color:#64748b;font-size:.86em}.report-center-actions{display:flex;gap:7px;flex-wrap:wrap}.report-center-actions button{border:0;border-radius:8px;padding:8px 10px;font-weight:800;cursor:pointer;color:#fff}.rc-print{background:#0d6efd}.rc-pdf{background:#6f42c1}.rc-all{background:#198754}.br-current-report-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0}.br-current-report-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;color:#fff}.report-center-settings{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#f8fbff;border:1px solid #dbeafe;border-radius:10px;padding:12px;margin-bottom:14px}.report-center-settings select,.report-center-settings input{padding:9px;border:1px solid #d7dee8;border-radius:8px}.report-totals{margin:8px 0 12px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc}.report-totals h3{margin:0 0 7px;font-size:12px}.report-total-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.report-total-grid>div{padding:7px;border:1px solid #dbe3ee;background:#fff;border-radius:6px;text-align:center}.report-total-grid b{display:block;font-size:9px;color:#475569}.report-total-grid strong{display:block;font-size:12px;margin-top:3px}@media(max-width:700px){.report-total-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media print{.report-totals{break-inside:avoid}.report-total-grid{grid-template-columns:repeat(4,minmax(0,1fr))}} .report-center-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px;margin-bottom:14px;color:#1e3a8a}
 .br-result-meta{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
 .br-pill{padding:7px 10px;border-radius:999px;background:#eef4ff;color:#174ea6;font-weight:700}
 .br-table-wrap{overflow:auto;max-height:65vh}
@@ -2543,7 +2543,13 @@
         </div>
       </div>
       <div id="br-result-meta" class="br-result-meta"></div>
-      <div class="section-card"><div id="br-detail"></div></div>
+      <div class="section-card">
+        <div id="br-detail"></div>
+        <div class="br-current-report-actions" id="br-current-report-actions">
+          <button class="rc-print" type="button" onclick="printFilteredBusinessReport(false)">🖨️ ${T('এই রিপোর্ট প্রিন্ট','Print This Report')}</button>
+          <button class="rc-pdf" type="button" onclick="printFilteredBusinessReport(true)">📄 ${T('এই রিপোর্ট PDF','Save This Report as PDF')}</button>
+        </div>
+      </div>
       </div>
       <div id="br-reports" class="br-report-panel">
         <div class="report-center-settings">
@@ -2690,6 +2696,9 @@
     function resetBusinessReportFilters(){businessReportType='all';['br-from','br-to','br-ref','br-vehicle','br-site','br-boat','br-search'].forEach(function(id){var e=document.getElementById(id);if(e)e.value=''});document.querySelectorAll('[data-br-type]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-br-type')==='all')});renderBusinessReportResults();}
     function printFilteredBusinessReport(asPdf){
       var rows=getFilteredBusinessReportRows();
+      if(asPdf){
+        // Browsers use the same print dialog for PDF; the user can choose "Save as PDF".
+      }
       if(!rows.length)return alert(T('প্রিন্ট করার মতো কোনো তথ্য নেই।','No records to print.'));
       var title=T('ফিল্টার করা ব্যবসায়িক রিপোর্ট','Filtered Business Report');
       var from=(document.getElementById('br-from')||{}).value||'সব',to=(document.getElementById('br-to')||{}).value||'সব';
