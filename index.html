@@ -321,7 +321,27 @@
 .dark-theme .quick-stat span,.dark-theme .dashboard-welcome p{color:#9ca3af}
 
 
-  .br-filter-card{background:linear-gradient(135deg,#f8fbff,#eef6ff);border:1px solid #dbeafe;border-radius:18px;padding:16px;margin:14px 0}.br-filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.br-filter-grid input,.br-filter-grid select{width:100%;padding:11px;border:1px solid #dbe3ee;border-radius:10px;background:#fff;box-sizing:border-box}.br-filter-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}.br-filter-actions button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}.br-btn-primary{background:#2563eb;color:#fff}.br-btn-print{background:#111827;color:#fff}.br-btn-pdf{background:#dc2626;color:#fff}.br-btn-reset{background:#e5e7eb;color:#111827}.br-result-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.br-result-count{font-weight:700;color:#334155}.br-report-table{font-size:12px}.br-report-table td,.br-report-table th{white-space:nowrap}.stock-ton-badge{display:inline-block;margin-top:4px;padding:3px 7px;border-radius:999px;background:#ecfdf5;color:#047857;font-size:11px;font-weight:700}.conversion-note{font-size:12px;color:#64748b;margin-top:6px}.unit-help{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:10px;margin-top:8px;font-size:12px}
+/* ===== Advanced Business Report & CFT -> Metric Ton ===== */
+.br-filter-card{background:linear-gradient(135deg,#f8fbff,#ffffff);border:1px solid #dbeafe}
+.br-filter-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px}
+.br-filter-grid .wide{grid-column:span 2}
+.br-report-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.br-report-tabs button{border:1px solid #d7dee8;background:#fff;border-radius:999px;padding:8px 12px;font-weight:700;cursor:pointer}
+.br-report-tabs button.active{background:#0d6efd;color:#fff;border-color:#0d6efd}
+.br-report-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.br-report-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;color:#fff}
+.br-print{background:#0d6efd}.br-pdf{background:#6f42c1}.br-reset{background:#6c757d}
+.br-result-meta{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.br-pill{padding:7px 10px;border-radius:999px;background:#eef4ff;color:#174ea6;font-weight:700}
+.br-table-wrap{overflow:auto;max-height:65vh}
+.br-table-wrap table{min-width:1050px}
+.stock-convert-card{background:linear-gradient(135deg,#f7fffb,#fff);border:1px solid #ccebd9}
+.stock-convert-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px}
+.stock-convert-help{font-size:.86rem;color:#64748b;line-height:1.55;margin-top:8px}
+.stock-ton{font-weight:800;color:#198754}
+.stock-cft{color:#475569}
+@media(max-width:800px){.br-filter-grid,.stock-convert-grid{grid-template-columns:1fr 1fr}.br-filter-grid .wide{grid-column:span 2}}
+@media(max-width:520px){.br-filter-grid,.stock-convert-grid{grid-template-columns:1fr}.br-filter-grid .wide{grid-column:span 1}}
 </style>
 </head>
 <body>
@@ -615,7 +635,7 @@
         purchaseList: purchaseList, salesList: salesList, paymentHistory: paymentHistory, expenseList: expenseList,
         cashList: cashList, bankAccounts: bankAccounts, bankTransactions: bankTransactions, shipmentList: shipmentList,
         contactList: contactList, productList: productList, employeeList: employeeList, reminderList: reminderList,
-        noteList: noteList, invoiceList: invoiceList
+        noteList: noteList, invoiceList: invoiceList, stockConversionRules: stockConversionRules
       };
     }
 
@@ -635,6 +655,7 @@
       if(Array.isArray(data.reminderList))reminderList=data.reminderList;
       if(Array.isArray(data.noteList))noteList=data.noteList;
       if(Array.isArray(data.invoiceList))invoiceList=data.invoiceList;
+      if(data.stockConversionRules && typeof data.stockConversionRules==='object') stockConversionRules=Object.assign(stockConversionRules,data.stockConversionRules);
     }
 
     async function loadCloudData(){
@@ -2289,51 +2310,207 @@
     function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});}
     function pageShell(title,sub,body){document.getElementById('home-view').classList.remove('active-view');document.getElementById('sub-page-view').classList.add('active-view');document.getElementById('page-title').innerText=T(title[0],title[1]);document.getElementById('print-only-title').innerText=T(title[0],title[1]);document.getElementById('page-content').innerHTML='<div class="module-hero"><h2>'+T(title[0],title[1])+'</h2><p>'+T(sub[0],sub[1])+'</p></div>'+body;applyLanguageToCurrentView();}
     function uid(){return Date.now()+Math.floor(Math.random()*1000);}
-    function saveAllExtra(){storeSet('biz_contacts',contactList);storeSet('biz_products',productList);storeSet('biz_employees',employeeList);storeSet('biz_reminders',reminderList);storeSet('biz_notes',noteList);storeSet('biz_invoices',invoiceList);}
+    function saveAllExtra(){storeSet('biz_contacts',contactList);storeSet('biz_products',productList);storeSet('biz_employees',employeeList);storeSet('biz_reminders',reminderList);storeSet('biz_notes',noteList);storeSet('biz_invoices',invoiceList);storeSet('biz_stock_conversion',stockConversionRules);}
 
     function openContacts(){pageShell(['যোগাযোগ','Contacts'],['কাস্টমার, সাপ্লায়ার, পরিবহন ও অন্যান্য যোগাযোগ এক জায়গায় পরিচালনা করুন।','Manage customers, suppliers, transporters and other contacts in one place.'],`<div class="section-card"><div class="module-grid"><input id="ct-name" placeholder="${T('নাম','Name')}"><input id="ct-phone" placeholder="${T('মোবাইল','Phone')}"><select id="ct-type"><option value="customer">${T('কাস্টমার','Customer')}</option><option value="supplier">${T('সাপ্লায়ার','Supplier')}</option><option value="transporter">${T('পরিবহন','Transporter')}</option><option value="other">${T('অন্যান্য','Other')}</option></select><input id="ct-address" placeholder="${T('ঠিকানা','Address')}"><input id="ct-note" placeholder="${T('নোট','Note')}"><button class="btn-submit" onclick="addContact()">${T('যোগ করুন','Add Contact')}</button></div></div><div class="section-card"><input id="ct-search" oninput="renderContacts()" placeholder="${T('নাম/মোবাইল খুঁজুন','Search name/phone')}"><div class="table-responsive"><table><thead><tr><th>${T('নাম','Name')}</th><th>${T('ধরণ','Type')}</th><th>${T('মোবাইল','Phone')}</th><th>${T('ঠিকানা','Address')}</th><th>${T('অ্যাকশন','Action')}</th></tr></thead><tbody id="ct-records"></tbody></table></div></div>`);renderContacts();}
     function addContact(){var n=document.getElementById('ct-name').value.trim(),p=document.getElementById('ct-phone').value.trim();if(!n){alert(T('নাম দিন','Enter a name'));return;}contactList.push({id:uid(),name:n,phone:p,type:document.getElementById('ct-type').value,address:document.getElementById('ct-address').value,note:document.getElementById('ct-note').value});saveAllExtra();renderContacts();}
     function renderContacts(){var tb=document.getElementById('ct-records');if(!tb)return;var q=(document.getElementById('ct-search').value||'').toLowerCase();tb.innerHTML=contactList.filter(x=>(x.name+' '+x.phone+' '+x.address).toLowerCase().includes(q)).slice().reverse().map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(T({customer:'কাস্টমার',supplier:'সাপ্লায়ার',transporter:'পরিবহন',other:'অন্যান্য'}[x.type]||x.type,{customer:'Customer',supplier:'Supplier',transporter:'Transporter',other:'Other'}[x.type]||x.type))+'</td><td>'+esc(x.phone)+'</td><td>'+esc(x.address)+'</td><td><a href="tel:'+esc(x.phone)+'"><button class="btn-action">☎</button></a> <button class="btn-action" onclick="deleteContact('+x.id+')">🗑</button></td></tr>').join('')||'<tr><td colspan="5">'+T('কোনো তথ্য নেই','No contacts found')+'</td></tr>';}
     function deleteContact(id){contactList=contactList.filter(x=>x.id!==id);saveAllExtra();renderContacts();}
 
-    function openProducts(){pageShell(['প্রোডাক্ট লিস্ট','Product List'],['পণ্যের নাম, কোড, একক, ক্রয়/বিক্রয় দর, ন্যূনতম স্টক ও CFT→মেট্রিক টন রূপান্তর পরিচালনা করুন।','Manage products, prices, reorder level and CFT-to-metric-ton conversion.'],`<div class="section-card"><div class="module-grid"><input id="pr-name" placeholder="${T('পণ্যের নাম','Product name')}"><input id="pr-sku" placeholder="SKU / Code"><select id="pr-unit"><option>CFT</option><option>Ton</option><option>Thousand</option><option>Piece</option></select><input id="pr-buy" type="number" placeholder="${T('ক্রয় দর','Buy price')}"><input id="pr-sell" type="number" placeholder="${T('বিক্রয় দর','Sell price')}"><input id="pr-min" type="number" placeholder="${T('ন্যূনতম স্টক','Reorder level')}"><select id="pr-conv"><option value="0.046">${T('সিলেট বালি: 0.046 MT/CFT','Sylhet Sand: 0.046 MT/CFT')}</option><option value="0.045">${T('লোকাল বালি: 0.045 MT/CFT','Local Sand: 0.045 MT/CFT')}</option><option value="0.046">${T('অন্যান্য CFT: 0.046 MT/CFT','Other CFT: 0.046 MT/CFT')}</option><option value="custom">${T('নিজের রূপান্তর হার','Custom conversion')}</option></select><input id="pr-custom-conv" type="number" step="0.0001" style="display:none" placeholder="MT per CFT"><button class="btn-submit" onclick="addProduct()">${T('পণ্য যোগ করুন','Add Product')}</button></div><div class="unit-help">${T('CFT পণ্যের স্টক স্বয়ংক্রিয়ভাবে মেট্রিক টনে দেখাবে। প্রয়োজন হলে নিজের সঠিক density/রূপান্তর হার দিন।','CFT stock is normalized to metric tons. Enter your own accurate density/conversion factor when needed.')}<div class="conversion-note">1 CFT = conversion factor MT. এটি ব্যবসায়িক/মালভেদে পরিবর্তন হতে পারে।</div></div></div><div class="section-card"><div class="table-responsive"><table><thead><tr><th>${T('পণ্য','Product')}</th><th>SKU</th><th>${T('একক','Unit')}</th><th>${T('ক্রয়','Buy')}</th><th>${T('বিক্রয়','Sell')}</th><th>${T('ন্যূনতম','Min')}</th><th>${T('CFT→MT','CFT→MT')}</th><th>${T('অ্যাকশন','Action')}</th></tr></thead><tbody id="pr-records"></tbody></table></div></div>`);var c=document.getElementById('pr-conv');if(c)c.onchange=function(){document.getElementById('pr-custom-conv').style.display=this.value==='custom'?'block':'none';};renderProducts();}
-    function addProduct(){var n=document.getElementById('pr-name').value.trim();if(!n)return alert(T('পণ্যের নাম দিন','Enter product name'));var unit=document.getElementById('pr-unit').value,cv=document.getElementById('pr-conv').value,conv=unit==='CFT'?(cv==='custom'?(+document.getElementById('pr-custom-conv').value||0):(+cv||0)):0;if(unit==='CFT'&&conv<=0)return alert(T('CFT পণ্যের সঠিক CFT→মেট্রিক টন রূপান্তর হার দিন।','Enter a valid CFT-to-metric-ton conversion factor.'));productList.push({id:uid(),name:n,sku:document.getElementById('pr-sku').value,unit:unit,buy:+document.getElementById('pr-buy').value||0,sell:+document.getElementById('pr-sell').value||0,min:+document.getElementById('pr-min').value||0,mtPerCft:conv});saveAllExtra();renderProducts();}
-    function renderProducts(){var tb=document.getElementById('pr-records');if(!tb)return;tb.innerHTML=productList.slice().reverse().map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.sku)+'</td><td>'+esc(x.unit)+'</td><td>'+Number(x.buy||0).toFixed(2)+' ৳</td><td>'+Number(x.sell||0).toFixed(2)+' ৳</td><td>'+Number(x.min||0)+'</td><td>'+(x.unit==='CFT'?Number(x.mtPerCft||0).toFixed(4)+' MT/CFT':'—')+'</td><td><button class="btn-action" onclick="deleteProduct('+x.id+')">🗑</button></td></tr>').join('')||'<tr><td colspan="8">'+T('কোনো পণ্য নেই','No products')+'</td></tr>';}
+    function openProducts(){pageShell(['প্রোডাক্ট লিস্ট','Product List'],['পণ্যের নাম, কোড, একক, ক্রয়/বিক্রয় দর ও ন্যূনতম স্টক পরিচালনা করুন।','Manage product name, SKU, units, purchase/selling prices and reorder level.'],`<div class="section-card"><div class="module-grid"><input id="pr-name" placeholder="${T('পণ্যের নাম','Product name')}"><input id="pr-sku" placeholder="SKU / Code"><select id="pr-unit"><option>CFT</option><option>Ton</option><option>Thousand</option><option>Piece</option></select><input id="pr-buy" type="number" placeholder="${T('ক্রয় দর','Buy price')}"><input id="pr-sell" type="number" placeholder="${T('বিক্রয় দর','Sell price')}"><input id="pr-min" type="number" placeholder="${T('ন্যূনতম স্টক','Reorder level')}"><button class="btn-submit" onclick="addProduct()">${T('পণ্য যোগ করুন','Add Product')}</button></div></div><div class="section-card"><div class="table-responsive"><table><thead><tr><th>${T('পণ্য','Product')}</th><th>SKU</th><th>${T('একক','Unit')}</th><th>${T('ক্রয়','Buy')}</th><th>${T('বিক্রয়','Sell')}</th><th>${T('ন্যূনতম স্টক','Min Stock')}</th><th>${T('অ্যাকশন','Action')}</th></tr></thead><tbody id="pr-records"></tbody></table></div></div>`);renderProducts();}
+    function addProduct(){var n=document.getElementById('pr-name').value.trim();if(!n)return alert(T('পণ্যের নাম দিন','Enter product name'));productList.push({id:uid(),name:n,sku:document.getElementById('pr-sku').value,unit:document.getElementById('pr-unit').value,buy:+document.getElementById('pr-buy').value||0,sell:+document.getElementById('pr-sell').value||0,min:+document.getElementById('pr-min').value||0});saveAllExtra();renderProducts();}
+    function renderProducts(){var tb=document.getElementById('pr-records');if(!tb)return;tb.innerHTML=productList.slice().reverse().map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.sku)+'</td><td>'+esc(x.unit)+'</td><td>'+x.buy.toFixed(2)+' ৳</td><td>'+x.sell.toFixed(2)+' ৳</td><td>'+x.min+'</td><td><button class="btn-action" onclick="deleteProduct('+x.id+')">🗑</button></td></tr>').join('')||'<tr><td colspan="7">'+T('কোনো পণ্য নেই','No products')+'</td></tr>';}
     function deleteProduct(id){productList=productList.filter(x=>x.id!==id);saveAllExtra();renderProducts();}
 
-    function getProductMeta(name){return productList.find(function(p){return String(p.name).trim()===String(name).trim();})||null;}
-    function qtyToMetricTon(name,qty,unit){var p=getProductMeta(name),u=unit||((p&&p.unit)||'');var n=parseFloat(qty)||0;if(u==='Ton'||u==='টন')return n;if(u==='CFT'){var f=(p&&parseFloat(p.mtPerCft))||0.046;return n*f;}return 0;}
-    function calculateStock(){var m={};productList.forEach(p=>m[p.name]={name:p.name,unit:p.unit,qty:0,originalQty:0,min:p.min||0,mt:0,mtPerCft:p.mtPerCft||0});purchaseList.forEach(x=>{var p=getProductMeta(x.item);m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,originalQty:0,min:0,mt:0,mtPerCft:(p&&p.mtPerCft)||0.046};m[x.item].originalQty+=(parseFloat(x.qty)||0);m[x.item].mt+=qtyToMetricTon(x.item,x.qty,x.unit);m[x.item].qty=m[x.item].originalQty;});salesList.forEach(x=>{var p=getProductMeta(x.item);m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,originalQty:0,min:0,mt:0,mtPerCft:(p&&p.mtPerCft)||0.046};m[x.item].originalQty-=(parseFloat(x.qty)||0);m[x.item].mt-=qtyToMetricTon(x.item,x.qty,x.unit);m[x.item].qty=m[x.item].originalQty;});return Object.values(m);}
-    function openStockManagement(){pageShell(['স্টকের হিসাব','Stock Management'],['কেনা ও বিক্রির হিসাব থেকে বর্তমান স্টক দেখুন; CFT পণ্য স্বয়ংক্রিয়ভাবে মেট্রিক টনে রূপান্তর হবে।','View current stock; CFT items are automatically converted to metric tons.'],`<div class="kpi-grid" id="stock-kpi"></div><div class="section-card"><div class="table-responsive"><table><thead><tr><th>${T('পণ্য','Product')}</th><th>${T('মূল একক স্টক','Original Stock')}</th><th>${T('মেট্রিক টন','Metric Ton')}</th><th>${T('একক','Unit')}</th><th>${T('ন্যূনতম','Reorder')}</th><th>${T('অবস্থা','Status')}</th><th>${T('আনুমানিক মূল্য','Value')}</th></tr></thead><tbody id="stock-records"></tbody></table></div></div>`);renderStock();}
-    function renderStock(){var a=calculateStock(),tb=document.getElementById('stock-records'),k=document.getElementById('stock-kpi');if(!tb)return;var low=a.filter(x=>x.qty<=x.min).length,val=a.reduce((s,x)=>{var p=getProductMeta(x.name);return s+x.qty*(p?p.buy:0)},0),totalMt=a.reduce((s,x)=>s+(x.mt||0),0);k.innerHTML='<div class="kpi-card"><b>'+a.length+'</b><span>'+T('পণ্য','Products')+'</span></div><div class="kpi-card"><b>'+low+'</b><span>'+T('কম স্টক','Low Stock')+'</span></div><div class="kpi-card"><b>'+totalMt.toFixed(3)+' MT</b><span>'+T('মোট মেট্রিক টন','Total Metric Ton')+'</span></div><div class="kpi-card"><b>'+val.toFixed(2)+' ৳</b><span>'+T('স্টক মূল্য','Stock Value')+'</span></div>';tb.innerHTML=a.map(x=>{var p=getProductMeta(x.name),v=x.qty*(p?p.buy:0),low=x.qty<=x.min;return '<tr><td><b>'+esc(x.name)+'</b></td><td>'+Number(x.qty||0).toFixed(2)+' '+esc(x.unit)+'</td><td><span class="stock-ton-badge">'+Number(x.mt||0).toFixed(3)+' MT</span></td><td>'+esc(x.unit)+'</td><td>'+x.min+'</td><td>'+T(low?'কম স্টক':'স্বাভাবিক',low?'Low Stock':'Normal')+'</td><td>'+v.toFixed(2)+' ৳</td></tr>'}).join('')||'<tr><td colspan="7">'+T('স্টকের তথ্য নেই','No stock data')+'</td></tr>';}
+    function getStockConversionRate(item){
+      var n=String(item||'').toLowerCase();
+      if(n.includes('sylhet') || n.includes('সিলেট')) return parseFloat(stockConversionRules.sylhet)||50;
+      if(n.includes('local') || n.includes('লোকাল')) return parseFloat(stockConversionRules.local)||50;
+      return parseFloat(stockConversionRules.other)||50;
+    }
+    function qtyToTon(qty,unit,item){
+      var q=parseFloat(qty)||0, u=String(unit||'').toLowerCase();
+      if(u==='cft') return q*getStockConversionRate(item)/1000;
+      if(u==='ton' || u==='টন') return q;
+      return 0;
+    }
+    function tonToCft(ton,item){
+      var rate=getStockConversionRate(item); return rate>0 ? (parseFloat(ton)||0)*1000/rate : 0;
+    }
+    function calculateStock(){
+      var m={};
+      productList.forEach(function(p){
+        m[p.name]={name:p.name,unit:p.unit,qty:0,cftQty:0,tonQty:0,min:p.min||0,rate:getStockConversionRate(p.name)};
+      });
+      purchaseList.forEach(function(x){
+        m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,cftQty:0,tonQty:0,min:0,rate:getStockConversionRate(x.item)};
+        var q=parseFloat(x.qty)||0;
+        m[x.item].qty += q;
+        if(String(x.unit).toLowerCase()==='cft'){m[x.item].cftQty+=q;m[x.item].tonQty+=qtyToTon(q,x.unit,x.item);}
+        else if(String(x.unit).toLowerCase()==='ton'||String(x.unit)==='টন'){m[x.item].tonQty+=q;m[x.item].cftQty+=tonToCft(q,x.item);}
+      });
+      salesList.forEach(function(x){
+        m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,cftQty:0,tonQty:0,min:0,rate:getStockConversionRate(x.item)};
+        var q=parseFloat(x.qty)||0;
+        m[x.item].qty -= q;
+        if(String(x.unit).toLowerCase()==='cft'){m[x.item].cftQty-=q;m[x.item].tonQty-=qtyToTon(q,x.unit,x.item);}
+        else if(String(x.unit).toLowerCase()==='ton'||String(x.unit)==='টন'){m[x.item].tonQty-=q;m[x.item].cftQty-=tonToCft(q,x.item);}
+      });
+      return Object.values(m);
+    }
+    function saveStockConversionRules(){
+      stockConversionRules={
+        sylhet:Math.max(0,parseFloat(document.getElementById('sc-sylhet').value)||50),
+        local:Math.max(0,parseFloat(document.getElementById('sc-local').value)||50),
+        other:Math.max(0,parseFloat(document.getElementById('sc-other').value)||50)
+      };
+      storeSet('biz_stock_conversion',stockConversionRules);
+      scheduleCloudSave();
+      renderStock();
+      alert(T('রূপান্তর হার সংরক্ষণ হয়েছে।','Conversion rates saved.'));
+    }
+    function resetStockConversionRules(){
+      stockConversionRules={sylhet:50,local:50,other:50};
+      storeSet('biz_stock_conversion',stockConversionRules);
+      scheduleCloudSave();
+      openStockManagement();
+    }
+    function openStockManagement(){
+      pageShell(['স্টকের হিসাব','Stock Management'],
+      ['CFT/টন হিসাব থেকে বর্তমান স্টক দেখুন এবং CFT → Metric Ton রূপান্তর নিয়ন্ত্রণ করুন।','View current stock and control CFT → Metric Ton conversion.'],
+      `<div class="section-card stock-convert-card">
+        <h3><i class="fa-solid fa-scale-balanced"></i> ${T('CFT → মেট্রিক টন রূপান্তর','CFT → Metric Ton Conversion')}</h3>
+        <div class="stock-convert-help">
+          ${T('ফর্মুলা: মেট্রিক টন = CFT × প্রতি CFT ওজন (কেজি) ÷ ১০০০। আপনার বাস্তব ওজন/ওজন মেশিনের হিসাব অনুযায়ী হার সেট করুন।','Formula: Metric Ton = CFT × kg per CFT ÷ 1000. Set the rate according to your actual measured weight.')}
+        </div>
+        <div class="stock-convert-grid" style="margin-top:12px">
+          <div class="form-group"><label>${T('সিলেট বালি — kg/CFT','Sylhet Sand — kg/CFT')}</label><input id="sc-sylhet" type="number" step="0.01" value="${stockConversionRules.sylhet}"></div>
+          <div class="form-group"><label>${T('লোকাল বালি — kg/CFT','Local Sand — kg/CFT')}</label><input id="sc-local" type="number" step="0.01" value="${stockConversionRules.local}"></div>
+          <div class="form-group"><label>${T('অন্যান্য CFT — kg/CFT','Other CFT — kg/CFT')}</label><input id="sc-other" type="number" step="0.01" value="${stockConversionRules.other}"></div>
+          <div style="display:flex;align-items:end;gap:8px"><button class="btn-submit" onclick="saveStockConversionRules()">${T('হার সংরক্ষণ','Save Rates')}</button><button class="btn-action" onclick="resetStockConversionRules()">${T('ডিফল্ট','Default')}</button></div>
+        </div>
+      </div>
+      <div class="kpi-grid" id="stock-kpi"></div>
+      <div class="section-card"><div class="table-responsive"><table><thead><tr>
+        <th>${T('পণ্য','Product')}</th><th>${T('মজুত CFT','Stock CFT')}</th><th>${T('মজুত মেট্রিক টন','Stock Metric Ton')}</th><th>${T('kg/CFT','kg/CFT')}</th><th>${T('ন্যূনতম','Reorder')}</th><th>${T('অবস্থা','Status')}</th><th>${T('আনুমানিক মূল্য','Value')}</th>
+      </tr></thead><tbody id="stock-records"></tbody></table></div></div>`);
+      renderStock();
+    }
+    function renderStock(){
+      var a=calculateStock(),tb=document.getElementById('stock-records'),k=document.getElementById('stock-kpi');
+      if(!tb)return;
+      var low=a.filter(function(x){return x.tonQty<=0 || (x.min>0 && x.cftQty<=x.min);}).length;
+      var val=a.reduce(function(sum,x){var p=productList.find(function(p){return p.name===x.name});return sum+x.tonQty*(p?((p.unit==='Ton'||p.unit==='টন')?p.buy:(p.buy||0)*1000/getStockConversionRate(x.name)):0)},0);
+      var totalTon=a.reduce(function(sum,x){return sum+x.tonQty},0);
+      k.innerHTML='<div class="kpi-card"><b>'+a.length+'</b><span>'+T('পণ্য','Products')+'</span></div><div class="kpi-card"><b>'+low+'</b><span>'+T('কম/শূন্য স্টক','Low/Empty Stock')+'</span></div><div class="kpi-card"><b>'+totalTon.toFixed(3)+' t</b><span>'+T('মোট মেট্রিক টন','Total Metric Ton')+'</span></div><div class="kpi-card"><b>'+val.toFixed(2)+' ৳</b><span>'+T('আনুমানিক স্টক মূল্য','Stock Value')+'</span></div>';
+      tb.innerHTML=a.map(function(x){
+        var p=productList.find(function(p){return p.name===x.name}),low=x.tonQty<=0 || (x.min>0&&x.cftQty<=x.min);
+        return '<tr><td><b>'+esc(x.name)+'</b></td><td class="stock-cft">'+x.cftQty.toFixed(2)+' CFT</td><td class="stock-ton">'+x.tonQty.toFixed(3)+' t</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.min+'</td><td>'+T(low?'কম/শূন্য':'স্বাভাবিক',low?'Low/Empty':'Normal')+'</td><td>'+((p?p.buy:0)*x.cftQty).toFixed(2)+' ৳</td></tr>'
+      }).join('')||'<tr><td colspan="7">'+T('স্টকের তথ্য নেই','No stock data')+'</td></tr>';
+    }
 
-    function reportAllRows(){
+    var businessReportRows=[];
+    var businessReportType='all';
+    function brVal(x){return x===undefined||x===null?'':String(x);}
+    function buildBusinessReportRows(){
       var rows=[];
-      purchaseList.forEach(function(x){rows.push({type:'purchase',typeBn:'কেনা',date:x.date||'',ref:x.challan||'',party:x.supplier||'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:+x.total||0,paid:+x.paid||0,due:+x.due||0,vehicle:x.transportName||'',place:x.site||x.origin||'',boat:(x.transportName||'').replace(/^বালগেট:\s*/,'').split(' (')[0]||'',note:x.transportDetails||''});});
-      salesList.forEach(function(x){rows.push({type:'sale',typeBn:'বেচা',date:x.date||'',ref:x.memo||'',party:x.customer||'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:+x.total||0,paid:+x.paid||0,due:+x.due||0,vehicle:x.transportName||'',place:x.site||'',boat:(x.transportName||'').replace(/^বালগেট:\s*/,'').split(' (')[0]||'',note:x.transportDetails||''});});
-      expenseList.forEach(function(x){rows.push({type:'expense',typeBn:'খরচ',date:x.date||'',ref:x.id||'',party:x.landOwner||x.payloaderName||'',item:x.title||x.category||'',qty:x.qty||'',unit:x.unit||'',amount:+x.amount||0,paid:+x.amount||0,due:0,vehicle:x.vehicle||'',place:x.site||'',boat:'',note:x.note||''});});
-      (paymentHistory||[]).forEach(function(x){rows.push({type:'payment',typeBn:x.typeBn||'পেমেন্ট',date:x.date||'',ref:'',party:x.name||'',item:x.type||'',qty:'',unit:'',amount:+x.amount||0,paid:+x.amount||0,due:0,vehicle:'',place:'',boat:'',note:x.note||''});});
-      (cashList||[]).forEach(function(x){rows.push({type:'cash',typeBn:'ক্যাশ',date:x.date||'',ref:x.id||'',party:'',item:x.title||'',qty:'',unit:'',amount:+x.amount||0,paid:x.type==='in'?+x.amount||0:0,due:0,vehicle:'',place:'',boat:'',note:x.type||''});});
-      (bankTransactions||[]).forEach(function(x){rows.push({type:'bank',typeBn:'ব্যাংক/ওয়ালেট',date:x.date||'',ref:x.id||'',party:x.name||'',item:x.title||x.type||'',qty:'',unit:'',amount:+x.amount||0,paid:x.type==='in'?+x.amount||0:0,due:0,vehicle:'',place:'',boat:'',note:x.note||''});});
-      (shipmentList||[]).forEach(function(x){rows.push({type:'shipment',typeBn:'মালপত্র ট্র্যাকিং',date:x.date||'',ref:x.id||x.trackingNo||'',party:x.party||x.customer||x.supplier||'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:+x.fare||0,paid:+x.farePaid||0,due:+x.fareDue||0,vehicle:x.vehicle||x.transportName||'',place:(x.origin||'')+' → '+(x.destination||''),boat:x.boatName||x.transportName||'',note:x.notes||''});});
-      (invoiceList||[]).forEach(function(x){rows.push({type:'invoice',typeBn:'চালান',date:x.date||'',ref:x.no||'',party:x.customer||'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:+x.total||0,paid:0,due:0,vehicle:x.vehicle||'',place:x.site||'',boat:x.boat||'',note:x.note||''});});
+      purchaseList.forEach(function(x){rows.push({type:'purchase',typeBn:'ক্রয়',date:x.date||'',ref:x.challan||'',party:x.supplier||'',vehicle:x.transportName||'',site:'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||''});});
+      salesList.forEach(function(x){rows.push({type:'sale',typeBn:'বিক্রয়',date:x.date||'',ref:x.memo||'',party:x.customer||'',vehicle:x.transportName||'',site:x.site||'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||''});});
+      expenseList.forEach(function(x){rows.push({type:'expense',typeBn:'খরচ',date:x.date||'',ref:'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.category||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||''});});
+      paymentHistory.forEach(function(x){rows.push({type:'payment',typeBn:'পেমেন্ট',date:x.date||'',ref:'',party:x.name||'',vehicle:'',site:'',boat:'',item:x.typeBn||x.type||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||''});});
+      cashList.forEach(function(x){rows.push({type:'cash',typeBn:'ক্যাশ',date:x.date||'',ref:'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.type||'',qty:'',unit:'',amount:x.amount||0,paid:x.type==='in'?x.amount:0,due:0,note:''});});
+      bankTransactions.forEach(function(x){rows.push({type:'bank',typeBn:'ব্যাংক',date:x.date||'',ref:'',party:x.title||x.name||'',vehicle:'',site:'',boat:'',item:x.type||'',qty:'',unit:'',amount:x.amount||0,paid:0,due:0,note:x.note||''});});
+      invoiceList.forEach(function(x){rows.push({type:'invoice',typeBn:'চালান',date:x.date||'',ref:x.no||'',party:x.customer||'',vehicle:'',site:x.site||'',boat:'',item:x.item||'',qty:x.qty||'',unit:'',amount:x.total||0,paid:0,due:0,note:x.note||''});});
+      shipmentList.forEach(function(x){rows.push({type:'shipment',typeBn:'মালপত্র',date:x.date||'',ref:x.trackingNo||x.id||'',party:x.party||x.customer||'',vehicle:x.vehicle||x.transportName||'',site:x.destination||x.to||'',boat:(x.vehicle||'').toLowerCase().includes('boat')?x.vehicle:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:0,paid:0,due:0,note:(x.origin||x.from||'')+' → '+(x.destination||x.to||'')});});
       return rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
     }
-    function reportMatches(row){
-      var from=(document.getElementById('br-from')||{}).value||'', to=(document.getElementById('br-to')||{}).value||'', q=((document.getElementById('br-search')||{}).value||'').trim().toLowerCase(), type=(document.getElementById('br-type')||{}).value||'all';
-      if(from && row.date && row.date<from)return false; if(to && row.date && row.date>to)return false; if(type!=='all'&&row.type!==type)return false;
-      if(q){var hay=[row.date,row.ref,row.party,row.item,row.qty,row.unit,row.vehicle,row.place,row.boat,row.note,row.typeBn].join(' ').toLowerCase();if(hay.indexOf(q)<0)return false;} return true;
+    function openBusinessReport(){
+      pageShell(['ব্যবসার রিপোর্ট','Business Report'],['যেকোনো তারিখ, চালান, গাড়ি, সাইট, নৌকা বা লেনদেনের তথ্য দিয়ে পুরো হিস্টরি খুঁজুন এবং আলাদা Print/PDF করুন।','Search complete history by date, challan, vehicle, site, boat or any transaction field and print/save PDF.'],
+      `<div class="section-card br-filter-card">
+        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> ${T('হিস্টরি সার্চ ও রিপোর্ট','History Search & Report')}</h3>
+        <div class="br-filter-grid">
+          <div class="form-group"><label>${T('শুরুর তারিখ','From Date')}</label><input id="br-from" type="date"></div>
+          <div class="form-group"><label>${T('শেষের তারিখ','To Date')}</label><input id="br-to" type="date"></div>
+          <div class="form-group"><label>${T('রেফারেন্স / চালান','Reference / Challan')}</label><input id="br-ref" placeholder="${T('চালান/মেমো নম্বর','Challan / Memo No.')}"></div>
+          <div class="form-group"><label>${T('গাড়ি / পরিবহন','Vehicle / Transport')}</label><input id="br-vehicle" placeholder="${T('গাড়ি নম্বর','Vehicle No.')}"></div>
+          <div class="form-group"><label>${T('জায়গা / সাইট','Place / Site')}</label><input id="br-site" placeholder="${T('যেমন: শেরপুর','e.g. Sherpur')}"></div>
+          <div class="form-group"><label>${T('নৌকা / বালগেট','Boat / Bulkhead')}</label><input id="br-boat" placeholder="${T('নৌকা/বালগেট নাম','Boat / Bulkhead name')}"></div>
+          <div class="form-group wide"><label>${T('যেকোনো তথ্য খুঁজুন','Search Anything')}</label><input id="br-search" oninput="renderBusinessReportResults()" placeholder="${T('নাম, পণ্য, ফোন, নোট, গাড়ি, সাইট...','Name, product, phone, note, vehicle, site...')}"></div>
+        </div>
+        <div class="br-report-tabs">
+          <button class="active" data-br-type="all" onclick="setBusinessReportType('all',this)">সব</button>
+          <button data-br-type="purchase" onclick="setBusinessReportType('purchase',this)">${T('ক্রয়','Purchase')}</button>
+          <button data-br-type="sale" onclick="setBusinessReportType('sale',this)">${T('বিক্রয়','Sales')}</button>
+          <button data-br-type="expense" onclick="setBusinessReportType('expense',this)">${T('খরচ','Expense')}</button>
+          <button data-br-type="payment" onclick="setBusinessReportType('payment',this)">${T('পেমেন্ট','Payment')}</button>
+          <button data-br-type="cash" onclick="setBusinessReportType('cash',this)">ক্যাশ</button>
+          <button data-br-type="bank" onclick="setBusinessReportType('bank',this)">ব্যাংক</button>
+          <button data-br-type="invoice" onclick="setBusinessReportType('invoice',this)">${T('চালান','Invoice')}</button>
+          <button data-br-type="shipment" onclick="setBusinessReportType('shipment',this)">${T('মালপত্র','Shipment')}</button>
+        </div>
+        <div class="br-report-actions">
+          <button class="btn-submit" onclick="renderBusinessReportResults()"><i class="fa-solid fa-filter"></i> ${T('হিসাব দেখুন','Apply Filters')}</button>
+          <button class="br-print" onclick="printFilteredBusinessReport(false)">🖨️ ${T('ফিল্টার করা রিপোর্ট প্রিন্ট','Print Filtered Report')}</button>
+          <button class="br-pdf" onclick="printFilteredBusinessReport(true)">📄 ${T('ফিল্টার করা রিপোর্ট PDF','Filtered Report PDF')}</button>
+          <button class="br-reset" onclick="resetBusinessReportFilters()">↺ ${T('রিসেট','Reset')}</button>
+        </div>
+      </div>
+      <div id="br-result-meta" class="br-result-meta"></div>
+      <div class="section-card"><div id="br-detail"></div></div>`);
+      businessReportRows=buildBusinessReportRows();
+      renderBusinessReportResults();
     }
-    function getFilteredReportRows(){return reportAllRows().filter(reportMatches);}
-    function openBusinessReport(){pageShell(['ব্যবসার রিপোর্ট','Business Report'],['তারিখ, চালান, গাড়ি, জায়গা, নৌকা, কাস্টমার, সাপ্লায়ার, পণ্য বা যেকোনো তথ্য দিয়ে পুরো হিস্টরি খুঁজে প্রিন্ট/PDF করুন।','Filter complete history by date, challan, vehicle, place, boat, party, product or any text and print/save as PDF.'],`<div class="kpi-grid" id="br-kpi"></div><div class="br-filter-card"><div class="br-filter-grid"><input type="date" id="br-from"><input type="date" id="br-to"><select id="br-type"><option value="all">${T('সব লেনদেন','All Transactions')}</option><option value="purchase">${T('কেনা','Purchase')}</option><option value="sale">${T('বেচা','Sales')}</option><option value="expense">${T('খরচ','Expense')}</option><option value="payment">${T('পেমেন্ট','Payment')}</option><option value="cash">${T('ক্যাশ','Cash')}</option><option value="bank">${T('ব্যাংক/ওয়ালেট','Bank/Wallet')}</option><option value="shipment">${T('মালপত্র ট্র্যাকিং','Shipment')}</option><option value="invoice">${T('চালান','Invoice')}</option></select><input id="br-search" oninput="renderBusinessReport()" placeholder="${T('তারিখ/চালান/গাড়ি/জায়গা/নৌকা/নাম/পণ্য খুঁজুন...','Search date/challan/vehicle/place/boat/name/product...')}"></div><div class="br-filter-actions"><button class="br-btn-primary" onclick="renderBusinessReport()">🔎 ${T('হিসাব খুঁজুন','Search')}</button><button class="br-btn-print" onclick="printFilteredBusinessReport(false)">🖨 ${T('শুধু প্রিন্ট','Print')}</button><button class="br-btn-pdf" onclick="printFilteredBusinessReport(true)">📄 ${T('PDF / Save as PDF','PDF / Save as PDF')}</button><button class="br-btn-reset" onclick="resetBusinessReportFilters()">↺ ${T('রিসেট','Reset')}</button></div></div><div class="section-card"><div class="br-result-head"><h3>${T('ফিল্টার করা হিস্টরি','Filtered History')}</h3><div id="br-result-count" class="br-result-count"></div></div><div id="br-detail"></div></div>`);document.getElementById('br-from').value=getTodayDate();document.getElementById('br-to').value=getTodayDate();renderBusinessReport();}
-    function renderBusinessReport(){var rows=getFilteredReportRows(),all=reportAllRows(),sales=rows.filter(r=>r.type==='sale').reduce((s,x)=>s+x.amount,0),pur=rows.filter(r=>r.type==='purchase').reduce((s,x)=>s+x.amount,0),exp=rows.filter(r=>r.type==='expense').reduce((s,x)=>s+x.amount,0),due=rows.reduce((s,x)=>s+x.due,0),profit=sales-pur-exp;var k=document.getElementById('br-kpi'),d=document.getElementById('br-detail'),c=document.getElementById('br-result-count');if(!k||!d)return;k.innerHTML='<div class="kpi-card"><b>'+sales.toFixed(2)+' ৳</b><span>'+T('বিক্রি','Sales')+'</span></div><div class="kpi-card"><b>'+pur.toFixed(2)+' ৳</b><span>'+T('ক্রয়','Purchases')+'</span></div><div class="kpi-card"><b>'+exp.toFixed(2)+' ৳</b><span>'+T('খরচ','Expenses')+'</span></div><div class="kpi-card"><b>'+profit.toFixed(2)+' ৳</b><span>'+T('আনুমানিক লাভ/ক্ষতি','Est. Profit/Loss')+'</span></div><div class="kpi-card"><b>'+due.toFixed(2)+' ৳</b><span>'+T('বাকি','Due')+'</span></div>';
-      c.innerText=T('দেখানো হয়েছে ','Showing ')+rows.length+T(' / মোট ',' / total ')+all.length+T(' টি রেকর্ড',' records');
-      if(!rows.length){d.innerHTML='<p style="text-align:center;padding:30px">'+T('এই ফিল্টারে কোনো হিসাব পাওয়া যায়নি।','No records found for this filter.')+'</p>';return;}
-      var h='<div class="table-responsive"><table class="br-report-table"><thead><tr><th>'+T('ধরণ','Type')+'</th><th>'+T('তারিখ','Date')+'</th><th>'+T('চালান/রেফারেন্স','Ref')+'</th><th>'+T('পার্টি','Party')+'</th><th>'+T('পণ্য/বিবরণ','Item/Details')+'</th><th>'+T('গাড়ি','Vehicle')+'</th><th>'+T('জায়গা','Place')+'</th><th>'+T('নৌকা','Boat')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('টাকা','Amount')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>';
-      rows.forEach(function(x){h+='<tr><td>'+esc(T(x.typeBn,{purchase:'Purchase',sale:'Sales',expense:'Expense',payment:'Payment',cash:'Cash',bank:'Bank/Wallet',shipment:'Shipment',invoice:'Invoice'}[x.type]||x.type))+'</td><td>'+esc(x.date)+'</td><td>'+esc(x.ref)+'</td><td>'+esc(x.party)+'</td><td>'+esc(x.item)+'</td><td>'+esc(x.vehicle)+'</td><td>'+esc(x.place)+'</td><td>'+esc(x.boat)+'</td><td>'+esc(x.qty)+' '+esc(x.unit)+'</td><td>'+Number(x.amount||0).toFixed(2)+' ৳</td><td>'+Number(x.due||0).toFixed(2)+' ৳</td></tr>';});h+='</tbody></table></div>';d.innerHTML=h;}
-    function resetBusinessReportFilters(){document.getElementById('br-from').value='';document.getElementById('br-to').value='';document.getElementById('br-search').value='';document.getElementById('br-type').value='all';renderBusinessReport();}
-    function printFilteredBusinessReport(asPdf){var rows=getFilteredReportRows(),title=T('ফিল্টার করা ব্যবসায়িক রিপোর্ট','Filtered Business Report'),from=(document.getElementById('br-from')||{}).value||'',to=(document.getElementById('br-to')||{}).value||'',q=(document.getElementById('br-search')||{}).value||'';var html='<h1>'+esc(title)+'</h1><p style="text-align:center">'+T('সময়কাল','Period')+': '+esc(from||'—')+' → '+esc(to||'—')+' | '+T('সার্চ','Search')+': '+esc(q||T('সব','All'))+'</p><p style="text-align:center">'+T('মোট রেকর্ড','Records')+': '+rows.length+'</p><table><thead><tr><th>'+T('ধরণ','Type')+'</th><th>'+T('তারিখ','Date')+'</th><th>'+T('রেফারেন্স','Ref')+'</th><th>'+T('পার্টি','Party')+'</th><th>'+T('পণ্য/বিবরণ','Item')+'</th><th>'+T('গাড়ি','Vehicle')+'</th><th>'+T('জায়গা','Place')+'</th><th>'+T('নৌকা','Boat')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('টাকা','Amount')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>';rows.forEach(function(x){html+='<tr><td>'+esc(x.typeBn)+'</td><td>'+esc(x.date)+'</td><td>'+esc(x.ref)+'</td><td>'+esc(x.party)+'</td><td>'+esc(x.item)+'</td><td>'+esc(x.vehicle)+'</td><td>'+esc(x.place)+'</td><td>'+esc(x.boat)+'</td><td>'+esc(x.qty)+' '+esc(x.unit)+'</td><td>'+Number(x.amount||0).toFixed(2)+' ৳</td><td>'+Number(x.due||0).toFixed(2)+' ৳</td></tr>';});html+='</tbody></table>';var w=window.open('','_blank');if(!w){alert(T('পপ-আপ অনুমতি দিন।','Allow pop-ups.'));return;}w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;padding:15px;color:#111}h1{text-align:center}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;vertical-align:top}th{background:#eef2f7}@page{size:A4 landscape;margin:7mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();if(asPdf){try{w.document.title=title+' - PDF';}catch(e){}}},250);}
-    function printCurrentReport(){printFilteredBusinessReport(false);}
+    function setBusinessReportType(type,btn){
+      businessReportType=type;
+      document.querySelectorAll('[data-br-type]').forEach(function(b){b.classList.remove('active')});
+      if(btn)btn.classList.add('active');
+      renderBusinessReportResults();
+    }
+    function brMatches(r,q){
+      if(!q)return true;
+      var text=[r.date,r.ref,r.party,r.vehicle,r.site,r.boat,r.item,r.unit,r.note,r.type,r.typeBn].join(' ').toLowerCase();
+      return text.includes(q.toLowerCase());
+    }
+    function getFilteredBusinessReportRows(){
+      var from=(document.getElementById('br-from')||{}).value||'',to=(document.getElementById('br-to')||{}).value||'';
+      var ref=((document.getElementById('br-ref')||{}).value||'').trim().toLowerCase();
+      var vehicle=((document.getElementById('br-vehicle')||{}).value||'').trim().toLowerCase();
+      var site=((document.getElementById('br-site')||{}).value||'').trim().toLowerCase();
+      var boat=((document.getElementById('br-boat')||{}).value||'').trim().toLowerCase();
+      var q=((document.getElementById('br-search')||{}).value||'').trim();
+      return businessReportRows.filter(function(r){
+        var dateOK=(!from||r.date>=from)&&(!to||r.date<=to);
+        var typeOK=businessReportType==='all'||r.type===businessReportType;
+        var refOK=!ref||String(r.ref).toLowerCase().includes(ref);
+        var vehicleOK=!vehicle||String(r.vehicle).toLowerCase().includes(vehicle);
+        var siteOK=!site||String(r.site).toLowerCase().includes(site);
+        var boatOK=!boat||String(r.boat).toLowerCase().includes(boat);
+        return dateOK&&typeOK&&refOK&&vehicleOK&&siteOK&&boatOK&&brMatches(r,q);
+      });
+    }
+    function renderBusinessReportResults(){
+      var d=document.getElementById('br-detail'),m=document.getElementById('br-result-meta');if(!d)return;
+      var rows=getFilteredBusinessReportRows();
+      var total=rows.reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0),due=rows.reduce(function(a,r){return a+(parseFloat(r.due)||0)},0);
+      m.innerHTML='<span class="br-pill">'+T('মোট রেকর্ড','Records')+': '+rows.length+'</span><span class="br-pill">'+T('লেনদেন/মূল্য','Amount')+': '+total.toFixed(2)+' ৳</span><span class="br-pill">'+T('বাকি','Due')+': '+due.toFixed(2)+' ৳</span>';
+      if(!rows.length){d.innerHTML='<div class="pl-empty">'+T('কোনো তথ্য পাওয়া যায়নি। ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।','No records found. Change the filters and try again.')+'</div>';return;}
+      d.innerHTML='<div class="br-table-wrap"><table><thead><tr><th>'+T('তারিখ','Date')+'</th><th>'+T('ধরন','Type')+'</th><th>'+T('চালান/রেফ.','Challan/Ref.')+'</th><th>'+T('নাম/পক্ষ','Party')+'</th><th>'+T('গাড়ি/পরিবহন','Vehicle')+'</th><th>'+T('জায়গা/সাইট','Site')+'</th><th>'+T('নৌকা/বালগেট','Boat/Bulkhead')+'</th><th>'+T('পণ্য','Item')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('মোট','Amount')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>'+
+        rows.map(function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+esc(currentLang==='en'?({purchase:'Purchase',sale:'Sale',expense:'Expense',payment:'Payment',cash:'Cash',bank:'Bank',invoice:'Invoice',shipment:'Shipment'}[r.type]||r.type):r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';}).join('')+
+        '</tbody></table></div>';
+    }
+    function resetBusinessReportFilters(){businessReportType='all';['br-from','br-to','br-ref','br-vehicle','br-site','br-boat','br-search'].forEach(function(id){var e=document.getElementById(id);if(e)e.value=''});document.querySelectorAll('[data-br-type]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-br-type')==='all')});renderBusinessReportResults();}
+    function printFilteredBusinessReport(asPdf){
+      var rows=getFilteredBusinessReportRows();
+      if(!rows.length)return alert(T('প্রিন্ট করার মতো কোনো তথ্য নেই।','No records to print.'));
+      var title=T('ফিল্টার করা ব্যবসায়িক রিপোর্ট','Filtered Business Report');
+      var from=(document.getElementById('br-from')||{}).value||'সব',to=(document.getElementById('br-to')||{}).value||'সব';
+      var total=rows.reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0),due=rows.reduce(function(a,r){return a+(parseFloat(r.due)||0)},0);
+      var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
+      var html='<h1>'+esc(title)+'</h1><p style="text-align:center">'+T('সময়','Period')+': '+esc(from)+' → '+esc(to)+' | '+T('রেকর্ড','Records')+': '+rows.length+'</p><p style="text-align:center"><b>'+T('মোট','Amount')+': '+total.toFixed(2)+' ৳</b> &nbsp; <b>'+T('বাকি','Due')+': '+due.toFixed(2)+' ৳</b></p><table><thead><tr><th>তারিখ</th><th>ধরন</th><th>চালান/রেফ.</th><th>নাম/পক্ষ</th><th>গাড়ি/পরিবহন</th><th>সাইট</th><th>নৌকা/বালগেট</th><th>পণ্য</th><th>পরিমাণ</th><th>মোট</th><th>বাকি</th></tr></thead><tbody>';
+      rows.forEach(function(r){html+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';});
+      html+='</tbody></table>';
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;padding:12px;color:#111}h1{text-align:center}table{width:100%;border-collapse:collapse;font-size:8px}th,td{border:1px solid #888;padding:4px;vertical-align:top}th{background:#eef2f7}@page{size:A4 landscape;margin:7mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},250);
+    }
 
     function openInvoiceGenerator(){pageShell(['চালান তৈরি','Invoice Generator'],['কাস্টমার ও পণ্যের তথ্য দিয়ে প্রিন্টযোগ্য চালান তৈরি ও সংরক্ষণ করুন।','Create and save a printable invoice with customer and product details.'],`<div class="section-card"><div class="module-grid"><input id="iv-no" placeholder="Invoice No."><input id="iv-date" type="date" value="${getTodayDate()}"><input id="iv-customer" placeholder="${T('কাস্টমার','Customer')}"><input id="iv-phone" placeholder="${T('মোবাইল','Phone')}"><input id="iv-site" placeholder="${T('সাইট/ঠিকানা','Site/Address')}"><input id="iv-item" placeholder="${T('পণ্য','Product')}"><input id="iv-qty" type="number" placeholder="${T('পরিমাণ','Quantity')}"><input id="iv-rate" type="number" placeholder="${T('দর','Rate')}"><textarea id="iv-note" placeholder="${T('নোট','Note')}"></textarea><button class="btn-submit" onclick="saveInvoice()">${T('চালান সংরক্ষণ','Save Invoice')}</button><button class="btn-submit" onclick="printInvoicePreview()">🖨 ${T('প্রিন্ট','Print')}</button></div></div><div class="section-card" id="invoice-preview"></div><div class="section-card"><h3>${T('সংরক্ষিত চালান','Saved Invoices')}</h3><div id="iv-list"></div></div>`);renderInvoiceList();}
     function invoiceData(){var q=+document.getElementById('iv-qty').value||0,r=+document.getElementById('iv-rate').value||0;return{id:uid(),no:document.getElementById('iv-no').value||('INV-'+Date.now()),date:document.getElementById('iv-date').value,customer:document.getElementById('iv-customer').value,phone:document.getElementById('iv-phone').value,site:document.getElementById('iv-site').value,item:document.getElementById('iv-item').value,qty:q,rate:r,total:q*r,note:document.getElementById('iv-note').value};}
