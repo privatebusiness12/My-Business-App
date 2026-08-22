@@ -2424,6 +2424,8 @@
       return rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
     }
     function openBusinessReport(){
+      renderMaterialQuantitySummary();
+
       pageShell(['ব্যবসার রিপোর্ট','Business Report'],['যেকোনো তারিখ, চালান, গাড়ি, সাইট, নৌকা বা লেনদেনের তথ্য দিয়ে পুরো হিস্টরি খুঁজুন এবং আলাদা Print/PDF করুন।','Search complete history by date, challan, vehicle, site, boat or any transaction field and print/save PDF.'],
       `<div class="section-card br-filter-card">
         <h3><i class="fa-solid fa-magnifying-glass-chart"></i> ${T('হিস্টরি সার্চ ও রিপোর্ট','History Search & Report')}</h3>
@@ -2644,6 +2646,58 @@
     }
 
   
+
+    /* ---------------- Material Quantity Summary ---------------- */
+    function materialQuantitySummary(){
+      var rows = [];
+      var purchases = Array.isArray(purchaseList) ? purchaseList : [];
+      var sales = Array.isArray(salesList) ? salesList : [];
+      var all = purchases.concat(sales);
+      var map = {};
+      all.forEach(function(x){
+        var item = String(x.item || x.product || x.name || '').trim();
+        if(!item) return;
+        var unit = String(x.unit || '').toLowerCase().trim();
+        var qty = parseFloat(x.qty);
+        if(!isFinite(qty)) return;
+        var key = item.toLowerCase();
+        if(!map[key]) map[key] = {item:item,cft:0,ton:0,pc:0,other:0};
+        if(unit === 'cft' || unit === 'ft3' || unit === 'cubic feet'){
+          map[key].cft += qty;
+        } else if(unit === 'ton' || unit === 'mt' || unit === 'metric ton' || unit === 'metric tons'){
+          map[key].ton += qty;
+        } else if(unit === 'pc' || unit === 'pcs' || unit === 'piece' || unit === 'pieces' || unit === 'পিস'){
+          map[key].pc += qty;
+        } else {
+          map[key].other += qty;
+        }
+      });
+      Object.keys(map).forEach(function(k){ rows.push(map[k]); });
+      return rows;
+    }
+
+    function renderMaterialQuantitySummary(){
+      var rows = materialQuantitySummary();
+      var totalCft = rows.reduce(function(a,x){return a+x.cft},0);
+      var totalTon = rows.reduce(function(a,x){return a+x.ton},0);
+      var totalPc = rows.reduce(function(a,x){return a+x.pc},0);
+      var box = document.getElementById('material-quantity-summary');
+      if(!box) return;
+      var html = '<div class="summary-grid" style="margin-bottom:12px">';
+      html += '<div class="summary-card"><b>'+T('মোট CFT','Total CFT')+'</b><strong>'+totalCft.toFixed(2)+'</strong></div>';
+      html += '<div class="summary-card"><b>'+T('মোট টন','Total Metric Ton')+'</b><strong>'+totalTon.toFixed(2)+' t</strong></div>';
+      html += '<div class="summary-card"><b>'+T('মোট পিচ','Total Pieces')+'</b><strong>'+totalPc.toFixed(2)+'</strong></div>';
+      html += '</div>';
+      html += '<div class="report-section"><h3>'+T('মাল অনুযায়ী পরিমাণ','Material Quantity by Item')+'</h3>';
+      html += '<table><thead><tr><th>'+T('মাল','Material')+'</th><th>CFT</th><th>'+T('টন','Metric Ton')+'</th><th>'+T('পিচ','Pieces')+'</th><th>'+T('অন্যান্য','Other')+'</th></tr></thead><tbody>';
+      if(!rows.length) html += '<tr><td colspan="5">'+T('কোনো পরিমাণের তথ্য নেই','No quantity data found')+'</td></tr>';
+      rows.forEach(function(x){
+        html += '<tr><td>'+esc(x.item)+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(2)+'</td><td>'+x.pc.toFixed(2)+'</td><td>'+x.other.toFixed(2)+'</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      box.innerHTML = html;
+    }
+
     /* ---------------- Universal Print / PDF ---------------- */
     function preparePrintPage(){
       var title = document.getElementById('page-title') ? document.getElementById('page-title').innerText : T('ব্যবসার হিসাব','Business Accounts');
@@ -2678,6 +2732,11 @@
       var customerDue=sales.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0), supplierDue=purchase.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
       var totalSales=sales.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalPurchase=purchase.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalExpense=expenses.reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0);
       var net=totalSales-totalPurchase-totalExpense;
+       var materialRows=materialQuantitySummary(), totalCft=materialRows.reduce(function(a,x){return a+x.cft},0), totalTon=materialRows.reduce(function(a,x){return a+x.ton},0), totalPc=materialRows.reduce(function(a,x){return a+x.pc},0);
+       var materialHtml='<div class="report-section"><h2>'+T('মালের মোট পরিমাণ','Material Quantity Summary')+'</h2><table><tr><th>'+T('মোট CFT','Total CFT')+'</th><th>'+T('মোট টন','Total Metric Ton')+'</th><th>'+T('মোট পিচ','Total Pieces')+'</th></tr><tr><td>'+totalCft.toFixed(2)+'</td><td>'+totalTon.toFixed(2)+' t</td><td>'+totalPc.toFixed(2)+'</td></tr></table><br><table><thead><tr><th>'+T('মাল','Material')+'</th><th>CFT</th><th>'+T('টন','Metric Ton')+'</th><th>'+T('পিচ','Pieces')+'</th><th>'+T('অন্যান্য','Other')+'</th></tr></thead><tbody>';
+       materialRows.forEach(function(x){materialHtml+='<tr><td>'+esc(x.item)+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(2)+'</td><td>'+x.pc.toFixed(2)+'</td><td>'+x.other.toFixed(2)+'</td></tr>';});
+       materialHtml+='</tbody></table></div>';
+
       var html='<div class="print-report-page" style="padding:10px;background:#fff;color:#111">'+
         '<h1>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</h1>'+
         '<p style="text-align:center">'+new Date().toLocaleString()+'</p>'+
