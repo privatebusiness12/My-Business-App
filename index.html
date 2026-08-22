@@ -335,7 +335,7 @@
 .br-report-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .br-report-actions button{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;color:#fff}
 .br-print{background:#0d6efd}.br-pdf{background:#6f42c1}.br-reset{background:#6c757d}
-.br-center-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.br-center-tab{border:1px solid #d7dee8;background:#fff;color:#334155;border-radius:10px;padding:10px 15px;font-weight:800;cursor:pointer}.br-center-tab.active{background:#0d6efd;color:#fff;border-color:#0d6efd}.br-report-panel{display:none}.br-report-panel.active{display:block}.report-center-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.report-center-card{border:1px solid #dbe3ef;border-radius:12px;background:#fff;padding:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}.report-center-card h4{margin:0 0 8px;color:#1e293b}.report-center-card p{margin:0 0 10px;color:#64748b;font-size:.86em}.report-center-actions{display:flex;gap:7px;flex-wrap:wrap}.report-center-actions button{border:0;border-radius:8px;padding:8px 10px;font-weight:800;cursor:pointer;color:#fff}.rc-print{background:#0d6efd}.rc-pdf{background:#6f42c1}.rc-all{background:#198754}.report-center-settings{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#f8fbff;border:1px solid #dbeafe;border-radius:10px;padding:12px;margin-bottom:14px}.report-center-settings select,.report-center-settings input{padding:9px;border:1px solid #d7dee8;border-radius:8px}.report-center-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px;margin-bottom:14px;color:#1e3a8a}
+.br-center-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.br-center-tab{border:1px solid #d7dee8;background:#fff;color:#334155;border-radius:10px;padding:10px 15px;font-weight:800;cursor:pointer}.br-center-tab.active{background:#0d6efd;color:#fff;border-color:#0d6efd}.br-report-panel{display:none}.br-report-panel.active{display:block}.report-center-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.report-center-card{border:1px solid #dbe3ef;border-radius:12px;background:#fff;padding:14px;box-shadow:0 2px 8px rgba(15,23,42,.04)}.report-center-card h4{margin:0 0 8px;color:#1e293b}.report-center-card p{margin:0 0 10px;color:#64748b;font-size:.86em}.report-center-actions{display:flex;gap:7px;flex-wrap:wrap}.report-center-actions button{border:0;border-radius:8px;padding:8px 10px;font-weight:800;cursor:pointer;color:#fff}.rc-print{background:#0d6efd}.rc-pdf{background:#6f42c1}.rc-all{background:#198754}.report-center-settings{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#f8fbff;border:1px solid #dbeafe;border-radius:10px;padding:12px;margin-bottom:14px}.report-center-settings select,.report-center-settings input{padding:9px;border:1px solid #d7dee8;border-radius:8px}.report-totals{margin:8px 0 12px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc}.report-totals h3{margin:0 0 7px;font-size:12px}.report-total-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.report-total-grid>div{padding:7px;border:1px solid #dbe3ee;background:#fff;border-radius:6px;text-align:center}.report-total-grid b{display:block;font-size:9px;color:#475569}.report-total-grid strong{display:block;font-size:12px;margin-top:3px}@media(max-width:700px){.report-total-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media print{.report-totals{break-inside:avoid}.report-total-grid{grid-template-columns:repeat(4,minmax(0,1fr))}} .report-center-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px;margin-bottom:14px;color:#1e3a8a}
 .br-result-meta{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
 .br-pill{padding:7px 10px;border-radius:999px;background:#eef4ff;color:#174ea6;font-weight:700}
 .br-table-wrap{overflow:auto;max-height:65vh}
@@ -2613,16 +2613,19 @@
     }
     function printStockReport(st){
       var a=calculateStock();
-      var totalCft=a.reduce(function(s,x){return s+x.cftQty},0),totalTon=a.reduce(function(s,x){return s+x.tonQty},0);
-      var rows=a.map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+x.cftQty.toFixed(2)+'</td><td>'+x.tonQty.toFixed(3)+'</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.min+'</td></tr>';}).join('')||'<tr><td colspan="5">'+T('কোনো স্টক নেই','No stock')+'</td></tr>';
+      var totalCft=a.reduce(function(s,x){return s+(parseFloat(x.cftQty)||0)},0),totalTon=a.reduce(function(s,x){return s+(parseFloat(x.tonQty)||0)},0);
+      var totalPcs=a.reduce(function(s,x){return s+(parseFloat(x.pcQty||x.pcs||x.pieces)||0)},0);
+      var totalValue=a.reduce(function(s,x){var q=parseFloat(x.cftQty)||0; var r=parseFloat(x.rate)||0; return s+(q*r);},0);
+      var rows=a.map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+x.cftQty.toFixed(2)+'</td><td>'+x.tonQty.toFixed(3)+'</td><td>'+((parseFloat(x.pcQty||x.pcs||x.pieces)||0).toFixed(2))+'</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.min+'</td></tr>';}).join('')||'<tr><td colspan="6">'+T('কোনো স্টক নেই','No stock')+'</td></tr>';
       var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
-      var html='<div class="report-head"><h1>'+T('স্টকের হিসাব','Stock Management')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div><div class="summary"><b>'+T('মোট CFT','Total CFT')+': '+totalCft.toFixed(2)+'</b> &nbsp; <b>'+T('মোট Metric Ton','Total Metric Ton')+': '+totalTon.toFixed(3)+' t</b></div><table><thead><tr><th>'+T('পণ্য','Product')+'</th><th>CFT</th><th>Metric Ton</th><th>'+T('দর','Rate')+'</th><th>'+T('সর্বনিম্ন','Minimum')+'</th></tr></thead><tbody>'+rows+'</tbody></table><div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
+      var html='<div class="report-head"><h1>'+T('স্টকের হিসাব','Stock Management')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div><div class="summary"><b>'+T('মোট CFT','Total CFT')+': '+totalCft.toFixed(2)+'</b> &nbsp; <b>'+T('মোট Metric Ton','Total Metric Ton')+': '+totalTon.toFixed(3)+' t</b> &nbsp; <b>'+T('মোট Pcs','Total Pieces')+': '+totalPcs.toFixed(2)+'</b> &nbsp; <b>'+T('মোট আনুমানিক মূল্য','Total Estimated Value')+': '+totalValue.toFixed(2)+' ৳</b></div><table><thead><tr><th>'+T('পণ্য','Product')+'</th><th>CFT</th><th>Metric Ton</th><th>'+T('Pcs','Pieces')+'</th><th>'+T('দর','Rate')+'</th><th>'+T('সর্বনিম্ন','Minimum')+'</th></tr></thead><tbody>'+rows+'</tbody></table><div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
       w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:12px}.report-head h1{margin:0 0 5px}.report-head p{font-size:10px;color:#555}.summary{border:1px solid #ccc;padding:9px;margin:10px 0}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px}th{background:#eef2f7}.signature-block{text-align:right;margin-top:30px}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
     }
     function printProfitLossReport(st){
       var sales=(salesList||[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0),purchase=(purchaseList||[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0),expense=(expenseList||[]).reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0),net=sales-purchase-expense;
       var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
-      var html='<div class="report-head"><h1>'+T('লাভ-ক্ষতির হিসাব','Profit & Loss')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div><table><tr><th>'+T('মোট বিক্রয়','Total Sales')+'</th><th>'+T('মোট ক্রয়','Total Purchase')+'</th><th>'+T('মোট খরচ','Total Expense')+'</th><th>'+T('লাভ/ক্ষতি','Profit/Loss')+'</th></tr><tr><td>'+sales.toFixed(2)+' ৳</td><td>'+purchase.toFixed(2)+' ৳</td><td>'+expense.toFixed(2)+' ৳</td><td>'+net.toFixed(2)+' ৳</td></tr></table><div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
+      var mats=materialQuantitySummary(), mcft=mats.reduce(function(a,x){return a+x.cft},0), mton=mats.reduce(function(a,x){return a+x.ton},0), mpc=mats.reduce(function(a,x){return a+x.pc},0);
+      var html='<div class="report-head"><h1>'+T('লাভ-ক্ষতির হিসাব','Profit & Loss')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div><table><tr><th>'+T('মোট বিক্রয়','Total Sales')+'</th><th>'+T('মোট ক্রয়','Total Purchase')+'</th><th>'+T('মোট খরচ','Total Expense')+'</th><th>'+T('লাভ/ক্ষতি','Profit/Loss')+'</th></tr><tr><td>'+sales.toFixed(2)+' ৳</td><td>'+purchase.toFixed(2)+' ৳</td><td>'+expense.toFixed(2)+' ৳</td><td>'+net.toFixed(2)+' ৳</td></tr></table><div class="summary"><b>'+T('মোট CFT','Total CFT')+': '+mcft.toFixed(2)+'</b> &nbsp; <b>'+T('মোট Metric Ton','Total Metric Ton')+': '+mton.toFixed(3)+' t</b> &nbsp; <b>'+T('মোট Pcs','Total Pieces')+': '+mpc.toFixed(2)+'</b></div><div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
       w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:14px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:8px;text-align:center}th{background:#eef2f7}.signature-block{text-align:right;margin-top:30px}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
     }
 
@@ -3002,9 +3005,81 @@
       w.document.open();w.document.write(html);w.document.close();
       setTimeout(function(){w.focus();w.print();},250);
     }
+
+    function buildReportTotals(arr, keys){
+      arr = Array.isArray(arr) ? arr : [];
+      keys = Array.isArray(keys) ? keys : [];
+      var money = {total:0, amount:0, paid:0, due:0};
+      var moneySeen = {total:false, amount:false, paid:false, due:false};
+      var qty = {cft:0, ton:0, pcs:0, other:0};
+      var qtySeen = false;
+
+      function num(v){
+        if(v===null || v===undefined || v==='') return null;
+        var n=parseFloat(String(v).replace(/,/g,''));
+        return isFinite(n) ? n : null;
+      }
+      function unitOf(x){
+        return String(x.unit || x.units || x.uom || '').trim().toLowerCase();
+      }
+      function addDirectQuantity(x, name, bucket){
+        var n=num(x[name]);
+        if(n!==null){ qty[bucket]+=n; qtySeen=true; }
+      }
+
+      arr.forEach(function(x){
+        ['total','amount','paid','due'].forEach(function(k){
+          if(keys.indexOf(k)>=0){
+            var n=num(x[k]);
+            if(n!==null){ money[k]+=n; moneySeen[k]=true; }
+          }
+        });
+
+        var u=unitOf(x);
+        var q=num(x.qty);
+        if(q!==null){
+          if(['cft','ft3','cubic feet','cubic foot'].indexOf(u)>=0){qty.cft+=q;qtySeen=true;}
+          else if(['ton','mt','metric ton','metric tons','টন'].indexOf(u)>=0){qty.ton+=q;qtySeen=true;}
+          else if(['pc','pcs','piece','pieces','পিস'].indexOf(u)>=0){qty.pcs+=q;qtySeen=true;}
+          else {qty.other+=q;qtySeen=true;}
+        }
+        addDirectQuantity(x,'cft','cft');
+        addDirectQuantity(x,'cftQty','cft');
+        addDirectQuantity(x,'ton','ton');
+        addDirectQuantity(x,'tonQty','ton');
+        addDirectQuantity(x,'metricTon','ton');
+        addDirectQuantity(x,'metric_ton','ton');
+        addDirectQuantity(x,'pc','pcs');
+        addDirectQuantity(x,'pcs','pcs');
+        addDirectQuantity(x,'pieces','pcs');
+        addDirectQuantity(x,'pcQty','pcs');
+      });
+
+      return {money:money,moneySeen:moneySeen,qty:qty,qtySeen:qtySeen};
+    }
+
+    function reportTotalsHtml(arr, keys){
+      var t=buildReportTotals(arr,keys);
+      var cells=[];
+      if(t.moneySeen.total) cells.push('<div><b>'+T('মোট টাকা','Total Amount')+'</b><strong>'+t.money.total.toFixed(2)+' ৳</strong></div>');
+      if(t.moneySeen.amount) cells.push('<div><b>'+T('মোট পরিমাণ/মূল্য','Total Amount')+'</b><strong>'+t.money.amount.toFixed(2)+' ৳</strong></div>');
+      if(t.moneySeen.paid) cells.push('<div><b>'+T('মোট পরিশোধ','Total Paid')+'</b><strong>'+t.money.paid.toFixed(2)+' ৳</strong></div>');
+      if(t.moneySeen.due) cells.push('<div><b>'+T('মোট বাকি','Total Due')+'</b><strong>'+t.money.due.toFixed(2)+' ৳</strong></div>');
+      if(t.qtySeen){
+        cells.push('<div><b>'+T('মোট CFT','Total CFT')+'</b><strong>'+t.qty.cft.toFixed(2)+'</strong></div>');
+        cells.push('<div><b>'+T('মোট Metric Ton','Total Metric Ton')+'</b><strong>'+t.qty.ton.toFixed(3)+' t</strong></div>');
+        cells.push('<div><b>'+T('মোট Pcs','Total Pieces')+'</b><strong>'+t.qty.pcs.toFixed(2)+'</strong></div>');
+        if(Math.abs(t.qty.other)>0) cells.push('<div><b>'+T('অন্যান্য একক','Other Units')+'</b><strong>'+t.qty.other.toFixed(2)+'</strong></div>');
+      }
+      if(!cells.length) return '';
+      return '<div class="report-totals"><h3>'+T('মোট হিসাব','Report Totals')+'</h3><div class="report-total-grid">'+cells.join('')+'</div></div>';
+    }
+
     function printTableFromArray(title, arr, keys){
       if(!arr || !arr.length) return '<div class="report-section"><h2>'+esc(title)+'</h2><p>'+T('কোনো তথ্য নেই','No records found')+'</p></div>';
-      var h='<div class="report-section"><h2>'+esc(title)+'</h2><table><thead><tr>';
+      var h='<div class="report-section"><h2>'+esc(title)+'</h2>';
+      h+=reportTotalsHtml(arr,keys);
+      h+='<table><thead><tr>';
       keys.forEach(function(k){h+='<th>'+esc(k)+'</th>';}); h+='</tr></thead><tbody>';
       arr.forEach(function(x){h+='<tr>';keys.forEach(function(k){var v=x[k];if(v===undefined)v='';if(typeof v==='object')v=JSON.stringify(v);h+='<td>'+esc(v)+'</td>';});h+='</tr>';});
       return h+'</tbody></table></div>';
