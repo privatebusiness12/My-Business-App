@@ -358,6 +358,13 @@
 @media print{.dashboard-bottom-logout{display:none}}
 </style>
 
+<style>
+.report-section table tfoot td{font-weight:800;background:#eef4ff;border-top:2px solid #64748b}
+.report-section table tfoot .col-total{text-align:right}
+.report-section table tfoot .col-total-label{font-weight:900;text-align:left}
+@media print{.report-section table tfoot{display:table-row-group}}
+</style>
+
 </head>
 <body>
 
@@ -3091,6 +3098,29 @@
       return '<div class="report-totals"><h3>'+T('মোট হিসাব','Report Totals')+'</h3><div class="report-total-grid">'+cells.join('')+'</div></div>';
     }
 
+
+    function reportColumnTotalsHtml(arr, keys){
+      arr = Array.isArray(arr) ? arr : [];
+      var sums = {}, seen = {};
+      keys.forEach(function(k){ sums[k]=0; seen[k]=false; });
+      function n(v){
+        if(v===null || v===undefined || v==='') return null;
+        var x=parseFloat(String(v).replace(/,/g,'').replace(/৳/g,'').trim());
+        return isFinite(x) ? x : null;
+      }
+      arr.forEach(function(row){
+        keys.forEach(function(k){
+          var x=n(row[k]);
+          if(x!==null){ sums[k]+=x; seen[k]=true; }
+        });
+      });
+      var cells=keys.map(function(k,i){
+        if(seen[k]) return '<td class="col-total">'+sums[k].toFixed(2)+'</td>';
+        return i===0 ? '<td class="col-total-label">মোট / Total</td>' : '<td class="col-total">—</td>';
+      }).join('');
+      return '<tfoot><tr>'+cells+'</tr></tfoot>';
+    }
+
     function printTableFromArray(title, arr, keys){
       if(!arr || !arr.length) return '<div class="report-section"><h2>'+esc(title)+'</h2><p>'+T('কোনো তথ্য নেই','No records found')+'</p></div>';
       var h='<div class="report-section"><h2>'+esc(title)+'</h2>';
@@ -3098,7 +3128,8 @@
       h+='<table><thead><tr>';
       keys.forEach(function(k){h+='<th>'+esc(k)+'</th>';}); h+='</tr></thead><tbody>';
       arr.forEach(function(x){h+='<tr>';keys.forEach(function(k){var v=x[k];if(v===undefined)v='';if(typeof v==='object')v=JSON.stringify(v);h+='<td>'+esc(v)+'</td>';});h+='</tr>';});
-      return h+'</tbody></table></div>';
+      h+='</tbody>'+reportColumnTotalsHtml(arr,keys)+'</table></div>';
+      return h;
     }
     function printAllBusinessData(){
       var oldSub=document.getElementById('sub-page-view').classList.contains('active-view');
