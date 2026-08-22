@@ -191,13 +191,17 @@
 /* Universal print / PDF support */
 .print-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 15px}.print-toolbar button{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700}.print-current{background:#0d6efd;color:#fff}.print-all{background:#198754;color:#fff}.print-pdf{background:#6f42c1;color:#fff}.print-toolbar .btn-backup{background:#495057;color:#fff}
 .print-only-title{display:none}
+.print-settings{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:auto}.print-settings select,.print-settings input{padding:8px 10px;border:1px solid #d7dee8;border-radius:8px;background:#fff;color:#222;box-sizing:border-box}.print-settings input{min-width:180px}.print-meta{display:none}
 @media print{
-  @page{size:A4;margin:10mm}
+  @page{size:A4 portrait;margin:10mm}
   body{background:#fff!important;color:#111!important;padding:0!important;font-size:11px!important}
   .app-header,.settings-trigger,#settings-panel,.back-btn,.print-toolbar,.tab-item,.st-modal,.st-actions,button,a[href^=tel]{display:none!important}
   .page-view{display:none!important}
   #sub-page-view{display:block!important}
-  #sub-page-view .print-only-title{display:block!important;text-align:center;font-size:18px;margin:0 0 10px}
+  #sub-page-view .print-only-title{display:block!important;text-align:center;font-size:18px;margin:0 0 4px}
+  #sub-page-view .print-meta{display:flex!important;justify-content:space-between;gap:15px;margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid #999;font-size:9px}
+  .print-signature-block{display:block!important;margin-top:28px;text-align:right;break-inside:avoid}
+  .print-signature-block .sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center}
   #page-title{display:none!important}
   .section-card,.module-hero,.pl-hero,.kpi-card,.note-card{box-shadow:none!important;break-inside:avoid;border:1px solid #ddd!important;background:#fff!important;color:#111!important}
   table{width:100%!important;border-collapse:collapse!important;font-size:9px!important}
@@ -491,6 +495,10 @@
     <div class="section-card print-toolbar" style="margin-top:15px">
       <button class="print-all" onclick="printAllBusinessData()">📚 <span data-bn="সব ট্যাবের সকল হিসাব প্রিন্ট / PDF" data-en="Print / PDF All Tabs & Records">সব ট্যাবের সকল হিসাব প্রিন্ট / PDF</span></button>
       <button class="print-pdf" onclick="printHomeDashboard()">📄 <span data-bn="ড্যাশবোর্ড PDF" data-en="Dashboard PDF">ড্যাশবোর্ড PDF</span></button>
+      <div class="print-settings">
+        <select id="dash-print-orientation" title="A4 orientation"><option value="portrait">A4 Portrait</option><option value="landscape">A4 Landscape</option></select>
+        <input id="dash-print-signature" type="text" placeholder="স্বাক্ষরের নাম (ঐচ্ছিক)">
+      </div>
     </div>
 
     <!-- ৩. সেটিংস -->
@@ -537,10 +545,15 @@
     <button class="back-btn" onclick="goHome()"><i class="fa-solid fa-arrow-left"></i> <span data-bn="পেছনে যান" data-en="Back">পেছনে যান</span></button>
     <h2 id="page-title" style="margin-bottom: 15px; color: #007bff;"></h2>
     <div class="print-only-title" id="print-only-title"></div>
+    <div class="print-meta" id="print-meta"><span id="print-generated-at"></span><span id="print-signature-name"></span></div>
     <div id="print-toolbar" class="print-toolbar">
       <button class="print-current" onclick="printCurrentPage()">🖨️ <span data-bn="এই ট্যাব প্রিন্ট" data-en="Print This Tab">এই ট্যাব প্রিন্ট</span></button>
       <button class="print-pdf" onclick="printCurrentPage()">📄 <span data-bn="PDF হিসেবে সংরক্ষণ" data-en="Save as PDF">PDF হিসেবে সংরক্ষণ</span></button>
       <button class="print-all" onclick="printAllBusinessData()">📚 <span data-bn="সব হিসাব প্রিন্ট/PDF" data-en="Print/PDF All Records">সব হিসাব প্রিন্ট/PDF</span></button>
+      <div class="print-settings">
+        <select id="print-orientation" title="A4 orientation"><option value="portrait">A4 Portrait</option><option value="landscape">A4 Landscape</option></select>
+        <input id="print-signature" type="text" placeholder="স্বাক্ষরের নাম (ঐচ্ছিক)">
+      </div>
     </div>
     <div id="page-content"></div>
   </div>
@@ -604,13 +617,33 @@
       var d=document.getElementById('dash-due-total'), i=document.getElementById('dash-invoice-count');
       if(s) s.innerText=Array.isArray(salesList)?salesList.length:0;
       if(p) p.innerText=Array.isArray(productList)?productList.length:0;
-      var due=0;
-      if(Array.isArray(salesList)) salesList.forEach(function(x){due += parseFloat(x.due)||0; due += parseFloat(x.transportFareDue)||0;});
-      if(Array.isArray(purchaseList)) purchaseList.forEach(function(x){due += parseFloat(x.due)||0; due += parseFloat(x.transportFareDue)||0;});
-      if(Array.isArray(generalDuePayments)) generalDuePayments.forEach(function(x){due -= parseFloat(x.amount)||0;});
-      due=Math.max(0,due);
+      var due=calculateOutstandingDue();
       if(d) d.innerText='৳'+due.toLocaleString('en-US',{maximumFractionDigits:2});
       if(i) i.innerText=Array.isArray(invoiceList)?invoiceList.length:0;
+    }
+
+    function sumAllRecordedPayments(){
+      return (Array.isArray(paymentHistory)?paymentHistory:[]).reduce(function(sum,x){ return sum + (parseFloat(x.amount)||0); },0);
+    }
+    function calculateOutstandingDue(){
+      var due=0;
+      if(Array.isArray(salesList)) salesList.forEach(function(x){ due += parseFloat(x.due)||0; due += parseFloat(x.transportFareDue)||0; });
+      if(Array.isArray(purchaseList)) purchaseList.forEach(function(x){ due += parseFloat(x.due)||0; due += parseFloat(x.transportFareDue)||0; });
+      if(Array.isArray(generalDuePayments)) generalDuePayments.forEach(function(x){ due -= parseFloat(x.amount)||0; });
+      return Math.max(0,due);
+    }
+    function getPrintSettings(prefix){
+      var p=prefix||'print';
+      var o=document.getElementById(p+'-orientation');
+      var s=document.getElementById(p+'-signature');
+      if(!o && !s && p==='print'){
+        o=document.getElementById('dash-print-orientation');
+        s=document.getElementById('dash-print-signature');
+      }
+      return {orientation:(o&&o.value==='landscape')?'landscape':'portrait',signature:(s&&s.value||'').trim(),generated:new Date().toLocaleString('bn-BD')};
+    }
+    function setPrintPageStyle(w,orientation){
+      w.document.write('<style id="dynamic-print-style">@page{size:A4 '+orientation+';margin:9mm}</style>');
     }
 
     function firebaseLogin(){
@@ -1743,7 +1776,7 @@
       for(var l = 0; l < purchaseList.length; l++) totalTransportDue += parseFloat(purchaseList[l].transportFareDue || 0);
 
       var generalDuePaid = generalDuePayments.reduce(function(sum,x){ return sum + (parseFloat(x.amount)||0); },0);
-      var netOutstandingDue = Math.max(0, totalCustomerDue + totalSupplierDue + totalTransportDue - generalDuePaid);
+      var netOutstandingDue = calculateOutstandingDue();
       var todayDate = getTodayDate();
 
       document.getElementById('page-content').innerHTML = 
@@ -2506,6 +2539,12 @@
           <button class="br-pdf" onclick="printFilteredBusinessReport(true)">📄 ${T('ফিল্টার করা রিপোর্ট PDF','Filtered Report PDF')}</button>
           <button class="br-reset" onclick="resetBusinessReportFilters()">↺ ${T('রিসেট','Reset')}</button>
         </div>
+        <div class="section-card" style="margin-top:12px;background:#f8fbff;border:1px solid #dbeafe;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <strong>${T('প্রিন্ট সেটিংস','Print Settings')}:</strong>
+          <select id="br-print-orientation" style="padding:9px;border:1px solid #d7dee8;border-radius:8px"><option value="landscape">A4 Landscape</option><option value="portrait">A4 Portrait</option></select>
+          <input id="br-signature" placeholder="${T('স্বাক্ষরের নাম (ঐচ্ছিক)','Signature name (optional)')}" style="padding:9px;border:1px solid #d7dee8;border-radius:8px;min-width:210px">
+          <span style="font-size:.85em;color:#64748b">${T('প্রিন্টে তারিখ ও সময় স্বয়ংক্রিয়ভাবে থাকবে।','Print date and time will be added automatically.')}</span>
+        </div>
       </div>
       <div id="br-result-meta" class="br-result-meta"></div>
       <div class="section-card"><div id="br-detail"></div></div>`);
@@ -2543,8 +2582,13 @@
     function renderBusinessReportResults(){
       var d=document.getElementById('br-detail'),m=document.getElementById('br-result-meta');if(!d)return;
       var rows=getFilteredBusinessReportRows();
-      var total=rows.filter(function(r){return r.primary===true;}).reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0); var paid=rows.filter(function(r){return r.primary===true;}).reduce(function(a,r){return a+(parseFloat(r.paid)||0)},0); var due=rows.filter(function(r){return r.primary===true;}).reduce(function(a,r){return a+(parseFloat(r.due)||0)},0); var pay=rows.filter(function(r){return r.type==='payment';}).reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0);
-      m.innerHTML='<span class="br-pill">'+T('মোট রেকর্ড','Records')+': '+rows.length+'</span><span class="br-pill">'+T('মূল লেনদেন','Transaction Value')+': '+total.toFixed(2)+' ৳</span><span class="br-pill">'+T('পরিশোধ/জমা','Paid/Collected')+': '+paid.toFixed(2)+' ৳</span><span class="br-pill">'+T('বাকি','Due')+': '+due.toFixed(2)+' ৳</span><span class="br-pill">'+T('আলাদা পেমেন্ট','Separate Payments')+': '+pay.toFixed(2)+' ৳</span>';
+      var total=rows.filter(function(r){return r.primary===true;}).reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0);
+      var paid=rows.filter(function(r){return r.primary===true;}).reduce(function(a,r){return a+(parseFloat(r.paid)||0)},0);
+      var due=rows.filter(function(r){return r.primary===true;}).reduce(function(a,r){return a+(parseFloat(r.due)||0)},0);
+      var pay=rows.filter(function(r){return r.type==='payment';}).reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0);
+      var overallPaid=sumAllRecordedPayments();
+      var overallDue=calculateOutstandingDue();
+      m.innerHTML='<span class="br-pill">'+T('মোট রেকর্ড','Records')+': '+rows.length+'</span><span class="br-pill">'+T('মূল লেনদেন','Transaction Value')+': '+total.toFixed(2)+' ৳</span><span class="br-pill">'+T('এই রিপোর্টের পরিশোধ/জমা','Report Paid/Collected')+': '+paid.toFixed(2)+' ৳</span><span class="br-pill">'+T('সকল পেমেন্ট মোট','All Payments Total')+': '+overallPaid.toFixed(2)+' ৳</span><span class="br-pill">'+T('বর্তমান মোট বাকি','Current Total Due')+': '+overallDue.toFixed(2)+' ৳</span><span class="br-pill">'+T('আলাদা পেমেন্ট','Filtered Payments')+': '+pay.toFixed(2)+' ৳</span>';
       if(!rows.length){d.innerHTML='<div class="pl-empty">'+T('কোনো তথ্য পাওয়া যায়নি। ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।','No records found. Change the filters and try again.')+'</div>';return;}
       d.innerHTML='<div class="br-table-wrap"><table><thead><tr><th>'+T('তারিখ','Date')+'</th><th>'+T('ধরন','Type')+'</th><th>'+T('চালান/রেফ.','Challan/Ref.')+'</th><th>'+T('নাম/পক্ষ','Party')+'</th><th>'+T('গাড়ি/পরিবহন','Vehicle')+'</th><th>'+T('জায়গা/সাইট','Site')+'</th><th>'+T('নৌকা/বালগেট','Boat/Bulkhead')+'</th><th>'+T('পণ্য','Item')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('মোট','Amount')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>'+
         rows.map(function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+esc(currentLang==='en'?({purchase:'Purchase',sale:'Sale',expense:'Expense',payment:'Payment',cash:'Cash',bank:'Bank',invoice:'Invoice',shipment:'Shipment'}[r.type]||r.type):r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';}).join('')+
@@ -2564,6 +2608,9 @@
       var paid=primary.reduce(function(a,r){return a+(parseFloat(r.paid)||0)},0);
       var due=primary.reduce(function(a,r){return a+(parseFloat(r.due)||0)},0);
       var pay=rows.filter(function(r){return r.type==='payment';}).reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0);
+      var overallPaid=sumAllRecordedPayments();
+      var overallDue=calculateOutstandingDue();
+      var printSettings=getPrintSettings('br-print');
 
       /* Material quantities are also calculated only from primary purchase/sale rows,
          so payment/cash/report rows can never inflate CFT/Ton/Piece totals. */
@@ -2586,14 +2633,15 @@
       var totalPc=qrows.reduce(function(a,x){return a+x.pc},0);
 
       var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
-      var html='<h1>'+esc(title)+'</h1>'+
-        '<p style="text-align:center">'+T('সময়','Period')+': '+esc(from)+' → '+esc(to)+' | '+T('মূল লেনদেন','Primary Transactions')+': '+primary.length+' | '+T('সকল রেকর্ড','All Records')+': '+rows.length+'</p>'+
+      var html='<div class="report-head"><h1>'+esc(title)+'</h1>'+
+        '<p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(printSettings.generated)+' | '+T('সময়কাল','Period')+': '+esc(from)+' → '+esc(to)+'</p></div>'+
         '<div class="finance-cards">'+
         '<div><b>'+T('মোট লেনদেনের মূল্য','Gross Transaction Value')+'</b><strong>'+total.toFixed(2)+' ৳</strong></div>'+
-        '<div><b>'+T('পরিশোধ / জমা','Paid / Collected')+'</b><strong>'+paid.toFixed(2)+' ৳</strong></div>'+
-        '<div><b>'+T('বাকি','Outstanding Due')+'</b><strong>'+due.toFixed(2)+' ৳</strong></div>'+
-        '<div><b>'+T('আলাদা পেমেন্ট','Separate Payments')+'</b><strong>'+pay.toFixed(2)+' ৳</strong></div>'+
+        '<div><b>'+T('সকল পেমেন্ট মোট','All Payments Total')+'</b><strong>'+overallPaid.toFixed(2)+' ৳</strong></div>'+
+        '<div><b>'+T('বর্তমান মোট বাকি','Current Total Due')+'</b><strong>'+overallDue.toFixed(2)+' ৳</strong></div>'+
+        '<div><b>'+T('এই ফিল্টারের পেমেন্ট','Filtered Payments')+'</b><strong>'+pay.toFixed(2)+' ৳</strong></div>'+
         '</div>'+
+        '<div class="report-note">'+T('এই রিপোর্টে মোট লেনদেন, সকল পেমেন্ট এবং বর্তমান বাকি আলাদাভাবে দেখানো হয়েছে; পেমেন্টের টাকা মোট লেনদেনের সাথে যোগ করা হয়নি।','Gross transactions, all payments and current outstanding are shown separately; payments are not added to gross transaction value.')+'</div>'+
         '<div class="material-box"><h2>'+T('মালের মোট পরিমাণ','Total Material Quantity')+'</h2>'+
         '<div class="qty-cards"><div><b>'+T('মোট CFT','Total CFT')+'</b><strong>'+totalCft.toFixed(2)+'</strong></div>'+
         '<div><b>'+T('মোট টন','Total Metric Ton')+'</b><strong>'+totalTon.toFixed(2)+' t</strong></div>'+
@@ -2610,10 +2658,11 @@
         html+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.paid||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';
       });
       html+='</tbody></table>';
+      html+='<div class="signature-block"><div class="sig-line">'+(printSettings.signature?esc(printSettings.signature):'স্বাক্ষর')+'</div></div>';
 
       w.document.open();
       w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+title+'</title><style>'+
-        'body{font-family:Arial,"Noto Sans Bengali",sans-serif;padding:12px;color:#111}h1{text-align:center}h2{margin:8px 0}.finance-cards,.qty-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.qty-cards{grid-template-columns:repeat(3,1fr)}.finance-cards div,.qty-cards div{border:1px solid #aaa;border-radius:6px;padding:9px;text-align:center;background:#f8fafc}.finance-cards strong,.qty-cards strong{display:block;font-size:16px;margin-top:4px}.material-box{margin:14px 0}.material-box table,body>table{width:100%;border-collapse:collapse;font-size:8px}.material-box th,.material-box td,body>table th,body>table td{border:1px solid #888;padding:4px;vertical-align:top}.material-box th,body>table th{background:#eef2f7}@page{size:A4 landscape;margin:7mm}</style></head><body>'+html+'</body></html>');
+        'body{font-family:Arial,"Noto Sans Bengali",sans-serif;padding:12px;color:#111}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:12px}.report-head h1{margin:0 0 5px}.report-head p{margin:0;font-size:10px;color:#555}.report-note{font-size:9px;background:#f8fafc;border:1px solid #ddd;padding:7px;margin:10px 0}.finance-cards,.qty-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.qty-cards{grid-template-columns:repeat(3,1fr)}.finance-cards div,.qty-cards div{border:1px solid #aaa;border-radius:6px;padding:9px;text-align:center;background:#f8fafc}.finance-cards strong,.qty-cards strong{display:block;font-size:16px;margin-top:4px}.material-box{margin:14px 0}.material-box table,body>table{width:100%;border-collapse:collapse;font-size:8px}.material-box th,.material-box td,body>table th,body>table td{border:1px solid #888;padding:4px;vertical-align:top}.material-box th,body>table th{background:#eef2f7}.signature-block{text-align:right;margin-top:28px;break-inside:avoid}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center;font-size:10px}@media print{@page{size:A4 '+printSettings.orientation+';margin:7mm}}</style></head><body>'+html+'</body></html>');
       w.document.close();setTimeout(function(){w.focus();w.print();},250);
     }
 
@@ -2812,6 +2861,13 @@
     function printCurrentPage(){
       if(!document.getElementById('sub-page-view').classList.contains('active-view')) return printHomeDashboard();
       preparePrintPage();
+      var ps=getPrintSettings('print');
+      var meta=document.getElementById('print-generated-at'),sig=document.getElementById('print-signature-name');
+      if(meta)meta.innerText=T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+ps.generated;
+      if(sig)sig.innerText=ps.signature?T('স্বাক্ষর','Signature')+': '+ps.signature:'';
+      var st=document.getElementById('dynamic-page-print-style');
+      if(!st){st=document.createElement('style');st.id='dynamic-page-print-style';document.head.appendChild(st);}
+      st.textContent='@media print{@page{size:A4 '+ps.orientation+';margin:10mm}}';
       setTimeout(function(){window.print();},80);
     }
 
@@ -2819,9 +2875,11 @@
       var totalSales = (Array.isArray(salesList)?salesList:[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0);
       var totalPurchase = (Array.isArray(purchaseList)?purchaseList:[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0);
       var totalExpense = (Array.isArray(expenseList)?expenseList:[]).reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0);
-      var totalPaid = (Array.isArray(salesList)?salesList:[]).reduce(function(a,x){return a+(parseFloat(x.paid)||0)},0);
+      var totalPaid = sumAllRecordedPayments();
       var customerDue = (Array.isArray(salesList)?salesList:[]).reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
       var supplierDue = (Array.isArray(purchaseList)?purchaseList:[]).reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
+      var totalOutstandingDue = calculateOutstandingDue();
+      var dashPrintSettings=getPrintSettings('dash-print');
       var net = totalSales-totalPurchase-totalExpense;
       var mats = typeof materialQuantitySummary==='function' ? materialQuantitySummary() : [];
       var cft = mats.reduce(function(a,x){return a+x.cft},0);
@@ -2843,14 +2901,14 @@
         '.section{border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin:12px 0}.section h2{font-size:14px;margin:0 0 9px;border-bottom:1px solid #e5e7eb;padding-bottom:7px}'+
         'table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #cbd5e1;padding:5px;text-align:left}th{background:#eef4ff}'+
         '.footer{text-align:center;margin-top:18px;font-size:9px;color:#64748b;border-top:1px solid #ddd;padding-top:8px}'+
-        '@media print{@page{size:A4 portrait;margin:9mm}body{padding:0}.section{break-inside:avoid}.grid{grid-template-columns:repeat(2,1fr)}}'+
+        '@media print{@page{size:A4 '+dashPrintSettings.orientation+';margin:9mm}body{padding:0}.section{break-inside:avoid}.grid{grid-template-columns:repeat(2,1fr)}}'+
         '</style></head><body>'+
-        '<div class="head"><h1>PRIVATE BUSINESS</h1><h2 style="margin:7px 0 0;font-size:18px">Dashboard Summary Report</h2><p>Generated: '+esc(today)+'</p></div>'+
+        '<div class="head"><h1>PRIVATE BUSINESS</h1><h2 style="margin:7px 0 0;font-size:18px">Dashboard Summary Report</h2><p>Generated: '+esc(dashPrintSettings.generated)+'</p></div>'+
         '<div class="grid">'+
         '<div class="card"><div class="label">TOTAL SALES / মোট বিক্রয়</div><div class="value">'+totalSales.toFixed(2)+' ৳</div></div>'+
         '<div class="card"><div class="label">TOTAL PURCHASE / মোট ক্রয়</div><div class="value">'+totalPurchase.toFixed(2)+' ৳</div></div>'+
         '<div class="card"><div class="label">TOTAL PAID / মোট পরিশোধ</div><div class="value">'+totalPaid.toFixed(2)+' ৳</div></div>'+
-        '<div class="card"><div class="label">CUSTOMER DUE / কাস্টমার বাকি</div><div class="value">'+customerDue.toFixed(2)+' ৳</div></div>'+
+        '<div class="card"><div class="label">CURRENT TOTAL DUE / বর্তমান মোট বাকি</div><div class="value">'+totalOutstandingDue.toFixed(2)+' ৳</div></div>'+
         '<div class="card"><div class="label">SUPPLIER DUE / সাপ্লায়ার বাকি</div><div class="value">'+supplierDue.toFixed(2)+' ৳</div></div>'+
         '<div class="card"><div class="label">TOTAL EXPENSE / মোট খরচ</div><div class="value">'+totalExpense.toFixed(2)+' ৳</div></div>'+
         '<div class="card"><div class="label">PROFIT / LOSS / লাভ-ক্ষতি</div><div class="value">'+net.toFixed(2)+' ৳</div></div>'+
@@ -2860,6 +2918,7 @@
         '<div class="section"><h2>সাম্প্রতিক বিক্রয় / Recent Sales</h2><table><thead><tr><th>তারিখ</th><th>মেমো</th><th>কাস্টমার</th><th>পণ্য</th><th>পরিমাণ</th><th>মোট</th><th>পরিশোধ</th><th>বাকি</th></tr></thead><tbody>'+
         (rows.length ? rows.map(function(x){return '<tr><td>'+esc(x.date||'')+'</td><td>'+esc(x.memo||'')+'</td><td>'+esc(x.customer||'')+'</td><td>'+esc(x.item||'')+'</td><td>'+esc(x.qty||'')+' '+esc(x.unit||'')+'</td><td>'+Number(x.total||0).toFixed(2)+' ৳</td><td>'+Number(x.paid||0).toFixed(2)+' ৳</td><td>'+Number(x.due||0).toFixed(2)+' ৳</td></tr>';}).join('') : '<tr><td colspan="8">কোনো বিক্রয় রেকর্ড নেই / No sales records</td></tr>')+
         '</tbody></table></div>'+
+        '<div class="signature-block"><div class="sig-line">'+(dashPrintSettings.signature?esc(dashPrintSettings.signature):'স্বাক্ষর')+'</div></div>'+
         '<div class="footer">PRIVATE BUSINESS • Dashboard Summary • Print / Save as PDF</div>'+
         '</body></html>';
 
@@ -2882,6 +2941,9 @@
       var customerDue=sales.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0), supplierDue=purchase.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
       var totalSales=sales.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalPurchase=purchase.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalExpense=expenses.reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0);
       var net=totalSales-totalPurchase-totalExpense;
+      var allPaymentsTotal=sumAllRecordedPayments();
+      var currentDue=calculateOutstandingDue();
+      var allPrintSettings=getPrintSettings('print');
        var materialRows=materialQuantitySummary(), totalCft=materialRows.reduce(function(a,x){return a+x.cft},0), totalTon=materialRows.reduce(function(a,x){return a+x.ton},0), totalPc=materialRows.reduce(function(a,x){return a+x.pc},0);
        var materialHtml='<div class="report-section"><h2>'+T('মালের মোট পরিমাণ','Material Quantity Summary')+'</h2><table><tr><th>'+T('মোট CFT','Total CFT')+'</th><th>'+T('মোট টন','Total Metric Ton')+'</th><th>'+T('মোট পিচ','Total Pieces')+'</th></tr><tr><td>'+totalCft.toFixed(2)+'</td><td>'+totalTon.toFixed(2)+' t</td><td>'+totalPc.toFixed(2)+'</td></tr></table><br><table><thead><tr><th>'+T('মাল','Material')+'</th><th>CFT</th><th>'+T('টন','Metric Ton')+'</th><th>'+T('পিচ','Pieces')+'</th><th>'+T('অন্যান্য','Other')+'</th></tr></thead><tbody>';
        materialRows.forEach(function(x){materialHtml+='<tr><td>'+esc(x.item)+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(2)+'</td><td>'+x.pc.toFixed(2)+'</td><td>'+x.other.toFixed(2)+'</td></tr>';});
@@ -2889,8 +2951,8 @@
 
       var html='<div class="print-report-page" style="padding:10px;background:#fff;color:#111">'+
         '<h1>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</h1>'+
-        '<p style="text-align:center">'+new Date().toLocaleString()+'</p>'+
-        '<div class="report-section"><h2>'+T('সারসংক্ষেপ','Summary')+'</h2><table><tr><th>'+T('মোট বিক্রি','Total Sales')+'</th><th>'+T('মোট ক্রয়','Total Purchase')+'</th><th>'+T('মোট খরচ','Total Expense')+'</th><th>'+T('আনুমানিক লাভ/ক্ষতি','Estimated Profit/Loss')+'</th><th>'+T('কাস্টমার বাকি','Customer Due')+'</th><th>'+T('সাপ্লায়ার বাকি','Supplier Due')+'</th></tr><tr><td>'+totalSales.toFixed(2)+' ৳</td><td>'+totalPurchase.toFixed(2)+' ৳</td><td>'+totalExpense.toFixed(2)+' ৳</td><td>'+net.toFixed(2)+' ৳</td><td>'+customerDue.toFixed(2)+' ৳</td><td>'+supplierDue.toFixed(2)+' ৳</td></tr></table></div>'+materialHtml+
+        '<p style="text-align:center">'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(allPrintSettings.generated)+'</p>'+
+        '<div class="report-section"><h2>'+T('সারসংক্ষেপ','Summary')+'</h2><table><tr><th>'+T('মোট বিক্রি','Total Sales')+'</th><th>'+T('মোট ক্রয়','Total Purchase')+'</th><th>'+T('মোট খরচ','Total Expense')+'</th><th>'+T('আনুমানিক লাভ/ক্ষতি','Estimated Profit/Loss')+'</th><th>'+T('সকল পেমেন্ট মোট','All Payments Total')+'</th><th>'+T('বর্তমান মোট বাকি','Current Total Due')+'</th></tr><tr><td>'+totalSales.toFixed(2)+' ৳</td><td>'+totalPurchase.toFixed(2)+' ৳</td><td>'+totalExpense.toFixed(2)+' ৳</td><td>'+net.toFixed(2)+' ৳</td><td>'+allPaymentsTotal.toFixed(2)+' ৳</td><td>'+currentDue.toFixed(2)+' ৳</td></tr></table></div>'+materialHtml+
         printTableFromArray(T('কেনার খাতা','Purchase Ledger'),purchase,['date','challan','supplier','phone','item','qty','unit','total','paid','due'])+
         printTableFromArray(T('বেচার খাতা','Sales Ledger'),sales,['date','memo','customer','phone','site','item','qty','unit','total','paid','due'])+
         printTableFromArray(T('খরচের খাতা','Expense Ledger'),expenses,['date','category','title','method','amount','note'])+
@@ -2904,6 +2966,7 @@
         printTableFromArray(T('তাগাদা রিমাইন্ডার','Due Reminders'),reminderList||[],['name','phone','date','amount','note','done'])+
         printTableFromArray(T('নোটপ্যাড','Notepad'),noteList||[],['title','body','date','pinned'])+
         printTableFromArray(T('চালান','Invoices'),invoiceList||[],['no','date','customer','phone','site','item','qty','rate','total','note'])+
+        '<div class="signature-block"><div class="sig-line">'+(allPrintSettings.signature?esc(allPrintSettings.signature):'স্বাক্ষর')+'</div></div>'+
         '</div>';
       var w=window.open('','_blank');
       if(!w){alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));return;}
