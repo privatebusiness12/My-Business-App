@@ -350,7 +350,15 @@
 
 .edit-record-btn{border:0;border-radius:8px;padding:7px 10px;cursor:pointer;background:#eef2ff;color:#3730a3;font-weight:700}.delete-record-btn{border:0;border-radius:8px;padding:7px 10px;cursor:pointer;background:#fee2e2;color:#b91c1c;font-weight:700}.stock-filter-bar{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;align-items:end}.stock-filter-bar input,.stock-filter-bar select{width:100%;padding:11px;border:1px solid #dbe3ee;border-radius:10px}.stock-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0}.stock-mini{padding:14px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#eef6ff);border:1px solid #e2e8f0}.stock-mini b{display:block;font-size:20px}.stock-movement{font-size:12px;color:#64748b}.edit-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px}.edit-modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.edit-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.edit-field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:#475569}.edit-field input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:9px}.edit-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.edit-modal-actions button{padding:10px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}@media(max-width:700px){.stock-filter-bar,.edit-fields,.stock-summary-grid{grid-template-columns:1fr}.edit-modal{padding:15px}}
 </style>
-<style id="correction-report-fix">.correction-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px}.cr-modal{display:block}.btn-action{border:0;border-radius:8px;padding:7px 10px;background:#0d6efd;color:#fff;cursor:pointer;font-weight:700}.br-result-meta{display:flex;gap:8px;flex-wrap:wrap}</style></head>
+<style id="correction-report-fix">.correction-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px}.cr-modal{display:block}.btn-action{border:0;border-radius:8px;padding:7px 10px;background:#0d6efd;color:#fff;cursor:pointer;font-weight:700}.br-result-meta{display:flex;gap:8px;flex-wrap:wrap}</style>
+<style>
+.dashboard-bottom-logout{margin:28px auto 18px;max-width:520px;text-align:center;padding:18px 16px;border:1px solid #e5e7eb;border-radius:16px;background:#fff;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+.dashboard-logout-btn{min-width:180px;padding:12px 24px;border:0;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer}
+.logout-note{margin-top:7px;font-size:11px;color:#64748b}
+@media print{.dashboard-bottom-logout{display:none}}
+</style>
+
+</head>
 <body>
 
 
@@ -2609,7 +2617,15 @@
       var w=window.open('','_blank');
       if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
       var html='<div class="report-head"><h1>'+esc(T(c.title,c.en))+'</h1><p>'+esc(T('প্রিন্ট তারিখ ও সময়','Printed on'))+': '+esc(st.generated)+'</p></div>'+table+'<div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
-      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(T(c.title,c.en))+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:14px}.report-head h1{margin:0 0 5px}.report-head p{margin:0;font-size:10px;color:#555}.report-section{margin-bottom:20px;break-inside:auto}.report-section h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#eef2f7}.signature-block{text-align:right;margin-top:30px;break-inside:avoid}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center;font-size:10px}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(T(c.title,c.en))+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:14px}.report-head h1{margin:0 0 5px}.report-head p{margin:0;font-size:10px;color:#555}.report-section{margin-bottom:20px;break-inside:auto}.report-section h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#eef2f7}.signature-block{text-align:right;margin-top:30px;break-inside:avoid}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center;font-size:10px}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'
+      <div id="dashboard-bottom-logout" class="dashboard-bottom-logout">
+        <button type="button" class="danger-btn dashboard-logout-btn" onclick="logoutUser()">
+          🚪 <span data-bn="লগ আউট">লগ আউট</span>
+        </button>
+        <div class="logout-note">নিরাপদে বের হতে এখানে চাপুন</div>
+      </div>
+    
+</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
     }
     function printStockReport(st){
       var a=calculateStock();
@@ -3123,6 +3139,68 @@
       w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#f1f5f9}.report-section{margin-bottom:20px;break-inside:auto}h1{text-align:center}h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px}@page{size:A4 '+allPrintSettings.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
     }
     initFirebaseAuth();
+
+    /* ---------------- Android / Mobile Back Button Guard ---------------- */
+    (function(){
+      var lastBackAt=0;
+      var backExitWindow=1800;
+
+      function closeTransientUI(){
+        var closed=false;
+        document.querySelectorAll('.modal,.modal-overlay,[role="dialog"],.sidebar.open,.mobile-menu.open').forEach(function(el){
+          if(el.classList.contains('modal') || el.classList.contains('modal-overlay')){
+            el.style.display='none';
+          }else{
+            el.classList.remove('open');
+          }
+          closed=true;
+        });
+        return closed;
+      }
+
+      function goDashboard(){
+        try{
+          if(typeof showPage==='function'){
+            showPage('home');
+            return true;
+          }
+        }catch(e){}
+        try{
+          var home=document.querySelector('[onclick*="showPage(\'home\')"],[onclick*="showPage(\"home\")"]');
+          if(home){home.click();return true;}
+        }catch(e){}
+        return false;
+      }
+
+      window.addEventListener('popstate', function(){
+        var handled=closeTransientUI();
+        if(!handled) goDashboard();
+      });
+
+      // Add one history state so Android's Back is intercepted once.
+      try{
+        history.pushState({pbApp:true}, '', location.href);
+      }catch(e){}
+
+      window.addEventListener('popstate', function(){
+        try{ history.pushState({pbApp:true}, '', location.href); }catch(e){}
+      });
+
+      document.addEventListener('backbutton', function(e){
+        if(e && e.preventDefault) e.preventDefault();
+        var now=Date.now();
+        if(closeTransientUI()) return;
+        if(now-lastBackAt<backExitWindow){
+          // second back: allow the browser/webview to exit if the host supports it
+          return;
+        }
+        lastBackAt=now;
+        if(!goDashboard()){
+          try{history.back();}catch(err){}
+        }
+      }, false);
+    })();
+
 </script>
 </body>
 </html>
