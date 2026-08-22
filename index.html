@@ -605,8 +605,10 @@
       if(s) s.innerText=Array.isArray(salesList)?salesList.length:0;
       if(p) p.innerText=Array.isArray(productList)?productList.length:0;
       var due=0;
-      if(Array.isArray(salesList)) salesList.forEach(function(x){due += parseFloat(x.due)||0;});
-      if(Array.isArray(purchaseList)) purchaseList.forEach(function(x){due += parseFloat(x.due)||0;});
+      if(Array.isArray(salesList)) salesList.forEach(function(x){due += parseFloat(x.due)||0; due += parseFloat(x.transportFareDue)||0;});
+      if(Array.isArray(purchaseList)) purchaseList.forEach(function(x){due += parseFloat(x.due)||0; due += parseFloat(x.transportFareDue)||0;});
+      if(Array.isArray(generalDuePayments)) generalDuePayments.forEach(function(x){due -= parseFloat(x.amount)||0;});
+      due=Math.max(0,due);
       if(d) d.innerText='৳'+due.toLocaleString('en-US',{maximumFractionDigits:2});
       if(i) i.innerText=Array.isArray(invoiceList)?invoiceList.length:0;
     }
@@ -635,7 +637,7 @@
 
     function getCloudCollections(){
       return {
-        purchaseList: purchaseList, salesList: salesList, paymentHistory: paymentHistory, expenseList: expenseList,
+        purchaseList: purchaseList, salesList: salesList, paymentHistory: paymentHistory, generalDuePayments: generalDuePayments, expenseList: expenseList,
         cashList: cashList, bankAccounts: bankAccounts, bankTransactions: bankTransactions, shipmentList: shipmentList,
         contactList: contactList, productList: productList, employeeList: employeeList, reminderList: reminderList,
         noteList: noteList, invoiceList: invoiceList, stockConversionRules: stockConversionRules
@@ -647,6 +649,7 @@
       if(Array.isArray(data.purchaseList))purchaseList=data.purchaseList;
       if(Array.isArray(data.salesList))salesList=data.salesList;
       if(Array.isArray(data.paymentHistory))paymentHistory=data.paymentHistory;
+      if(Array.isArray(data.generalDuePayments))generalDuePayments=data.generalDuePayments;
       if(Array.isArray(data.expenseList))expenseList=data.expenseList;
       if(Array.isArray(data.cashList))cashList=data.cashList;
       if(Array.isArray(data.bankAccounts))bankAccounts=data.bankAccounts;
@@ -737,6 +740,8 @@
     var purchaseList = [];
     var salesList = [];
     var paymentHistory = [];
+    // কোনো নির্দিষ্ট চালান/বিলের সাথে যুক্ত নয় এমন বাকি পরিশোধ/সমন্বয়
+    var generalDuePayments = [];
     var expenseList = [];
     var cashList = [];
     var shipmentList = JSON.parse(localStorage.getItem('shipmentTrackingList') || '[]');
@@ -1737,33 +1742,39 @@
       for(var k = 0; k < salesList.length; k++) totalTransportDue += parseFloat(salesList[k].transportFareDue || 0);
       for(var l = 0; l < purchaseList.length; l++) totalTransportDue += parseFloat(purchaseList[l].transportFareDue || 0);
 
+      var generalDuePaid = generalDuePayments.reduce(function(sum,x){ return sum + (parseFloat(x.amount)||0); },0);
+      var netOutstandingDue = Math.max(0, totalCustomerDue + totalSupplierDue + totalTransportDue - generalDuePaid);
       var todayDate = getTodayDate();
 
       document.getElementById('page-content').innerHTML = 
         '<div class="due-summary">' +
-          '<div class="summary-box bg-customer-due"><h4 data-bn="কাস্টমার পাবো (পণ্য)" data-bn="কাস্টমার পাবো (পণ্য)" data-en="Customer Receivable (Product)">কাস্টমার পাবো (পণ্য)</h4><h2>' + totalCustomerDue.toFixed(2) + ' ৳</h2></div>' +
-          '<div class="summary-box bg-supplier-due"><h4 data-bn="মহাজন দিতে হবে (পণ্য)" data-bn="মহাজন দিতে হবে (পণ্য)" data-en="Supplier Payable (Product)">মহাজন দিতে হবে (পণ্য)</h4><h2>' + totalSupplierDue.toFixed(2) + ' ৳</h2></div>' +
-          '<div class="summary-box bg-transport-due"><h4 data-bn="গাড়ি ভাড়া বাকি" data-bn="গাড়ি ভাড়া বাকি" data-en="Transport Fare Due">গাড়ি ভাড়া বাকি</h4><h2>' + totalTransportDue.toFixed(2) + ' ৳</h2></div>' +
+          '<div class="summary-box bg-customer-due"><h4 data-bn="কাস্টমার পাবো (পণ্য)" data-en="Customer Receivable (Product)">কাস্টমার পাবো (পণ্য)</h4><h2>' + totalCustomerDue.toFixed(2) + ' ৳</h2></div>' +
+          '<div class="summary-box bg-supplier-due"><h4 data-bn="মহাজন দিতে হবে (পণ্য)" data-en="Supplier Payable (Product)">মহাজন দিতে হবে (পণ্য)</h4><h2>' + totalSupplierDue.toFixed(2) + ' ৳</h2></div>' +
+          '<div class="summary-box bg-transport-due"><h4 data-bn="গাড়ি ভাড়া বাকি" data-en="Transport Fare Due">গাড়ি ভাড়া বাকি</h4><h2>' + totalTransportDue.toFixed(2) + ' ৳</h2></div>' +
+          '<div class="summary-box" style="background:#198754;color:#fff;"><h4 data-bn="সর্বমোট বাকি" data-en="Total Outstanding">সর্বমোট বাকি</h4><h2>' + netOutstandingDue.toFixed(2) + ' ৳</h2></div>' +
         '</div>' +
 
         '<div class="section-card" style="border: 1px solid #28a745;">' +
-          '<h3 style="color: #28a745; margin-bottom: 10px;" data-bn="নতুন বাকি পরিশোধ/জমা লিখুন" data-bn="নতুন বাকি পরিশোধ/জমা লিখুন" data-en="Record New Due Payment / Collection">নতুন বাকি পরিশোধ/জমা লিখুন</h3>' +
-          '<div style="display: flex; gap: 10px;">' +
-            '<div class="form-group" style="flex: 1;"><label>তারিখ:</label><input type="date" id="pay-date" value="' + todayDate + '"></div>' +
-            '<div class="form-group" style="flex: 1;"><label data-bn="ধরণ:" data-en="Type:">ধরণ:</label>' +
+          '<h3 style="color: #28a745; margin-bottom: 10px;" data-bn="বাকি বিল পরিশোধ / টাকা জমা" data-en="Due Payment / Collection">বাকি বিল পরিশোধ / টাকা জমা</h3>' +
+          '<div style="display: flex; gap: 10px; flex-wrap:wrap;">' +
+            '<div class="form-group" style="flex: 1; min-width:180px;"><label>তারিখ:</label><input type="date" id="pay-date" value="' + todayDate + '"></div>' +
+            '<div class="form-group" style="flex: 2; min-width:220px;"><label data-bn="ধরণ:" data-en="Type:">ধরণ:</label>' +
               '<select id="pay-person-type" onchange="togglePersonDropdown()">' +
                 '<option value="customer">কাস্টমার পণ্য বাকি জমা</option>' +
                 '<option value="supplier">মহাজন পণ্য বাকি পরিশোধ</option>' +
                 '<option value="transport">গাড়ি ভাড়া / ট্রান্সপোর্ট বাকি পরিশোধ</option>' +
+                '<option value="general">অন্য ব্যক্তি/মহাজনের কাছে সাধারণ বাকি পরিশোধ</option>' +
               '</select>' +
             '</div>' +
           '</div>' +
-          '<div class="form-group"><label data-bn="ব্যক্তি / পরিবহন নির্বাচন করুন:" data-en="Select Person / Transport:">ব্যক্তি / পরিবহন নির্বাচন করুন:</label><select id="pay-person-id"></select></div>' +
-          '<div style="display: flex; gap: 10px;">' +
-            '<div class="form-group" style="flex: 1;"><label data-bn="টাকার পরিমাণ:" data-en="Amount:">টাকার পরিমাণ:</label><input type="number" id="pay-amount" placeholder="৳"></div>' +
-            '<div class="form-group" style="flex: 1;"><label data-bn="নোট / মাধ্যম:" data-en="Note / Method:">নোট / মাধ্যম:</label><input type="text" id="pay-note" placeholder="যেমন: ক্যাশ বা বিকাশ"></div>' +
+          '<div class="form-group" id="pay-person-wrap"><label data-bn="ব্যক্তি / পরিবহন নির্বাচন করুন:" data-en="Select Person / Transport:">ব্যক্তি / পরিবহন নির্বাচন করুন:</label><select id="pay-person-id"></select></div>' +
+          '<div class="form-group" id="pay-general-name-wrap" style="display:none;"><label>ব্যক্তি / প্রতিষ্ঠানের নাম:</label><input type="text" id="pay-general-name" placeholder="যার কাছে টাকা দিলেন"></div>' +
+          '<div style="display: flex; gap: 10px; flex-wrap:wrap;">' +
+            '<div class="form-group" style="flex: 1; min-width:180px;"><label data-bn="টাকার পরিমাণ:" data-en="Amount:">টাকার পরিমাণ:</label><input type="number" id="pay-amount" min="0.01" step="0.01" placeholder="৳"></div>' +
+            '<div class="form-group" style="flex: 1; min-width:180px;"><label data-bn="নোট / মাধ্যম:" data-en="Note / Method:">নোট / মাধ্যম:</label><input type="text" id="pay-note" placeholder="যেমন: ক্যাশ / বিকাশ / ব্যাংক"></div>' +
           '</div>' +
           '<button class="btn-submit" onclick="submitPaymentEntry()" data-bn="পরিশোধ/জমা সেভ করুন" data-en="Save Payment / Collection">পরিশোধ/জমা সেভ করুন</button>' +
+          '<div style="margin-top:10px;color:#6c757d;font-size:.88em;">সাধারণ বাকি পরিশোধ করলে এটি মোট বাকি হিসাব থেকে আলাদাভাবে সমন্বয় হবে, আর পরবর্তীতে পেমেন্ট ইতিহাসে দেখা যাবে।</div>' +
         '</div>' +
 
         '<div class="section-card"><h3 data-bn="কাস্টমারের পন্যের বাকির তালিকা (পাবো)" data-en="Customer Product Due List (Receivable)">কাস্টমারের পন্যের বাকির তালিকা (পাবো)</h3><div class="table-responsive"><table><thead><tr><th data-bn="কাস্টমার নাম" data-en="Customer Name">কাস্টমার নাম</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="সাইট" data-en="Site">সাইট</th><th data-bn="পণ্যের বাকি" data-en="Product Due">পণ্যের বাকি</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="customer-due-records"></tbody></table></div></div>' +
@@ -1772,8 +1783,10 @@
         '<div class="section-card"><h3 style="color: #007bff;" data-bn="তারিখ ভিত্তিক পেমেন্ট ইতিহাস" data-en="Date-wise Payment History">তারিখ ভিত্তিক পেমেন্ট ইতিহাস</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="নাম/বিবরণ" data-en="Name / Description">নাম/বিবরণ</th><th data-bn="লেনদেনের ধরণ" data-en="Transaction Type">লেনদেনের ধরণ</th><th data-bn="পরিমাণ" data-en="Quantity">পরিমাণ</th><th data-bn="নোট/মাধ্যম" data-en="Note / Method">নোট/মাধ্যম</th></tr></thead><tbody id="payment-history-records"></tbody></table></div></div>';
 
       togglePersonDropdown();
+      togglePersonDropdown();
       renderDueTables();
       renderPaymentHistoryTable();
+      updateDashboardQuickStats();
       applyLanguageToCurrentView();
     }
 
@@ -1781,6 +1794,8 @@
       var type = document.getElementById('pay-person-type').value;
       var select = document.getElementById('pay-person-id');
       select.innerHTML = '';
+      updateGeneralPaymentFields();
+      if(type === 'general') return;
 
       if(type === 'customer') {
         var custDueItems = salesList.filter(function(item) { return parseFloat(item.due) > 0; });
@@ -1800,56 +1815,92 @@
       }
     }
 
-    function submitPaymentEntry() {
-      var date = document.getElementById('pay-date').value;
-      var type = document.getElementById('pay-person-type').value;
-      var rawVal = document.getElementById('pay-person-id').value;
-      var amount = parseFloat(document.getElementById('pay-amount').value);
-      var note = document.getElementById('pay-note').value || 'Payment Entry';
+    function updateGeneralPaymentFields(){
+      var typeEl=document.getElementById('pay-person-type');
+      var type=typeEl?typeEl.value:'';
+      var wrap=document.getElementById('pay-person-wrap');
+      var nameWrap=document.getElementById('pay-general-name-wrap');
+      var select=document.getElementById('pay-person-id');
+      if(type==='general'){
+        if(wrap) wrap.style.display='none';
+        if(nameWrap) nameWrap.style.display='block';
+        if(select) select.innerHTML='<option value="general">সাধারণ বাকি</option>';
+      }else{
+        if(wrap) wrap.style.display='block';
+        if(nameWrap) nameWrap.style.display='none';
+      }
+    }
 
-      if(!date || !rawVal || !amount || amount <= 0) {
-        alert("দয়া করে সঠিক অপশন নির্বাচন করুন এবং টাকার পরিমাণ দিন!");
+    function submitPaymentEntry() {
+      var dateEl=document.getElementById('pay-date');
+      var typeEl=document.getElementById('pay-person-type');
+      var amountEl=document.getElementById('pay-amount');
+      var noteEl=document.getElementById('pay-note');
+      var date = dateEl ? dateEl.value : '';
+      var type = typeEl ? typeEl.value : '';
+      var rawVal = document.getElementById('pay-person-id') ? document.getElementById('pay-person-id').value : '';
+      var amount = parseFloat(amountEl ? amountEl.value : '0');
+      var note = (noteEl ? noteEl.value : '') || 'Payment Entry';
+      var saved = false;
+
+      if(!date || !amount || amount <= 0) {
+        alert("দয়া করে তারিখ ও সঠিক টাকার পরিমাণ দিন!");
         return;
       }
 
-      if(type === 'customer') {
+      if(type === 'general') {
+        var gNameEl=document.getElementById('pay-general-name');
+        var gName=(gNameEl?gNameEl.value:'').trim() || 'অন্য ব্যক্তি / সাধারণ বাকি';
+        generalDuePayments.push({
+          id: Date.now(), date: date, name: gName, amount: amount, note: note,
+          type:'General Due Payment', typeBn:'সাধারণ বাকি পরিশোধ'
+        });
+        paymentHistory.push({ date: date, name: gName, type: 'General Due Payment', typeBn: 'সাধারণ বাকি পরিশোধ', amount: amount, note: note });
+        if(/ক্যাশ|cash|নগদ/i.test(note)) {
+          cashList.push({ id: Date.now()+1, date: date, type: 'out', title: 'সাধারণ বাকি পরিশোধ: ' + gName, amount: amount });
+        }
+        saved = true;
+      } else if(type === 'customer') {
         var item = salesList.find(function(x) { return x.id === parseInt(rawVal); });
-        if(item && amount <= parseFloat(item.due)) {
+        var due=parseFloat(item && item.due);
+        if(item && amount <= due) {
           item.paid = (parseFloat(item.paid) + amount).toFixed(2);
-          item.due = (parseFloat(item.due) - amount).toFixed(2);
+          item.due = Math.max(0, due - amount).toFixed(2);
           paymentHistory.push({ date: date, name: item.customer, type: 'Customer Due Collection', typeBn: 'কাস্টমার পণ্য বাকি জমা', amount: amount, note: note });
-          
-          if(note.includes('ক্যাশ') || note.includes('Cash') || note === 'Payment Entry') {
-            cashList.push({ id: Date.now(), date: date, type: 'in', title: 'কাস্টমার বাকি আদায়: ' + item.customer, amount: amount });
-          }
+          if(/ক্যাশ|cash|নগদ/i.test(note)) cashList.push({ id: Date.now(), date: date, type: 'in', title: 'কাস্টমার বাকি আদায়: ' + item.customer, amount: amount });
+          saved=true;
         }
       } else if(type === 'supplier') {
         var pItem = purchaseList.find(function(x) { return x.id === parseInt(rawVal); });
-        if(pItem && amount <= parseFloat(pItem.due)) {
+        var pDue=parseFloat(pItem && pItem.due);
+        if(pItem && amount <= pDue) {
           pItem.paid = (parseFloat(pItem.paid) + amount).toFixed(2);
-          pItem.due = (parseFloat(pItem.due) - amount).toFixed(2);
+          pItem.due = Math.max(0, pDue - amount).toFixed(2);
           paymentHistory.push({ date: date, name: pItem.supplier, type: 'Supplier Due Paid', typeBn: 'মহাজন পণ্য বাকি পরিশোধ', amount: amount, note: note });
-          
-          if(note.includes('ক্যাশ') || note.includes('Cash') || note === 'Payment Entry') {
-            cashList.push({ id: Date.now(), date: date, type: 'out', title: 'মহাজন বাকি পরিশোধ: ' + pItem.supplier, amount: amount });
-          }
+          if(/ক্যাশ|cash|নগদ/i.test(note)) cashList.push({ id: Date.now(), date: date, type: 'out', title: 'মহাজন বাকি পরিশোধ: ' + pItem.supplier, amount: amount });
+          saved=true;
         }
       } else if(type === 'transport') {
         var parts = rawVal.split('_');
         var tObj = parts[0] === 'sale' ? salesList.find(function(x){return x.id === parseInt(parts[1]);}) : purchaseList.find(function(x){return x.id === parseInt(parts[1]);});
-        if(tObj && amount <= parseFloat(tObj.transportFareDue)) {
+        var tDue=parseFloat(tObj && tObj.transportFareDue);
+        if(tObj && amount <= tDue) {
           tObj.transportFarePaid = (parseFloat(tObj.transportFarePaid || 0) + amount).toFixed(2);
-          tObj.transportFareDue = (parseFloat(tObj.transportFareDue) - amount).toFixed(2);
+          tObj.transportFareDue = Math.max(0, tDue - amount).toFixed(2);
           paymentHistory.push({ date: date, name: tObj.transportName, type: 'Transport Fare Paid', typeBn: 'গাড়ি ভাড়া পরিশোধ', amount: amount, note: note });
-          
-          if(note.includes('ক্যাশ') || note.includes('Cash') || note === 'Payment Entry') {
-            cashList.push({ id: Date.now(), date: date, type: 'out', title: 'গাড়ি ভাড়া বাকি পরিশোধ: ' + tObj.transportName, amount: amount });
-          }
+          if(/ক্যাশ|cash|নগদ/i.test(note)) cashList.push({ id: Date.now(), date: date, type: 'out', title: 'গাড়ি ভাড়া বাকি পরিশোধ: ' + tObj.transportName, amount: amount });
+          saved=true;
         }
       }
 
+      if(!saved) {
+        alert("এই পরিমাণটি নির্বাচিত বাকি টাকার চেয়ে বেশি হতে পারে, অথবা কোনো রেকর্ড নির্বাচন করা হয়নি। আগে বাকি রেকর্ডটি পরীক্ষা করুন।");
+        return;
+      }
+
       scheduleCloudSave();
-      alert("পরিশোধের তথ্য সফলভাবে রেকর্ড করা হয়েছে!");
+      updateDashboardQuickStats();
+      alert("পরিশোধের তথ্য সফলভাবে রেকর্ড করা হয়েছে এবং বাকি হিসাব আপডেট হয়েছে।");
       openDueLedger();
     }
 
