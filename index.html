@@ -2044,8 +2044,17 @@
           '<hr style="margin: 15px 0;">' +
           '<div class="form-group"><label data-bn="পণ্য ক্যাটাগরি:" data-en="Product Category:">পণ্য ক্যাটাগরি:</label><select id="s-category" onchange="updateProductOptions()"><option value="sand" data-bn="বালি (Sand)" data-en="Sand">বালি (Sand)</option><option value="brick" data-bn="ইট (Bricks)" data-en="Bricks">ইট (Bricks)</option><option value="stone" data-bn="পাথর (Stone)" data-en="Stone">পাথর (Stone)</option></select></div>' +
           '<div class="form-group"><label data-bn="পণ্যের ধরন:" data-en="Product Type:">পণ্যের ধরন:</label><select id="s-item"></select></div>' +
-          '<div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 2;"><label data-bn="পরিমাণ:" data-en="Quantity:">পরিমাণ:</label><input type="number" id="s-qty" oninput="calculateSalesTotal()" placeholder="০"></div><div class="form-group" style="flex: 1;"><label data-bn="একক (Unit):" data-en="Unit:">একক (Unit):</label><select id="s-unit"><option value="CFT">CFT</option><option value="হাজার" data-bn="হাজার" data-en="Thousand">হাজার</option><option value="টন" data-bn="টন" data-en="Ton">টন</option></select></div></div>' +
-          '<div class="form-group"><label data-bn="প্রতি এককের বিক্রি দর (রেট ৳):" data-en="Selling Rate per Unit (৳):">প্রতি এককের বিক্রি দর (রেট ৳):</label><input type="number" id="s-rate" oninput="calculateSalesTotal()" placeholder="৳"></div>' +
+          '<div class="form-group"><label style="color:#0d6efd;" data-bn="বিক্রয়ের হিসাবের ধরন:" data-en="Sales Pricing Type:">বিক্রয়ের হিসাবের ধরন:</label><select id="s-pricing-mode" onchange="toggleSalePricingMode()"><option value="unit" data-bn="CFT / Ton / Pcs অনুযায়ী" data-en="By CFT / Ton / Pcs">CFT / Ton / Pcs অনুযায়ী</option><option value="vehicle" data-bn="গাড়ি প্রতি বিক্রি" data-en="Per Vehicle">গাড়ি প্রতি বিক্রি</option></select></div>' +
+          '<div id="s-unit-pricing-box">' +
+          '<div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 2;"><label data-bn="পরিমাণ:" data-en="Quantity:">পরিমাণ:</label><input type="number" id="s-qty" oninput="calculateSalesTotal()" placeholder="০"></div><div class="form-group" style="flex: 1;"><label data-bn="একক (Unit):" data-en="Unit:">একক (Unit):</label><select id="s-unit"><option value="CFT">CFT</option><option value="টন" data-bn="টন" data-en="Ton">টন</option><option value="Pcs" data-bn="Pcs" data-en="Pcs">Pcs</option><option value="হাজার" data-bn="হাজার" data-en="Thousand">হাজার</option></select></div></div>' +
+          '</div>' +
+          '<div id="s-vehicle-pricing-box" style="display:none;">' +
+          '<div style="display:flex;gap:10px;"><div class="form-group" style="flex:1;"><label data-bn="মোট গাড়ি সংখ্যা:" data-en="Number of Vehicles:">মোট গাড়ি সংখ্যা:</label><input type="number" id="s-vehicle-count" min="0" step="1" oninput="calculateSalesTotal()" placeholder="০"></div><div class="form-group" style="flex:1;"><label data-bn="প্রতি গাড়িতে মাল পরিমাণ:" data-en="Material Quantity per Vehicle:">প্রতি গাড়িতে মাল পরিমাণ:</label><input type="number" id="s-qty-per-vehicle" min="0" oninput="calculateSalesTotal()" placeholder="০"></div></div>' +
+          '<div class="form-group"><label data-bn="প্রতি গাড়ির মাল একক:" data-en="Material Unit per Vehicle:">প্রতি গাড়ির মাল একক:</label><select id="s-vehicle-unit" onchange="calculateSalesTotal()"><option value="CFT">CFT</option><option value="টন" data-bn="টন" data-en="Ton">টন</option><option value="Pcs" data-bn="Pcs" data-en="Pcs">Pcs</option></select></div>' +
+          '<div class="form-group"><label data-bn="প্রতি গাড়ির বিক্রি দর (৳):" data-en="Selling Price per Vehicle (৳):">প্রতি গাড়ির বিক্রি দর (৳):</label><input type="number" id="s-rate-per-vehicle" oninput="calculateSalesTotal()" placeholder="৳"></div>' +
+          '<div style="background:#eef6ff;border:1px solid #b8d8ff;border-radius:10px;padding:10px;margin:8px 0;font-size:.92em;"><b data-bn="স্টকে বাদ যাবে:" data-en="Stock deduction:">স্টকে বাদ যাবে:</b> <span id="s-stock-qty-preview">0</span></div>' +
+          '</div>' +
+          '<div class="form-group"><label id="s-rate-label" data-bn="প্রতি এককের বিক্রি দর (রেট ৳):" data-en="Selling Rate per Unit (৳):">প্রতি এককের বিক্রি দর (রেট ৳):</label><input type="number" id="s-rate" oninput="calculateSalesTotal()" placeholder="৳"></div>' +
           '<div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="মোট বিক্রয় মূল্য (৳):" data-en="Total Sales Value (৳):">মোট বিক্রয় মূল্য (৳):</label><input type="number" id="s-total" readonly style="background: #e9ecef;"></div><div class="form-group" style="flex: 1;"><label data-bn="নগদ জমা (৳):" data-en="Cash Received (৳):">নগদ জমা (৳):</label><input type="number" id="s-paid" oninput="calculateSalesTotal()" placeholder="৳"></div></div>' +
           '<div class="form-group"><label data-bn="পণ্যের বাকি টাকা (৳):" data-en="Product Due (৳):">পণ্যের বাকি টাকা (৳):</label><input type="number" id="s-due" readonly style="background: #fff3cd; color: red; font-weight: bold;"></div>' +
           '<button class="btn-submit" style="background: #2ecc71;" onclick="saveSale()" data-bn="বিক্রয়ের হিসাব সেভ করুন" data-en="Save Sales Entry">বিক্রয়ের হিসাব সেভ করুন</button>' +
@@ -2056,6 +2065,7 @@
       updateProductOptions();
       renderSalesTable();
       applyLanguageToCurrentView();
+      if(document.getElementById('s-pricing-mode')) toggleSalePricingMode();
     }
 
     /* ---------------- হেলপার ফংশনসমূহ ---------------- */
@@ -2131,17 +2141,50 @@
       calculateTransportFare('p');
     }
 
+    function toggleSalePricingMode() {
+      var modeEl=document.getElementById('s-pricing-mode');
+      if(!modeEl) return;
+      var mode=modeEl.value;
+      var unitBox=document.getElementById('s-unit-pricing-box');
+      var vehicleBox=document.getElementById('s-vehicle-pricing-box');
+      var rateLabel=document.getElementById('s-rate-label');
+      var rateInput=document.getElementById('s-rate');
+      if(mode==='vehicle'){
+        if(unitBox) unitBox.style.display='none';
+        if(vehicleBox) vehicleBox.style.display='block';
+        if(rateLabel) rateLabel.innerText=T('প্রতি গাড়ির বিক্রি দর (৳):','Selling Price per Vehicle (৳):');
+        if(rateInput) rateInput.style.display='none';
+      }else{
+        if(unitBox) unitBox.style.display='block';
+        if(vehicleBox) vehicleBox.style.display='none';
+        if(rateLabel) rateLabel.innerText=T('প্রতি এককের বিক্রি দর (রেট ৳):','Selling Rate per Unit (৳):');
+        if(rateInput) rateInput.style.display='block';
+      }
+      calculateSalesTotal();
+    }
+
     function calculateSalesTotal() {
-      var qty = parseFloat(document.getElementById('s-qty').value) || 0;
-      var rate = parseFloat(document.getElementById('s-rate').value) || 0;
+      var mode=(document.getElementById('s-pricing-mode')||{}).value||'unit';
       var paid = parseFloat(document.getElementById('s-paid').value) || 0;
-
-      var total = qty * rate;
-      var due = total - paid;
-
-      document.getElementById('s-total').value = total.toFixed(2);
-      document.getElementById('s-due').value = due.toFixed(2);
-
+      var qty=0, rate=0, total=0;
+      if(mode==='vehicle'){
+        var vehicleCount=parseFloat(document.getElementById('s-vehicle-count').value)||0;
+        var qtyPerVehicle=parseFloat(document.getElementById('s-qty-per-vehicle').value)||0;
+        var vehicleUnit=(document.getElementById('s-vehicle-unit')||{}).value||'CFT';
+        rate=parseFloat(document.getElementById('s-rate-per-vehicle').value)||0;
+        qty=vehicleCount*qtyPerVehicle;
+        total=vehicleCount*rate;
+        var pQty=document.getElementById('s-stock-qty-preview');
+        if(pQty) pQty.innerText=qty>0 ? (qtyPerVehicle+' '+vehicleUnit+' × '+vehicleCount+' '+T('গাড়ি','vehicles')+' = '+qty+' '+vehicleUnit) : '0';
+      }else{
+        qty=parseFloat(document.getElementById('s-qty').value)||0;
+        rate=parseFloat(document.getElementById('s-rate').value)||0;
+        total=qty*rate;
+        var pQty2=document.getElementById('s-stock-qty-preview'); if(pQty2)pQty2.innerText='0';
+      }
+      var due=total-paid;
+      document.getElementById('s-total').value=total.toFixed(2);
+      document.getElementById('s-due').value=due.toFixed(2);
       calculateTransportFare('s');
     }
 
@@ -2287,11 +2330,20 @@
       var transportFareDue = transportFare - transportPaid;
 
       var item = document.getElementById('s-item').value;
-      var qty = document.getElementById('s-qty').value || '0';
-      var unit = document.getElementById('s-unit').value;
+      var pricingMode = (document.getElementById('s-pricing-mode')||{}).value || 'unit';
+      var vehicleCount = pricingMode==='vehicle' ? (parseFloat(document.getElementById('s-vehicle-count').value)||0) : 0;
+      var qtyPerVehicle = pricingMode==='vehicle' ? (parseFloat(document.getElementById('s-qty-per-vehicle').value)||0) : 0;
+      var unit = pricingMode==='vehicle' ? ((document.getElementById('s-vehicle-unit')||{}).value||'CFT') : document.getElementById('s-unit').value;
+      var qty = pricingMode==='vehicle' ? (vehicleCount*qtyPerVehicle) : (parseFloat(document.getElementById('s-qty').value)||0);
+      var rate = pricingMode==='vehicle' ? (parseFloat(document.getElementById('s-rate-per-vehicle').value)||0) : (parseFloat(document.getElementById('s-rate').value)||0);
       var total = document.getElementById('s-total').value || '0.00';
       var paid = parseFloat(document.getElementById('s-paid').value) || 0;
       var due = parseFloat(document.getElementById('s-due').value) || 0;
+
+      if(pricingMode==='vehicle' && (vehicleCount<=0 || qtyPerVehicle<=0 || rate<=0)){
+        alert(T('গাড়ি সংখ্যা, প্রতি গাড়ির মাল পরিমাণ এবং প্রতি গাড়ির বিক্রি দর সঠিকভাবে দিন।','Enter vehicle count, material quantity per vehicle and selling price per vehicle.'));
+        return;
+      }
 
       var id = Date.now();
 
@@ -2305,6 +2357,11 @@
         transportFare: transportFare,
         transportFarePaid: transportPaid,
         transportFareDue: transportFareDue,
+        pricingMode: pricingMode,
+        saleType: pricingMode==='vehicle' ? 'গাড়ি প্রতি' : 'একক অনুযায়ী',
+        vehicleCount: vehicleCount,
+        qtyPerVehicle: qtyPerVehicle,
+        rate: rate,
         item: item, qty: qty, unit: unit, total: total, paid: paid, due: due
       });
 
@@ -2339,6 +2396,12 @@
       document.getElementById('s-trans-due').value = '';
       document.getElementById('s-qty').value = '';
       document.getElementById('s-rate').value = '';
+      if(document.getElementById('s-vehicle-count')) document.getElementById('s-vehicle-count').value = '';
+      if(document.getElementById('s-qty-per-vehicle')) document.getElementById('s-qty-per-vehicle').value = '';
+      if(document.getElementById('s-rate-per-vehicle')) document.getElementById('s-rate-per-vehicle').value = '';
+      if(document.getElementById('s-stock-qty-preview')) document.getElementById('s-stock-qty-preview').innerText = '0';
+      if(document.getElementById('s-pricing-mode')) document.getElementById('s-pricing-mode').value = 'unit';
+      toggleSalePricingMode();
       document.getElementById('s-total').value = '';
       document.getElementById('s-paid').value = '';
       document.getElementById('s-due').value = '';
@@ -2356,7 +2419,7 @@
           '<td>' + data.supplier + '<br><small style="color: #666;">' + data.phone + '</small></td>' +
           '<td>' + data.transportDetails + '<br><small style="color:#6f42c1;">ভাড়া: ' + data.transportFare + '৳ | বাকি: ' + data.transportFareDue + '৳</small></td>' +
           '<td>' + data.item + '</td>' +
-          '<td>' + data.qty + ' ' + data.unit + '</td>' +
+          '<td>' + (data.pricingMode==='vehicle' ? '<b>গাড়ি প্রতি</b><br>'+data.vehicleCount+' গাড়ি × '+data.qtyPerVehicle+' '+data.unit+'<br><small>মোট: '+data.qty+' '+data.unit+'</small>' : data.qty + ' ' + data.unit) + '</td>' +
           '<td>' + data.total + ' ৳</td>' +
           '<td style="color: green;">' + data.paid + ' ৳</td>' +
           '<td style="color: red; font-weight: bold;">' + data.due + ' ৳</td>' +
@@ -2431,21 +2494,23 @@
     function calculateStock(){
       var m={};
       productList.forEach(function(p){
-        m[p.name]={name:p.name,unit:p.unit,qty:0,cftQty:0,tonQty:0,min:p.min||0,rate:getStockConversionRate(p.name)};
+        m[p.name]={name:p.name,unit:p.unit,qty:0,cftQty:0,tonQty:0,pcQty:0,min:p.min||0,rate:getStockConversionRate(p.name)};
       });
       purchaseList.forEach(function(x){
-        m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,cftQty:0,tonQty:0,min:0,rate:getStockConversionRate(x.item)};
+        m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,cftQty:0,tonQty:0,pcQty:0,min:0,rate:getStockConversionRate(x.item)};
         var q=parseFloat(x.qty)||0;
         m[x.item].qty += q;
         if(String(x.unit).toLowerCase()==='cft'){m[x.item].cftQty+=q;m[x.item].tonQty+=qtyToTon(q,x.unit,x.item);}
         else if(String(x.unit).toLowerCase()==='ton'||String(x.unit)==='টন'){m[x.item].tonQty+=q;m[x.item].cftQty+=tonToCft(q,x.item);}
+        else if(['pcs','pc','piece','pieces','পিস'].indexOf(String(x.unit).toLowerCase())>=0){m[x.item].pcQty+=q;}
       });
       salesList.forEach(function(x){
-        m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,cftQty:0,tonQty:0,min:0,rate:getStockConversionRate(x.item)};
+        m[x.item]=m[x.item]||{name:x.item,unit:x.unit,qty:0,cftQty:0,tonQty:0,pcQty:0,min:0,rate:getStockConversionRate(x.item)};
         var q=parseFloat(x.qty)||0;
         m[x.item].qty -= q;
         if(String(x.unit).toLowerCase()==='cft'){m[x.item].cftQty-=q;m[x.item].tonQty-=qtyToTon(q,x.unit,x.item);}
         else if(String(x.unit).toLowerCase()==='ton'||String(x.unit)==='টন'){m[x.item].tonQty-=q;m[x.item].cftQty-=tonToCft(q,x.item);}
+        else if(['pcs','pc','piece','pieces','পিস'].indexOf(String(x.unit).toLowerCase())>=0){m[x.item].pcQty-=q;}
       });
       return Object.values(m);
     }
@@ -2495,7 +2560,7 @@
     function buildBusinessReportRows(){
       var rows=[];
       purchaseList.forEach(function(x){rows.push({type:'purchase',typeBn:'ক্রয়',date:x.date||'',ref:x.challan||'',party:x.supplier||'',vehicle:x.transportName||'',site:'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||'',primary:true});});
-      salesList.forEach(function(x){rows.push({type:'sale',typeBn:'বিক্রয়',date:x.date||'',ref:x.memo||'',party:x.customer||'',vehicle:x.transportName||'',site:x.site||'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||'',primary:true});});
+      salesList.forEach(function(x){rows.push({type:'sale',typeBn:'বিক্রয়',date:x.date||'',ref:x.memo||'',party:x.customer||'',vehicle:x.transportName||'',site:x.site||'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.pricingMode==='vehicle'?((x.vehicleCount||0)+' গাড়ি × '+(x.qtyPerVehicle||0)+' '+(x.unit||'')+' = '+(x.qty||0)+' '+(x.unit||'')):(x.qty||''),unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||'',primary:true});});
       expenseList.forEach(function(x){rows.push({type:'expense',typeBn:'খরচ',date:x.date||'',ref:'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.category||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',primary:true});});
       // Auto-generated payment/cash rows are retained for their own filters, but are NOT included in the default "সব" view.
       paymentHistory.forEach(function(x){rows.push({type:'payment',typeBn:'পেমেন্ট',date:x.date||'',ref:x.sourceId||'',party:x.name||'',vehicle:'',site:'',boat:'',item:x.typeBn||x.type||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',autoSource:x.autoSource||'',primary:false});});
@@ -2608,7 +2673,7 @@
     function printSingleBusinessReport(key,asPdf){
       var cfg={
         purchase:{title:'কেনার খাতা',en:'Purchase Ledger',arr:purchaseList,keys:['date','challan','supplier','phone','item','qty','unit','total','paid','due','transportName']},
-        sale:{title:'বেচার খাতা',en:'Sales Ledger',arr:salesList,keys:['date','memo','customer','phone','site','item','qty','unit','total','paid','due','transportName']},
+        sale:{title:'বেচার খাতা',en:'Sales Ledger',arr:salesList,keys:['date','memo','customer','phone','site','item','saleType','qty','unit','total','paid','due','transportName']},
         expense:{title:'খরচের খাতা',en:'Expense Ledger',arr:expenseList,keys:['date','category','title','method','amount','note']},
         payment:{title:'পেমেন্ট ইতিহাস',en:'Payment History',arr:(paymentHistory||[]).concat(generalDuePayments||[]),keys:['date','name','typeBn','amount','note']},
         cash:{title:'ক্যাশ খাতা',en:'Cash Ledger',arr:cashList,keys:['date','type','title','amount']},
@@ -3139,8 +3204,9 @@
       if(!arr || !arr.length) return '<div class="report-section"><h2>'+esc(title)+'</h2><p>'+T('কোনো তথ্য নেই','No records found')+'</p></div>';
       var h='<div class="report-section"><h2>'+esc(title)+'</h2>';
       h+='<table><thead><tr>';
-      keys.forEach(function(k){h+='<th>'+esc(k)+'</th>';}); h+='</tr></thead><tbody>';
-      arr.forEach(function(x){h+='<tr>';keys.forEach(function(k){var v=x[k];if(v===undefined)v='';if(typeof v==='object')v=JSON.stringify(v);h+='<td>'+esc(v)+'</td>';});h+='</tr>';});
+      var labels={date:'তারিখ',challan:'চালান',supplier:'সাপ্লায়ার',phone:'ফোন',item:'পণ্য',qty:'পরিমাণ',unit:'একক',total:'মোট টাকা',paid:'পরিশোধ',due:'বাকি',memo:'মেমো',customer:'কাস্টমার',site:'সাইট',transportName:'পরিবহন',saleType:'বিক্রয়ের ধরন'};
+      keys.forEach(function(k){h+='<th>'+esc(labels[k]||k)+'</th>';}); h+='</tr></thead><tbody>';
+      arr.forEach(function(x){h+='<tr>';keys.forEach(function(k){var v=x[k];if(k==='qty' && x.pricingMode==='vehicle'){v=(x.vehicleCount||0)+' গাড়ি × '+(x.qtyPerVehicle||0)+' '+(x.unit||'')+' = '+(x.qty||0)+' '+(x.unit||'');}if(v===undefined)v='';if(typeof v==='object')v=JSON.stringify(v);h+='<td>'+esc(v)+'</td>';});h+='</tr>';});
       h+='</tbody>'+reportColumnTotalsHtml(arr,keys)+'</table></div>';
       return h;
     }
