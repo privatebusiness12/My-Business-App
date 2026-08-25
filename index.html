@@ -629,10 +629,43 @@
        ক্রয় বাকি + পরিবহন বাকি = আমাদের দিতে হবে।
        সাধারণ বাকি পরিশোধও 'আমাদের দিতে হবে' মোট থেকে বাদ যাবে।
        পুরোনো ডাটার কোনো রেকর্ড মুছে বা বদলে দেওয়া হয় না। */
+    function normalizePartyName(v){
+      return String(v==null?'':v).trim().toLowerCase().replace(/\s+/g,' ');
+    }
+    function transportPersonName(x){
+      if(!x)return '';
+      if(x.transportPersonName) return String(x.transportPersonName).trim();
+      var n=String(x.transportName||'').trim();
+      var m=n.match(/\(([^)]+)\)/);
+      if(m && m[1]) return m[1].trim();
+      var d=String(x.transportDetails||'');
+      var m2=d.match(/(?:ড্রাইভার|সুকানী|সুকানি|Driver|Sukani)\s*:\s*([^<\n]+)/i);
+      return m2&&m2[1]?m2[1].trim():'';
+    }
+    function partyNameMatches(a,b){
+      var x=normalizePartyName(a), y=normalizePartyName(b);
+      return !!x && !!y && x===y;
+    }
+    function generalDueAllocationsTotal(g){
+      return (Array.isArray(g&&g.allocations)?g.allocations:[]).reduce(function(sum,a){return sum+(parseFloat(a.amount)||0);},0);
+    }
+    function calculateLegacyPayableAdjustments(){
+      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
+        if(x.legacyGlobalDeduction) return sum+Math.max(0,parseFloat(x.amount)||0);
+        return sum;
+      },0);
+    }
+    function calculateLegacyReceivableAdjustments(){
+      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
+        if(x.legacyGlobalDeduction && x.direction==='receivable') return sum+Math.max(0,parseFloat(x.amount)||0);
+        return sum;
+      },0);
+    }
     function calculateCustomerReceivable(){
-      return (Array.isArray(salesList)?salesList:[]).reduce(function(sum,x){
+      var base=(Array.isArray(salesList)?salesList:[]).reduce(function(sum,x){
         return sum + Math.max(0,parseFloat(x.due)||0);
       },0);
+      return Math.max(0,base-calculateLegacyReceivableAdjustments());
     }
     function calculateSupplierPayable(){
       return (Array.isArray(purchaseList)?purchaseList:[]).reduce(function(sum,x){
@@ -651,12 +684,110 @@
       },0);
     }
     function calculateOurPayable(){
-      return Math.max(0, calculateSupplierPayable() + calculateTransportPayable() - calculateGeneralDuePaid());
+      return Math.max(0, calculateSupplierPayable() + calculateTransportPayable() - calculateLegacyPayableAdjustments());
     }
     function calculateOutstandingDue(){
-      /* Backward-compatible total: only the money we still have to pay.
-         Customer receivable is kept separate and is NOT mixed into this total. */
       return calculateOurPayable();
+    }
+
+    /* এককালীন পেমেন্ট: একই নামের আগের বাকি রেকর্ডগুলোতে FIFO পদ্ধতিতে সমন্বয় */
+    function getOneTimeCandidates(direction,matchType,name){
+      var target=normalizePartyName(name), out=[];
+      if(!target)return out;
+      if(direction==='receivable'){
+        salesList.forEach(function(x){
+          var match=(matchType==='customer' && partyNameMatches(x.customer,target)) ||
+                    (matchType==='site' && partyNameMatches(x.site,target));
+          if(match && (parseFloat(x.due)||0)>0) out.push({type:'sale',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
+        });
+      }else if(direction==='payable'){
+        purchaseList.forEach(function(x){
+          var match=(matchType==='supplier' && partyNameMatches(x.supplier,target)) ||
+                    (matchType==='driver' && partyNameMatches(transportPersonName(x),target));
+          if(match){
+            if(matchType==='supplier' && (parseFloat(x.due)||0)>0) out.push({type:'purchase',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
+            if(matchType==='driver' && (parseFloat(x.transportFareDue)||0)>0) out.push({type:'purchaseTransport',id:x.id,obj:x,field:'transportFareDue',available:parseFloat(x.transportFareDue)||0});
+          }
+        });
+      }
+      out.sort(function(a,b){
+        var ad=String(a.obj.date||''), bd=String(b.obj.date||'');
+        if(ad!==bd)return ad.localeCompare(bd);
+        return (Number(a.id)||0)-(Number(b.id)||0);
+      });
+      return out;
+    }
+    function applyOneTimeAllocations(direction,matchType,name,amount,applyNow){
+      var candidates=getOneTimeCandidates(direction,matchType,name), remaining=Math.max(0,parseFloat(amount)||0), allocations=[];
+      var available=candidates.reduce(function(sum,c){return sum+c.available;},0);
+      if(remaining<=0 || available+0.000001<remaining) return {ok:false,allocations:[],available:available};
+      candidates.forEach(function(c){
+        if(remaining<=0)return;
+        var take=Math.min(remaining,c.available);
+        if(take<=0)return;
+        if(applyNow!==false){
+          if(c.field==='due'){
+            c.obj.paid=(parseFloat(c.obj.paid)||0)+take;
+            c.obj.due=Math.max(0,(parseFloat(c.obj.total)||0)-c.obj.paid).toFixed(2);
+            c.obj.paid=c.obj.paid.toFixed(2);
+          }else if(c.field==='transportFareDue'){
+            c.obj.transportFarePaid=(parseFloat(c.obj.transportFarePaid)||0)+take;
+            c.obj.transportFarePaid=c.obj.transportFarePaid.toFixed(2);
+            c.obj.transportFareDue=Math.max(0,(parseFloat(c.obj.transportFare)||0)-parseFloat(c.obj.transportFarePaid)).toFixed(2);
+          }
+        }
+        allocations.push({sourceType:c.type,sourceId:c.id,field:c.field,amount:take});
+        remaining-=take;
+      });
+      return {ok:remaining<0.000001,allocations:allocations,available:available};
+    }
+    function reverseOneTimeAllocations(g){
+      if(!g || !Array.isArray(g.allocations))return;
+      g.allocations.forEach(function(a){
+        var obj=null;
+        if(a.sourceType==='sale') obj=salesList.find(function(r){return r.id===a.sourceId;});
+        else if(a.sourceType==='purchase'||a.sourceType==='purchaseTransport') obj=purchaseList.find(function(r){return r.id===a.sourceId;});
+        if(!obj)return;
+        var amt=parseFloat(a.amount)||0;
+        if(a.field==='due'){
+          obj.paid=Math.max(0,(parseFloat(obj.paid)||0)-amt).toFixed(2);
+          obj.due=Math.max(0,(parseFloat(obj.total)||0)-parseFloat(obj.paid)).toFixed(2);
+        }else if(a.field==='transportFareDue'){
+          obj.transportFarePaid=Math.max(0,(parseFloat(obj.transportFarePaid)||0)-amt).toFixed(2);
+          obj.transportFareDue=Math.max(0,(parseFloat(obj.transportFare)||0)-parseFloat(obj.transportFarePaid)).toFixed(2);
+        }
+      });
+      g.allocations=[];
+    }
+    function inferLegacyPayableMatch(name){
+      var target=normalizePartyName(name), supplierHits=0, driverHits=0, supplierType='';
+      purchaseList.forEach(function(x){
+        if(partyNameMatches(x.supplier,target) && (parseFloat(x.due)||0)>0){supplierHits++;supplierType='supplier';}
+        if(partyNameMatches(transportPersonName(x),target) && (parseFloat(x.transportFareDue)||0)>0){driverHits++;}
+      });
+      if(supplierHits===1 && driverHits===0)return 'supplier';
+      if(driverHits===1 && supplierHits===0)return 'driver';
+      return '';
+    }
+    function migrateGeneralDuePayments(){
+      var changed=false;
+      (Array.isArray(generalDuePayments)?generalDuePayments:[]).forEach(function(g){
+        if(g.allocationVersion)return;
+        if(!g.direction)g.direction='payable';
+        if(!g.matchType || g.matchType==='general'){
+          var inferred=inferLegacyPayableMatch(g.name||'');
+          if(inferred){
+            var r=applyOneTimeAllocations('payable',inferred,g.name,parseFloat(g.amount)||0,true);
+            if(r.ok){g.matchType=inferred;g.allocations=r.allocations;g.legacyGlobalDeduction=false;}
+            else {g.matchType='general';g.allocations=[];g.legacyGlobalDeduction=true;}
+          }else{
+            g.matchType='general';g.allocations=[];g.legacyGlobalDeduction=true;
+          }
+        }
+        g.allocationVersion=1; changed=true;
+      });
+      if(changed){scheduleCloudSave();}
+      return changed;
     }
     function getPrintSettings(prefix){
       var p=prefix||'print';
@@ -782,6 +913,7 @@
           document.getElementById('auth-status').innerText='';
           updateDashboardUser(user);
           await loadCloudData();
+          migrateGeneralDuePayments();
           updateDashboardQuickStats();
           startCloudAutoSave();
         }else{
@@ -1816,18 +1948,19 @@
                 '<option value="customer">কাস্টমার পণ্য বাকি জমা</option>' +
                 '<option value="supplier">মহাজন পণ্য বাকি পরিশোধ</option>' +
                 '<option value="transport">গাড়ি ভাড়া / ট্রান্সপোর্ট বাকি পরিশোধ</option>' +
-                '<option value="general">অন্য ব্যক্তি/মহাজনের কাছে সাধারণ বাকি পরিশোধ</option>' +
+                '<option value="oneTimeReceivable">এককালীন জমা — আমি পাবো (কাস্টমার / সাইট)</option><option value="oneTimePayable">এককালীন পরিশোধ — আমি দেবো (সাপ্লায়ার / ড্রাইভার / সুকানী)</option><option value="general">অন্য ব্যক্তি/মহাজনের কাছে সাধারণ বাকি পরিশোধ</option>' +
               '</select>' +
             '</div>' +
           '</div>' +
           '<div class="form-group" id="pay-person-wrap"><label data-bn="ব্যক্তি / পরিবহন নির্বাচন করুন:" data-en="Select Person / Transport:">ব্যক্তি / পরিবহন নির্বাচন করুন:</label><select id="pay-person-id"></select></div>' +
-          '<div class="form-group" id="pay-general-name-wrap" style="display:none;"><label>ব্যক্তি / প্রতিষ্ঠানের নাম:</label><input type="text" id="pay-general-name" placeholder="যার কাছে টাকা দিলেন"></div>' +
+          '<div class="form-group" id="pay-one-time-type-wrap" style="display:none;"><label data-bn="এককালীন সমন্বয়ের ধরন:" data-en="One-time Match Type:">এককালীন সমন্বয়ের ধরন:</label><select id="pay-one-time-type"><option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option></select></div>' +
+          '<div class="form-group" id="pay-general-name-wrap" style="display:none;"><label>ব্যক্তি / প্রতিষ্ঠান / সাইটের নাম:</label><input type="text" id="pay-general-name" list="pay-party-suggestions" placeholder="যে নামের আগের বাকি সমন্বয় হবে"><datalist id="pay-party-suggestions"></datalist></div>' +
           '<div style="display: flex; gap: 10px; flex-wrap:wrap;">' +
             '<div class="form-group" style="flex: 1; min-width:180px;"><label data-bn="টাকার পরিমাণ:" data-en="Amount:">টাকার পরিমাণ:</label><input type="number" id="pay-amount" min="0.01" step="0.01" placeholder="৳"></div>' +
             '<div class="form-group" style="flex: 1; min-width:180px;"><label data-bn="নোট / মাধ্যম:" data-en="Note / Method:">নোট / মাধ্যম:</label><input type="text" id="pay-note" placeholder="যেমন: ক্যাশ / বিকাশ / ব্যাংক"></div>' +
           '</div>' +
           '<button class="btn-submit" onclick="submitPaymentEntry()" data-bn="পরিশোধ/জমা সেভ করুন" data-en="Save Payment / Collection">পরিশোধ/জমা সেভ করুন</button>' +
-          '<div style="margin-top:10px;color:#6c757d;font-size:.88em;">সাধারণ বাকি পরিশোধ করলে এটি মোট বাকি হিসাব থেকে আলাদাভাবে সমন্বয় হবে, আর পরবর্তীতে পেমেন্ট ইতিহাসে দেখা যাবে।</div>' +
+          '<div style="margin-top:10px;color:#6c757d;font-size:.88em;">এককালীন জমা/পরিশোধ নির্বাচন করলে একই কাস্টমার, সাইট, সাপ্লায়ার বা ড্রাইভার/সুকানীর আগের বাকি থেকে টাকা স্বয়ংক্রিয়ভাবে কমবে। পুরোনো সাধারণ বাকি রেকর্ডও রাখা থাকবে।</div>' +
         '</div>' +
 
         '<div class="section-card"><h3 data-bn="কাস্টমারের পন্যের বাকির তালিকা (পাবো)" data-en="Customer Product Due List (Receivable)">কাস্টমারের পন্যের বাকির তালিকা (পাবো)</h3><div class="table-responsive"><table><thead><tr><th data-bn="কাস্টমার নাম" data-en="Customer Name">কাস্টমার নাম</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="সাইট" data-en="Site">সাইট</th><th data-bn="পণ্যের বাকি" data-en="Product Due">পণ্যের বাকি</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="customer-due-records"></tbody></table></div></div>' +
@@ -1873,15 +2006,32 @@
       var type=typeEl?typeEl.value:'';
       var wrap=document.getElementById('pay-person-wrap');
       var nameWrap=document.getElementById('pay-general-name-wrap');
+      var matchWrap=document.getElementById('pay-one-time-type-wrap');
       var select=document.getElementById('pay-person-id');
-      if(type==='general'){
-        if(wrap) wrap.style.display='none';
-        if(nameWrap) nameWrap.style.display='block';
-        if(select) select.innerHTML='<option value="general">সাধারণ বাকি</option>';
+      var matchSel=document.getElementById('pay-one-time-type');
+      if(type==='general' || type==='oneTimeReceivable' || type==='oneTimePayable'){
+        if(wrap)wrap.style.display='none';
+        if(nameWrap)nameWrap.style.display='block';
+        if(matchWrap)matchWrap.style.display=(type==='general'?'none':'block');
+        if(select)select.innerHTML='<option value="general">সাধারণ বাকি</option>';
+        if(matchSel && type==='oneTimeReceivable') matchSel.innerHTML='<option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option>';
+        if(matchSel && type==='oneTimePayable') matchSel.innerHTML='<option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option>';
+        buildPartySuggestions(type);
       }else{
-        if(wrap) wrap.style.display='block';
-        if(nameWrap) nameWrap.style.display='none';
+        if(wrap)wrap.style.display='block';
+        if(nameWrap)nameWrap.style.display='none';
+        if(matchWrap)matchWrap.style.display='none';
       }
+    }
+    function buildPartySuggestions(type){
+      var dl=document.getElementById('pay-party-suggestions'); if(!dl)return;
+      var names=[];
+      if(type==='oneTimeReceivable'){
+        salesList.forEach(function(x){ if((parseFloat(x.due)||0)>0){names.push(x.customer);names.push(x.site);} });
+      }else if(type==='oneTimePayable'){
+        purchaseList.forEach(function(x){ if((parseFloat(x.due)||0)>0)names.push(x.supplier); if((parseFloat(x.transportFareDue)||0)>0)names.push(transportPersonName(x)); });
+      }
+      var seen={}; dl.innerHTML=''; names.forEach(function(n){var k=normalizePartyName(n);if(k&&!seen[k]){seen[k]=1;dl.innerHTML+='<option value="'+esc(String(n))+'"></option>';}});
     }
 
     function submitPaymentEntry() {
@@ -1889,73 +2039,77 @@
       var typeEl=document.getElementById('pay-person-type');
       var amountEl=document.getElementById('pay-amount');
       var noteEl=document.getElementById('pay-note');
-      var date = dateEl ? dateEl.value : '';
-      var type = typeEl ? typeEl.value : '';
-      var rawVal = document.getElementById('pay-person-id') ? document.getElementById('pay-person-id').value : '';
-      var amount = parseFloat(amountEl ? amountEl.value : '0');
-      var note = (noteEl ? noteEl.value : '') || 'Payment Entry';
-      var saved = false;
+      var date=dateEl?dateEl.value:'';
+      var type=typeEl?typeEl.value:'';
+      var rawVal=document.getElementById('pay-person-id')?document.getElementById('pay-person-id').value:'';
+      var amount=parseFloat(amountEl?amountEl.value:'0');
+      var note=(noteEl?noteEl.value:'')||'Payment Entry';
+      var saved=false;
+      if(!date||!amount||amount<=0){alert('দয়া করে তারিখ ও সঠিক টাকার পরিমাণ দিন!');return;}
 
-      if(!date || !amount || amount <= 0) {
-        alert("দয়া করে তারিখ ও সঠিক টাকার পরিমাণ দিন!");
-        return;
-      }
-
-      if(type === 'general') {
+      if(type==='oneTimeReceivable' || type==='oneTimePayable'){
         var gNameEl=document.getElementById('pay-general-name');
-        var gName=(gNameEl?gNameEl.value:'').trim() || 'অন্য ব্যক্তি / সাধারণ বাকি';
+        var gName=(gNameEl?gNameEl.value:'').trim();
+        var matchEl=document.getElementById('pay-one-time-type');
+        var matchType=matchEl?matchEl.value:'';
+        var direction=type==='oneTimeReceivable'?'receivable':'payable';
+        if(!gName){alert('যে ব্যক্তি/সাইটের আগের বাকি সমন্বয় হবে তার নাম দিন।');return;}
+        var alloc=applyOneTimeAllocations(direction,matchType,gName,amount,false);
+        if(!alloc.ok){
+          alert('এই নামে/ধরনে যত বাকি পাওয়া গেছে ('+alloc.available.toFixed(2)+' ৳), তার চেয়ে বেশি টাকা দেওয়া হয়েছে। আগে বাকি হিসাব পরীক্ষা করুন।');
+          return;
+        }
         var generalId=uid();
+        var applied=applyOneTimeAllocations(direction,matchType,gName,amount,true);
         generalDuePayments.push({
-          id: generalId, date: date, name: gName, amount: amount, note: note,
-          type:'General Due Payment', typeBn:'সাধারণ বাকি পরিশোধ'
+          id:generalId,date:date,name:gName,amount:amount,note:note,
+          direction:direction,matchType:matchType,allocations:applied.allocations,
+          legacyGlobalDeduction:false,allocationVersion:1,
+          type:direction==='receivable'?'One-time Receivable Collection':'One-time Payable Payment',
+          typeBn:direction==='receivable'?'এককালীন কাস্টমার/সাইট জমা':'এককালীন সাপ্লায়ার/ড্রাইভার পরিশোধ'
         });
-        paymentHistory.push({ id:uid(), generalDueId:generalId, date: date, name: gName, type: 'General Due Payment', typeBn: 'সাধারণ বাকি পরিশোধ', amount: amount, note: note });
-        if(/ক্যাশ|cash|নগদ/i.test(note)) {
-          cashList.push({ id: Date.now()+1, date: date, type: 'out', title: 'সাধারণ বাকি পরিশোধ: ' + gName, amount: amount });
-        }
-        saved = true;
-      } else if(type === 'customer') {
-        var item = salesList.find(function(x) { return x.id === parseInt(rawVal); });
-        var due=parseFloat(item && item.due);
-        if(item && amount <= due) {
-          item.paid = (parseFloat(item.paid) + amount).toFixed(2);
-          item.due = Math.max(0, due - amount).toFixed(2);
-          paymentHistory.push({ id:uid(), sourceId:item.id, autoSource:'duePayment', date: date, name: item.customer, type: 'Customer Due Collection', typeBn: 'কাস্টমার পণ্য বাকি জমা', amount: amount, note: note });
-          if(/ক্যাশ|cash|নগদ/i.test(note)) cashList.push({ id: Date.now(), date: date, type: 'in', title: 'কাস্টমার বাকি আদায়: ' + item.customer, amount: amount });
+        paymentHistory.push({id:uid(),generalDueId:generalId,date:date,name:gName,type:direction==='receivable'?'One-time Collection':'One-time Payment',typeBn:direction==='receivable'?'এককালীন জমা':'এককালীন পরিশোধ',amount:amount,note:note});
+        if(/ক্যাশ|cash|নগদ/i.test(note)) cashList.push({id:uid(),generalDueId:generalId,date:date,type:direction==='receivable'?'in':'out',title:(direction==='receivable'?'এককালীন বাকি আদায়: ':'এককালীন বাকি পরিশোধ: ')+gName,amount:amount});
+        saved=true;
+      }else if(type==='general'){
+        var oldNameEl=document.getElementById('pay-general-name');
+        var oldName=(oldNameEl?oldNameEl.value:'').trim() || 'অন্য ব্যক্তি / সাধারণ বাকি';
+        var generalId2=uid();
+        generalDuePayments.push({id:generalId2,date:date,name:oldName,amount:amount,note:note,direction:'payable',matchType:'general',allocations:[],legacyGlobalDeduction:true,allocationVersion:1,type:'General Due Payment',typeBn:'সাধারণ বাকি পরিশোধ'});
+        paymentHistory.push({id:uid(),generalDueId:generalId2,date:date,name:oldName,type:'General Due Payment',typeBn:'সাধারণ বাকি পরিশোধ',amount:amount,note:note});
+        if(/ক্যাশ|cash|নগদ/i.test(note))cashList.push({id:uid(),generalDueId:generalId2,date:date,type:'out',title:'সাধারণ বাকি পরিশোধ: '+oldName,amount:amount});
+        saved=true;
+      }else if(type==='customer'){
+        var item=salesList.find(function(x){return x.id===parseInt(rawVal);});
+        var due=parseFloat(item&&item.due);
+        if(item&&amount<=due){
+          item.paid=(parseFloat(item.paid)+amount).toFixed(2);item.due=Math.max(0,due-amount).toFixed(2);
+          paymentHistory.push({id:uid(),sourceId:item.id,autoSource:'duePayment',date:date,name:item.customer,type:'Customer Due Collection',typeBn:'কাস্টমার পণ্য বাকি জমা',amount:amount,note:note});
+          if(/ক্যাশ|cash|নগদ/i.test(note))cashList.push({id:uid(),sourceId:item.id,autoSource:'duePayment',date:date,type:'in',title:'কাস্টমার বাকি আদায়: '+item.customer,amount:amount});
           saved=true;
         }
-      } else if(type === 'supplier') {
-        var pItem = purchaseList.find(function(x) { return x.id === parseInt(rawVal); });
-        var pDue=parseFloat(pItem && pItem.due);
-        if(pItem && amount <= pDue) {
-          pItem.paid = (parseFloat(pItem.paid) + amount).toFixed(2);
-          pItem.due = Math.max(0, pDue - amount).toFixed(2);
-          paymentHistory.push({ id:uid(), sourceId:pItem.id, autoSource:'duePayment', date: date, name: pItem.supplier, type: 'Supplier Due Paid', typeBn: 'মহাজন পণ্য বাকি পরিশোধ', amount: amount, note: note });
-          if(/ক্যাশ|cash|নগদ/i.test(note)) cashList.push({ id: Date.now(), date: date, type: 'out', title: 'মহাজন বাকি পরিশোধ: ' + pItem.supplier, amount: amount });
+      }else if(type==='supplier'){
+        var pItem=purchaseList.find(function(x){return x.id===parseInt(rawVal);});
+        var pDue=parseFloat(pItem&&pItem.due);
+        if(pItem&&amount<=pDue){
+          pItem.paid=(parseFloat(pItem.paid)+amount).toFixed(2);pItem.due=Math.max(0,pDue-amount).toFixed(2);
+          paymentHistory.push({id:uid(),sourceId:pItem.id,autoSource:'duePayment',date:date,name:pItem.supplier,type:'Supplier Due Paid',typeBn:'মহাজন পণ্য বাকি পরিশোধ',amount:amount,note:note});
+          if(/ক্যাশ|cash|নগদ/i.test(note))cashList.push({id:uid(),sourceId:pItem.id,autoSource:'duePayment',date:date,type:'out',title:'মহাজন বাকি পরিশোধ: '+pItem.supplier,amount:amount});
           saved=true;
         }
-      } else if(type === 'transport') {
-        var parts = rawVal.split('_');
-        var tObj = parts[0] === 'sale' ? salesList.find(function(x){return x.id === parseInt(parts[1]);}) : purchaseList.find(function(x){return x.id === parseInt(parts[1]);});
-        var tDue=parseFloat(tObj && tObj.transportFareDue);
-        if(tObj && amount <= tDue) {
-          tObj.transportFarePaid = (parseFloat(tObj.transportFarePaid || 0) + amount).toFixed(2);
-          tObj.transportFareDue = Math.max(0, tDue - amount).toFixed(2);
-          paymentHistory.push({ id:uid(), sourceId:tObj.id, autoSource:'transportDuePayment', date: date, name: tObj.transportName, type: 'Transport Fare Paid', typeBn: 'গাড়ি ভাড়া পরিশোধ', amount: amount, note: note });
-          if(/ক্যাশ|cash|নগদ/i.test(note)) cashList.push({ id: Date.now(), date: date, type: 'out', title: 'গাড়ি ভাড়া বাকি পরিশোধ: ' + tObj.transportName, amount: amount });
+      }else if(type==='transport'){
+        var parts=rawVal.split('_');
+        var tObj=parts[0]==='sale'?salesList.find(function(x){return x.id===parseInt(parts[1]);}):purchaseList.find(function(x){return x.id===parseInt(parts[1]);});
+        var tDue=parseFloat(tObj&&tObj.transportFareDue);
+        if(tObj&&amount<=tDue){
+          tObj.transportFarePaid=(parseFloat(tObj.transportFarePaid||0)+amount).toFixed(2);tObj.transportFareDue=Math.max(0,tDue-amount).toFixed(2);
+          paymentHistory.push({id:uid(),sourceId:tObj.id,autoSource:'transportDuePayment',date:date,name:tObj.transportName,type:'Transport Fare Paid',typeBn:'গাড়ি ভাড়া পরিশোধ',amount:amount,note:note});
+          if(/ক্যাশ|cash|নগদ/i.test(note))cashList.push({id:uid(),sourceId:tObj.id,autoSource:'transportDuePayment',date:date,type:'out',title:'গাড়ি ভাড়া বাকি পরিশোধ: '+tObj.transportName,amount:amount});
           saved=true;
         }
       }
-
-      if(!saved) {
-        alert("এই পরিমাণটি নির্বাচিত বাকি টাকার চেয়ে বেশি হতে পারে, অথবা কোনো রেকর্ড নির্বাচন করা হয়নি। আগে বাকি রেকর্ডটি পরীক্ষা করুন।");
-        return;
-      }
-
-      scheduleCloudSave();
-      updateDashboardQuickStats();
-      alert("পরিশোধের তথ্য সফলভাবে রেকর্ড করা হয়েছে এবং বাকি হিসাব আপডেট হয়েছে।");
-      openDueLedger();
+      if(!saved){alert('এই পরিমাণটি নির্বাচিত বাকি টাকার চেয়ে বেশি হতে পারে, অথবা কোনো রেকর্ড নির্বাচন করা হয়নি।');return;}
+      scheduleCloudSave();updateDashboardQuickStats();alert('পরিশোধ/জমার তথ্য সফলভাবে রেকর্ড হয়েছে এবং সংশ্লিষ্ট আগের বাকি আপডেট হয়েছে।');openDueLedger();
     }
 
     function renderDueTables() {
@@ -2855,7 +3009,7 @@
         sale:[['date','তারিখ','date'],['memo','মেমো/রেফারেন্স','text'],['customer','কাস্টমার','text'],['phone','মোবাইল','text'],['site','জায়গা/সাইট','text'],['item','পণ্য','text'],['pricingMode','বিক্রয় পদ্ধতি','text'],['vehicleCount','গাড়ি সংখ্যা','number'],['qtyPerVehicle','প্রতি গাড়ির পরিমাণ','number'],['rate','দর','number'],['qty','মোট পরিমাণ','number'],['unit','একক','text'],['total','মোট বিক্রয়','number'],['paid','জমা/পরিশোধ','number'],['due','বাকি','number'],['transportName','গাড়ি/নৌকা','text'],['transportFare','পরিবহন ভাড়া','number'],['transportFarePaid','পরিবহন ভাড়া পরিশোধ','number'],['transportFareDue','পরিবহন ভাড়া বাকি','number']],
         expense:[['date','তারিখ','date'],['category','ক্যাটাগরি','text'],['title','খরচের বিবরণ','text'],['amount','পরিমাণ','number'],['note','নোট','text']],
         payment:[['date','তারিখ','date'],['name','নাম','text'],['typeBn','পেমেন্টের ধরন','text'],['amount','পরিমাণ','number'],['note','নোট','text']],
-        generalDue:[['date','তারিখ','date'],['name','ব্যক্তি/প্রতিষ্ঠান','text'],['amount','পরিমাণ','number'],['note','নোট','text']],
+        generalDue:[['date','তারিখ','date'],['name','নাম','text'],['direction','দিক (receivable/payable)','text'],['matchType','মিলানোর ধরন (customer/site/supplier/driver/general)','text'],['amount','পরিমাণ','number'],['note','নোট','text']],
         cash:[['date','তারিখ','date'],['type','ধরন (in/out)','text'],['title','বিবরণ','text'],['amount','পরিমাণ','number']],
         bank:[['date','তারিখ','date'],['type','ধরন','text'],['title','বিবরণ','text'],['amount','পরিমাণ','number'],['note','নোট','text']],
         invoice:[['date','তারিখ','date'],['no','চালান নম্বর','text'],['customer','কাস্টমার','text'],['phone','মোবাইল','text'],['site','সাইট/ঠিকানা','text'],['item','পণ্য','text'],['qty','পরিমাণ','number'],['rate','দর','number'],['total','মোট','number'],['note','নোট','text']],
@@ -2875,11 +3029,23 @@
     function renderCorrections(){var d=document.getElementById('cr-list');if(!d)return;var rows=correctionRows();if(!rows.length){d.innerHTML='<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';return;}d.innerHTML='<div class="table-responsive"><table><thead><tr><th>ধরন</th><th>তারিখ/রেফ.</th><th>নাম/বিবরণ</th><th>পণ্য</th><th>পরিমাণ</th><th>মূল্য</th><th>বাকি</th><th>সংশোধন</th></tr></thead><tbody>'+rows.map(function(r){var x=r.x;return '<tr><td><b>'+esc(correctionLabel(r.type))+'</b></td><td>'+esc(x.date||x.no||x.trackingNo||'—')+'</td><td>'+esc(x.supplier||x.customer||x.name||x.title||x.party||'—')+'</td><td>'+esc(x.item||x.category||'—')+'</td><td>'+esc(x.qty||'—')+' '+esc(x.unit||'')+'</td><td>'+esc(x.total??x.amount??'—')+' ৳</td><td>'+esc(x.due??'—')+' ৳</td><td><button class="btn-action" onclick="openCorrectionEditor(\''+r.type+'\','+r.idx+')">✏️ সংশোধন</button></td></tr>';}).join('')+'</tbody></table></div>'}
     function openCorrectionEditor(type,idx){var arr=correctionArray(type),x=arr[idx];if(!x)return;var defs=correctionDefs(type);var d=document.getElementById('cr-modal');if(!d)return;d.style.display='block';d.innerHTML='<div class="section-card" style="border:2px solid #0d6efd;position:sticky;top:10px;z-index:20"><h3>✏️ '+esc(correctionLabel(type))+' — তথ্য সংশোধন</h3><div class="module-grid">'+defs.map(function(f){var v=x[f[0]];return '<div><label>'+esc(f[1])+'</label><input id="crf-'+f[0]+'" type="'+f[2]+'" value="'+esc(v==null?'':v)+'"></div>';}).join('')+'</div><div class="br-report-actions"><button class="btn-submit" onclick="saveCorrection(\''+type+'\','+idx+')">💾 সংরক্ষণ</button><button class="br-reset" onclick="closeCorrectionEditor()">বন্ধ করুন</button></div></div>';d.scrollIntoView({behavior:'smooth',block:'start'});}
     function closeCorrectionEditor(){var d=document.getElementById('cr-modal');if(d){d.style.display='none';d.innerHTML='';}}
+    function syncGeneralDuePaymentHistory(g){
+      if(!g||!g.id)return;
+      var h=paymentHistory.find(function(p){return p.generalDueId===g.id;});
+      if(h){
+        h.date=g.date;h.name=g.name;h.amount=parseFloat(g.amount)||0;h.note=g.note||'';
+        h.type=g.type||h.type;h.typeBn=g.typeBn||h.typeBn;
+      }
+    }
     function saveCorrection(type,idx){
       var arr=correctionArray(type),x=arr[idx];if(!x)return;
-
       var oldPaymentAmount=(type==='payment')?(parseFloat(x.amount)||0):0;
       var oldGeneralAmount=(type==='generalDue')?(parseFloat(x.amount)||0):0;
+      var oldGeneralState=null;
+      if(type==='generalDue'){
+        oldGeneralState={direction:x.direction,matchType:x.matchType,name:x.name,amount:oldGeneralAmount,legacyGlobalDeduction:!!x.legacyGlobalDeduction,allocations:Array.isArray(x.allocations)?x.allocations.map(function(a){return Object.assign({},a);}):[]};
+        if(Array.isArray(x.allocations)&&x.allocations.length)reverseOneTimeAllocations(x);
+      }
 
       correctionDefs(type).forEach(function(f){
         var el=document.getElementById('crf-'+f[0]);if(!el)return;
@@ -2888,71 +3054,54 @@
       });
 
       if(type==='purchase'||type==='sale'){
-        x.total=Math.max(0,parseFloat(x.total)||0);
-        x.paid=Math.max(0,parseFloat(x.paid)||0);
-
-        if(type==='sale' && x.pricingMode==='vehicle'){
-          var vc=Math.max(0,parseFloat(x.vehicleCount)||0);
-          var qpv=Math.max(0,parseFloat(x.qtyPerVehicle)||0);
-          if(vc>0 && qpv>0) x.qty=vc*qpv;
-          if(vc>0 && parseFloat(x.rate)>0) x.total=vc*(parseFloat(x.rate)||0);
+        x.total=Math.max(0,parseFloat(x.total)||0);x.paid=Math.max(0,parseFloat(x.paid)||0);
+        if(type==='sale'&&x.pricingMode==='vehicle'){
+          var vc=Math.max(0,parseFloat(x.vehicleCount)||0),qpv=Math.max(0,parseFloat(x.qtyPerVehicle)||0);
+          if(vc>0&&qpv>0)x.qty=vc*qpv;if(vc>0&&parseFloat(x.rate)>0)x.total=vc*(parseFloat(x.rate)||0);
         }
-        x.paid=Math.min(x.paid,x.total);
-        x.due=Math.max(0,x.total-x.paid);
-
-        if(x.transportFare!=null || x.transportFarePaid!=null || x.transportFareDue!=null){
-          x.transportFare=Math.max(0,parseFloat(x.transportFare)||0);
-          x.transportFarePaid=Math.max(0,parseFloat(x.transportFarePaid)||0);
-          x.transportFarePaid=Math.min(x.transportFarePaid,x.transportFare);
-          x.transportFareDue=Math.max(0,x.transportFare-x.transportFarePaid);
+        x.paid=Math.min(x.paid,x.total);x.due=Math.max(0,x.total-x.paid);
+        if(x.transportFare!=null||x.transportFarePaid!=null||x.transportFareDue!=null){
+          x.transportFare=Math.max(0,parseFloat(x.transportFare)||0);x.transportFarePaid=Math.max(0,parseFloat(x.transportFarePaid)||0);x.transportFarePaid=Math.min(x.transportFarePaid,x.transportFare);x.transportFareDue=Math.max(0,x.transportFare-x.transportFarePaid);
         }
       }
-
-      /* Correcting a payment record also updates the linked sale/purchase/transport
-         balance when the payment was created by the Due Ledger. */
       if(type==='payment'){
         var delta=(parseFloat(x.amount)||0)-oldPaymentAmount;
-        if(delta!==0 && x.sourceId){
+        if(delta!==0&&x.sourceId){
           if(x.autoSource==='duePayment'){
-            var linkedSale=salesList.find(function(r){return r.id===x.sourceId;});
-            var linkedPurchase=purchaseList.find(function(r){return r.id===x.sourceId;});
-            var linked=linkedSale||linkedPurchase;
-            if(linked){
-              linked.paid=Math.max(0,(parseFloat(linked.paid)||0)+delta);
-              linked.paid=Math.min(linked.paid,parseFloat(linked.total)||0);
-              linked.due=Math.max(0,(parseFloat(linked.total)||0)-linked.paid);
-            }
+            var linked=salesList.find(function(r){return r.id===x.sourceId;})||purchaseList.find(function(r){return r.id===x.sourceId;});
+            if(linked){linked.paid=Math.max(0,(parseFloat(linked.paid)||0)+delta);linked.paid=Math.min(linked.paid,parseFloat(linked.total)||0);linked.due=Math.max(0,(parseFloat(linked.total)||0)-linked.paid);}
           }else if(x.autoSource==='transportDuePayment'){
-            var linkedSaleT=salesList.find(function(r){return r.id===x.sourceId;});
-            var linkedPurchaseT=purchaseList.find(function(r){return r.id===x.sourceId;});
-            var linkedT=linkedSaleT||linkedPurchaseT;
-            if(linkedT){
-              linkedT.transportFarePaid=Math.max(0,(parseFloat(linkedT.transportFarePaid)||0)+delta);
-              linkedT.transportFarePaid=Math.min(linkedT.transportFarePaid,parseFloat(linkedT.transportFare)||0);
-              linkedT.transportFareDue=Math.max(0,(parseFloat(linkedT.transportFare)||0)-linkedT.transportFarePaid);
-            }
+            var linkedT=salesList.find(function(r){return r.id===x.sourceId;})||purchaseList.find(function(r){return r.id===x.sourceId;});
+            if(linkedT){linkedT.transportFarePaid=Math.max(0,(parseFloat(linkedT.transportFarePaid)||0)+delta);linkedT.transportFarePaid=Math.min(linkedT.transportFarePaid,parseFloat(linkedT.transportFare)||0);linkedT.transportFareDue=Math.max(0,(parseFloat(linkedT.transportFare)||0)-linkedT.transportFarePaid);}
           }
         }
       }
-
       if(type==='generalDue'){
-        var deltaGeneral=(parseFloat(x.amount)||0)-oldGeneralAmount;
-        /* The general payment is itself the adjustment record. Updating it in place
-           automatically changes the 'general payment deducted' total. */
-        if(x.amount<0)x.amount=0;
-        if(x.name==null||!String(x.name).trim())x.name='অন্য ব্যক্তি / সাধারণ বাকি';
+        x.amount=Math.max(0,parseFloat(x.amount)||0);
+        x.name=(String(x.name||'').trim()||'অন্য ব্যক্তি / সাধারণ বাকি');
+        x.direction=x.direction||oldGeneralState.direction||'payable';
+        x.matchType=x.matchType||oldGeneralState.matchType||'general';
+        if(x.matchType==='general'){
+          x.allocations=[];x.legacyGlobalDeduction=true;x.allocationVersion=1;
+        }else{
+          var alloc=applyOneTimeAllocations(x.direction,x.matchType,x.name,x.amount,true);
+          if(!alloc.ok){
+            /* revert to the previous allocation/state if the edited amount cannot be matched */
+            if(oldGeneralState.allocations&&oldGeneralState.allocations.length){
+              var restore=applyOneTimeAllocations(oldGeneralState.direction,oldGeneralState.matchType,oldGeneralState.name,oldGeneralState.amount,true);
+              x.allocations=restore.allocations;
+            }else{x.allocations=[];}
+            x.direction=oldGeneralState.direction||'payable';x.matchType=oldGeneralState.matchType||'general';x.name=oldGeneralState.name||x.name;x.amount=oldGeneralState.amount;x.legacyGlobalDeduction=oldGeneralState.legacyGlobalDeduction;
+            alert('সংশোধিত টাকার পরিমাণ নির্বাচিত পক্ষের মোট বাকি টাকার চেয়ে বেশি। আগের হিসাব অপরিবর্তিত রাখা হয়েছে।');return;
+          }
+          x.allocations=alloc.allocations;x.legacyGlobalDeduction=false;x.allocationVersion=1;
+        }
+        x.type=x.direction==='receivable'?'One-time Receivable Collection':'One-time Payable Payment';
+        x.typeBn=x.direction==='receivable'?'এককালীন কাস্টমার/সাইট জমা':'এককালীন সাপ্লায়ার/ড্রাইভার পরিশোধ';
+        syncGeneralDuePaymentHistory(x);
       }
-
-      if(type==='invoice'){
-        var q=parseFloat(x.qty)||0,rate=parseFloat(x.rate)||0;
-        if(!document.getElementById('crf-total')?.value)x.total=q*rate;
-      }
-
-      scheduleCloudSave();
-      saveAllExtra();
-      updateDashboardQuickStats();
-      closeCorrectionEditor();
-      renderCorrections();
+      if(type==='invoice'){var q=parseFloat(x.qty)||0,rate=parseFloat(x.rate)||0;if(!document.getElementById('crf-total')?.value)x.total=q*rate;}
+      scheduleCloudSave();saveAllExtra();updateDashboardQuickStats();closeCorrectionEditor();renderCorrections();
       if(type==='purchase'&&document.getElementById('purchase-records'))renderPurchaseTable();
       if(type==='sale'&&document.getElementById('sales-records'))renderSalesTable();
       if(type==='payment'&&document.getElementById('payment-history-records'))renderPaymentHistoryTable();
