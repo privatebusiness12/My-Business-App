@@ -493,6 +493,10 @@
           <i class="fa-solid fa-hand-holding-dollar tab-icon icon-purple"></i>
           <div class="tab-label" data-bn="ইনভেস্টরস" data-en="Investors">ইনভেস্টরস</div>
         </div>
+        <div class="tab-item" onclick="openVehicleBoatLedger()">
+          <i class="fa-solid fa-truck-fast tab-icon icon-blue"></i>
+          <div class="tab-label" data-bn="নৌকা ও গাড়ির হিসাব" data-en="Boat & Vehicle Ledger">নৌকা ও গাড়ির হিসাব</div>
+        </div>
       </div>
     </div>
 
@@ -2434,6 +2438,7 @@
         date: date,
         challan: challan || 'N/A', supplier: supplier, phone: phone || 'N/A',
         transportDetails: transportDetails,
+        transportMode: transportMode,
         transportName: transportName,
         transportPhone: transportPhone,
         transportFare: transportFare,
@@ -2534,6 +2539,7 @@
         date: date,
         memo: memo || 'N/A', customer: customer, phone: phone || 'N/A', site: site || 'N/A',
         transportDetails: transportDetails,
+        transportMode: transportMode,
         transportName: transportName,
         transportPhone: transportPhone,
         transportFare: transportFare,
@@ -2825,6 +2831,7 @@
           ${reportCenterCard('invoice','🧾','চালান','Invoices')}
           ${reportCenterCard('profit','📈','লাভ-ক্ষতির হিসাব','Profit & Loss')}
           ${reportCenterCard('investor','👥','ইনভেস্টরস','Investors')}
+          ${reportCenterCard('vehicleBoat','🚚','নৌকা ও গাড়ির হিসাব','Boat & Vehicle Ledger')}
         </div>
         <div class="section-card" style="margin-top:14px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0">
           <h3 style="margin:0 0 6px">📚 ${T('সকল রিপোর্ট একসাথে','All Reports Together')}</h3>
@@ -2875,6 +2882,7 @@
       if(key==='stock'){ return printStockReport(st); }
       if(key==='profit'){ return printProfitLossReport(st); }
       if(key==='investor'){ return printInvestorReport(); }
+      if(key==='vehicleBoat'){ return printVehicleBoatLedgerReport(); }
       if(!c)return;
       var arr=Array.isArray(c.arr)?c.arr:[];
       var table=printTableFromArray(T(c.title,c.en),arr,c.keys);
@@ -3143,6 +3151,70 @@
       var s=investorSummary(), p=parseFloat(profit)||0;
       return s.rows.map(function(x){return {name:x.name,total:x.total,share:x.share,profit:p*x.share/100};});
     }
+    /* ---------------- নৌকা ও গাড়ির পূর্ণ হিসাব ---------------- */
+    function normalizeVBText(v){ return String(v==null?'':v).trim().toLowerCase(); }
+    function parseTransportIdentity(x){
+      var raw=String(x.transportName||'').trim();
+      var mode=String(x.transportMode||'').toLowerCase();
+      var kind='vehicle', name=raw, person='';
+      if(mode==='bulkhead' || /^বালগেট\s*:/i.test(raw) || /^নৌকা\s*:/i.test(raw) || /bulkhead|boat/i.test(raw)) kind='boat';
+      var m=raw.match(/^(?:গাড়ি|বালগেট|নৌকা)\s*:\s*(.*?)\s*\((.*?)\)\s*$/i);
+      if(m){name=m[1].trim();person=m[2].trim();}
+      else if(raw){name=raw.replace(/^(গাড়ি|বালগেট|নৌকা)\s*:\s*/i,'').trim();}
+      if(!name) name=T('নাম নেই','Unnamed');
+      return {kind:kind,name:name,person:person,raw:raw};
+    }
+    function vehicleBoatRows(){
+      var map={};
+      function add(x,type){
+        var t=parseTransportIdentity(x); if(!t.raw) return;
+        var key=t.kind+'|'+normalizeVBText(t.name);
+        if(!map[key]) map[key]={kind:t.kind,name:t.name,person:t.person,count:0,purchaseCount:0,saleCount:0,qty:0,cft:0,ton:0,pcs:0,amount:0,paid:0,due:0,transportFare:0,transportPaid:0,transportDue:0,dates:[],vehicles:0};
+        var r=map[key]; r.count++; if(type==='purchase')r.purchaseCount++;else r.saleCount++;
+        var q=parseFloat(x.qty)||0, unit=String(x.unit||'').toLowerCase();
+        r.qty+=q; if(unit==='cft')r.cft+=q; else if(unit==='ton'||unit==='টন')r.ton+=q; else if(/pcs|piece|পিচ|pieces/i.test(unit))r.pcs+=q;
+        r.amount += parseFloat(x.total)||0; r.paid += parseFloat(x.paid)||0; r.due += Math.max(0,parseFloat(x.due)||0);
+        r.transportFare += parseFloat(x.transportFare)||0; r.transportPaid += parseFloat(x.transportFarePaid)||0; r.transportDue += Math.max(0,parseFloat(x.transportFareDue)||0);
+        r.vehicles += (parseFloat(x.vehicleCount)||0) || (type==='purchase' && /গাড়ি/i.test(r.raw||'')?1:0);
+        if(x.date)r.dates.push(x.date);
+        if(x.transportPhone)r.phone=x.transportPhone;
+      }
+      (Array.isArray(purchaseList)?purchaseList:[]).forEach(function(x){add(x,'purchase')});
+      (Array.isArray(salesList)?salesList:[]).forEach(function(x){add(x,'sale')});
+      return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.amount-a.amount;});
+    }
+    function vbFilteredRows(){
+      var from=(document.getElementById('vb-from')||{}).value||'',to=(document.getElementById('vb-to')||{}).value||'',q=normalizeVBText((document.getElementById('vb-search')||{}).value||''),type=(document.getElementById('vb-type')||{}).value||'all';
+      var map={};
+      function add(x,kind){
+        if(from && String(x.date||'')<from) return; if(to && String(x.date||'')>to) return; if(type!=='all'&&type!==kind)return;
+        var t=parseTransportIdentity(x); if(!t.raw)return; var key=t.kind+'|'+normalizeVBText(t.name);
+        var searchable=[t.name,t.person,t.raw,x.transportPhone,x.date,x.item,x.challan,x.memo,x.customer,x.supplier,x.site].join(' '); if(q && !normalizeVBText(searchable).includes(q))return;
+        if(!map[key])map[key]={kind:t.kind,name:t.name,person:t.person,count:0,purchaseCount:0,saleCount:0,qty:0,cft:0,ton:0,pcs:0,amount:0,paid:0,due:0,transportFare:0,transportPaid:0,transportDue:0,dates:[],vehicles:0};
+        var r=map[key],qv=parseFloat(x.qty)||0,unit=String(x.unit||'').toLowerCase(); r.count++; if(kind==='purchase')r.purchaseCount++;else r.saleCount++; r.qty+=qv;
+        if(unit==='cft')r.cft+=qv; else if(unit==='ton'||unit==='টন')r.ton+=qv; else if(/pcs|piece|পিচ|pieces/i.test(unit))r.pcs+=qv;
+        r.amount+=parseFloat(x.total)||0;r.paid+=parseFloat(x.paid)||0;r.due+=Math.max(0,parseFloat(x.due)||0);r.transportFare+=parseFloat(x.transportFare)||0;r.transportPaid+=parseFloat(x.transportFarePaid)||0;r.transportDue+=Math.max(0,parseFloat(x.transportFareDue)||0);r.vehicles+=(parseFloat(x.vehicleCount)||0) || (kind==='purchase'?1:0);if(x.date)r.dates.push(x.date);if(x.transportPhone)r.phone=x.transportPhone;
+      }
+      (Array.isArray(purchaseList)?purchaseList:[]).forEach(function(x){add(x,'purchase')}); (Array.isArray(salesList)?salesList:[]).forEach(function(x){add(x,'sale')});
+      return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.amount-a.amount;});
+    }
+    function vbTableHtml(rows,title){
+      var total=function(k){return rows.reduce(function(a,x){return a+(parseFloat(x[k])||0)},0)};
+      var h='<div class="report-section"><h2>'+esc(title)+'</h2><table><thead><tr><th>'+T('নাম','Name')+'</th><th>'+T('তারিখসমূহ','Dates')+'</th><th>'+T('ড্রাইভার/সুকানী','Driver/Sukani')+'</th><th>'+T('মোট বার','Times')+'</th><th>'+T('ক্রয়/এনেছে','Brought')+'</th><th>'+T('বিক্রয়/নিয়েছে','Taken')+'</th><th>CFT</th><th>Ton</th><th>Pcs</th><th>'+T('মোট টাকা','Total Amount')+'</th><th>'+T('পরিশোধ','Paid')+'</th><th>'+T('বাকি','Due')+'</th><th>'+T('ভাড়া বাকি','Fare Due')+'</th></tr></thead><tbody>';
+      rows.forEach(function(x){h+='<tr><td>'+esc(x.name)+'</td><td>'+esc(Array.from(new Set(x.dates||[])).sort().join(', ')||'—')+'</td><td>'+esc(x.person||'—')+'</td><td>'+x.count+'</td><td>'+x.purchaseCount+'</td><td>'+x.saleCount+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(3)+'</td><td>'+x.pcs.toFixed(2)+'</td><td>'+x.amount.toFixed(2)+'</td><td>'+x.paid.toFixed(2)+'</td><td>'+x.due.toFixed(2)+'</td><td>'+x.transportDue.toFixed(2)+'</td></tr>';});
+      h+='</tbody><tfoot><tr><th class="col-total-label">'+T('মোট:','Total:')+'</th><th>—</th><th>—</th><th class="col-total">'+total('count').toFixed(0)+'</th><th class="col-total">'+total('purchaseCount').toFixed(0)+'</th><th class="col-total">'+total('saleCount').toFixed(0)+'</th><th class="col-total">'+total('cft').toFixed(2)+'</th><th class="col-total">'+total('ton').toFixed(3)+'</th><th class="col-total">'+total('pcs').toFixed(2)+'</th><th class="col-total">'+total('amount').toFixed(2)+'</th><th class="col-total">'+total('paid').toFixed(2)+'</th><th class="col-total">'+total('due').toFixed(2)+'</th><th class="col-total">'+total('transportDue').toFixed(2)+'</th></tr></tfoot></table></div>';
+      return h;
+    }
+    function buildVehicleBoatReportHtml(st){
+      var rows=vbFilteredRows(), boats=rows.filter(function(x){return x.kind==='boat'}), vehicles=rows.filter(function(x){return x.kind==='vehicle'});
+      return '<div class="report-section"><h2>'+T('নৌকা ও গাড়ির পূর্ণ হিসাব','Complete Boat & Vehicle Ledger')+'</h2>'+vbTableHtml(vehicles,T('গাড়ি অনুযায়ী হিসাব','Vehicle-wise Summary'))+vbTableHtml(boats,T('নৌকা/বালগেট অনুযায়ী হিসাব','Boat/Bulkhead-wise Summary'))+'</div>';
+    }
+    function openVehicleBoatLedger(){
+      pageShell(['নৌকা ও গাড়ির হিসাব','Boat & Vehicle Ledger'],['কেনা-বেচার সব রেকর্ড থেকে নৌকা ও গাড়ি অনুযায়ী কতবার মাল আনা/নেওয়া হয়েছে, কত CFT/Ton/Pcs, মোট টাকা, পরিশোধ ও বাকি—আলাদা করে দেখুন।','Summarize every boat and vehicle by trips, material quantity, total amount, paid and due.'],`<div class="section-card"><div class="br-filter-grid"><div class="form-group"><label>${T('শুরুর তারিখ','From Date')}</label><input id="vb-from" type="date" oninput="renderVehicleBoatLedger()"></div><div class="form-group"><label>${T('শেষের তারিখ','To Date')}</label><input id="vb-to" type="date" oninput="renderVehicleBoatLedger()"></div><div class="form-group"><label>${T('ধরন','Type')}</label><select id="vb-type" onchange="renderVehicleBoatLedger()"><option value="all">${T('সব','All')}</option><option value="purchase">${T('শুধু কেনা / এনেছে','Purchase / Brought')}</option><option value="sale">${T('শুধু বেচা / নিয়েছে','Sales / Taken')}</option></select></div><div class="form-group wide"><label>${T('নৌকা/গাড়ি খুঁজুন','Search Boat/Vehicle')}</label><input id="vb-search" oninput="renderVehicleBoatLedger()" placeholder="${T('নাম, ড্রাইভার, সুকানী, গাড়ি...','Name, driver, sukani, vehicle...')}"></div></div><div class="br-report-actions"><button class="btn-submit" onclick="renderVehicleBoatLedger()">🔎 ${T('হিসাব দেখুন','Show Summary')}</button><button class="rc-print" onclick="printVehicleBoatLedgerReport()">🖨️ ${T('প্রিন্ট','Print')}</button><button class="rc-pdf" onclick="printVehicleBoatLedgerReport()">📄 PDF</button></div></div><div id="vb-result"></div>`);renderVehicleBoatLedger();
+    }
+    function renderVehicleBoatLedger(){var d=document.getElementById('vb-result');if(!d)return;var rows=vbFilteredRows(),boats=rows.filter(function(x){return x.kind==='boat'}),vehicles=rows.filter(function(x){return x.kind==='vehicle'});d.innerHTML='<div class="section-card"><div class="br-result-meta">'+T('মোট গাড়ি/নৌকা','Total Vehicles/Boats')+': '+rows.length+' | '+T('গাড়ি','Vehicles')+': '+vehicles.length+' | '+T('নৌকা/বালগেট','Boats/Bulkheads')+': '+boats.length+'</div>'+vbTableHtml(vehicles,T('🚚 গাড়ি অনুযায়ী হিসাব','🚚 Vehicle-wise Summary'))+vbTableHtml(boats,T('🛶 নৌকা/বালগেট অনুযায়ী হিসাব','🛶 Boat/Bulkhead-wise Summary'))+'</div>';}
+    function printVehicleBoatLedgerReport(){var st=getReportCenterSettings();var rows=vbFilteredRows(),boats=rows.filter(function(x){return x.kind==='boat'}),vehicles=rows.filter(function(x){return x.kind==='vehicle'});var html='<div class="report-head"><h1>'+T('নৌকা ও গাড়ির পূর্ণ হিসাব','Complete Boat & Vehicle Ledger')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div>'+vbTableHtml(vehicles,T('গাড়ি অনুযায়ী হিসাব','Vehicle-wise Summary'))+vbTableHtml(boats,T('নৌকা/বালগেট অনুযায়ী হিসাব','Boat/Bulkhead-wise Summary'))+'<div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):T('স্বাক্ষর','Signature'))+'</div></div>';var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:8px;margin-bottom:18px}th,td{border:1px solid #999;padding:4px;text-align:left;vertical-align:top}th{background:#eef2f7}.col-total-label,.col-total{font-weight:800!important;background:#fff}.report-section table tfoot th{border-top:2px solid #222;font-weight:800;background:#fff}.signature-block{text-align:right;margin-top:30px}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);}
+
     function openInvestors(){
       pageShell(['ইনভেস্টরস','Investors'],['ইনভেস্টরের বিনিয়োগ, মাধ্যম, মোট বিনিয়োগের অনুপাত এবং লাভের অংশ আলাদাভাবে পরিচালনা করুন।','Manage investor contributions, payment methods, ownership share and profit allocation separately.'],
       `<div class="section-card" style="border:1px solid #c7d2fe;background:#f8fafc">
@@ -3581,6 +3653,7 @@
         printTableFromArray(T('নোটপ্যাড','Notepad'),noteList||[],['title','body','date','pinned'])+
         printTableFromArray(T('চালান','Invoices'),invoiceList||[],['no','date','customer','phone','site','item','qty','rate','total','note'])+
         printTableFromArray(T('ইনভেস্টরস','Investors'),investorList||[],['date','investorName','amount','method','account','note'])+
+        buildVehicleBoatReportHtml(allPrintSettings)+
         '<div class="signature-block"><div class="sig-line">'+(allPrintSettings.signature?esc(allPrintSettings.signature):'স্বাক্ষর')+'</div></div>'+
         '</div>';
       var w=window.open('','_blank');
