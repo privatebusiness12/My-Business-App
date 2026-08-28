@@ -442,7 +442,23 @@ button{min-height:42px}
 body{font-size:13px}
 .table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table{min-width:700px}
 }
-</style></head>
+</style><style id="functional-control-v7">
+#final-control-center{width:100%;max-width:1200px;margin:0 auto;padding:10px}
+#final-control-center .control-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#final-control-center .control-grid button{width:100%;min-height:52px}
+#final-control-center .control-panel{overflow:hidden}
+.fc-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fc-row>*{min-width:0}.fc-actions{display:flex;gap:8px;flex-wrap:wrap}.fc-actions button{flex:1 1 150px}
+.fc-list{max-height:360px;overflow:auto;border:1px solid #ddd;border-radius:10px;padding:8px}
+.fc-list-item{padding:9px;border-bottom:1px solid #eee}
+@media(max-width:700px){#final-control-center .control-grid{grid-template-columns:1fr 1fr}.fc-row{grid-template-columns:1fr}}
+@media(max-width:420px){#final-control-center .control-grid{grid-template-columns:1fr}}
+</style>
+<style id="settings-bottom-v8">
+.settings-bottom-card{margin-bottom:18px}
+.settings-bottom-card .grid-container{margin-top:0}
+</style>
+</head>
 <body>
 
 
@@ -574,10 +590,6 @@ body{font-size:13px}
           <i class="fa-solid fa-truck-fast tab-icon icon-blue"></i>
           <div class="tab-label" data-bn="নৌকা ও গাড়ির হিসাব" data-en="Boat & Vehicle Ledger">নৌকা ও গাড়ির হিসাব</div>
         </div>
-        <div class="tab-item" onclick="showFinalControlCenter()">
-          <i class="fa-solid fa-gears tab-icon icon-purple"></i>
-          <div class="tab-label" data-bn="⚙️ সেটিংস ও কন্ট্রোল সেন্টার" data-en="⚙️ Settings & Control Center">⚙️ সেটিংস ও কন্ট্রোল সেন্টার</div>
-        </div>
       </div>
     </div>
 
@@ -634,6 +646,19 @@ body{font-size:13px}
       <button class="logout-btn" style="background:#dc3545" onclick="confirmFirebaseLogout()">
         <i class="fa-solid fa-right-from-bracket"></i><span data-bn="নিরাপদে লগআউট" data-en="Secure Logout">নিরাপদে লগআউট</span>
       </button>
+    </div>
+  </div>
+
+  <!-- একদম নিচে: সেটিংস ও কন্ট্রোল সেন্টার -->
+  <div class="section-card dashboard-section-card settings-bottom-card" style="margin-top:15px">
+    <div class="section-title"><i class="fa-solid fa-gears" style="color:#6f42c1"></i>
+      <span data-bn="সেটিংস ও কন্ট্রোল সেন্টার" data-en="Settings & Control Center">সেটিংস ও কন্ট্রোল সেন্টার</span>
+    </div>
+    <div class="grid-container" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+      <div class="tab-item" onclick="showFinalControlCenter()">
+        <i class="fa-solid fa-gears tab-icon icon-purple"></i>
+        <div class="tab-label" data-bn="⚙️ সেটিংস ও কন্ট্রোল সেন্টার খুলুন" data-en="⚙️ Open Settings & Control Center">⚙️ সেটিংস ও কন্ট্রোল সেন্টার খুলুন</div>
+      </div>
     </div>
   </div>
 
@@ -4083,46 +4108,7 @@ body{font-size:13px}
 <button onclick="finalPanel('backup')">💾 Backup & Restore</button><button onclick="finalPanel('security')">🔐 Security</button>
 <button onclick="finalPanel('notify')">🔔 Notification</button><button onclick="finalPanel('trash')">🗑️ Recycle Bin</button>
 <button onclick="finalPanel('history')">🕘 Complete History</button><button onclick="finalHealth()">🔎 Data Health Check</button>
-</div><div id="final-control-panel" class="control-panel"><h3>একটি অপশন নির্বাচন করুন</h3></div></section><script id="final-control-js">
-(function(){
-const P='pb_final_',get=(k,d)=>{try{return JSON.parse(localStorage.getItem(P+k))??d}catch(e){return d}},set=(k,v)=>localStorage.setItem(P+k,JSON.stringify(v));
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function hist(){return get('history',[])} function audit(a,s,d){let h=hist();h.push({time:new Date().toLocaleString('bn-BD'),action:a,section:s,details:d});set('history',h.slice(-3000))}
-window.finalPanel=function(t){const p=document.getElementById('final-control-panel');if(!p)return;const q={
-display:'<h3>🎨 Display & Language</h3><p>ভাষা, Theme ও Font Size আপনার বর্তমান Settings থেকেই পরিবর্তন করুন।</p>',
-business:'<h3>🏢 Business Information</h3><input id="fbn" placeholder="ব্যবসার নাম"><input id="fbo" placeholder="মালিকের নাম"><input id="fbp" placeholder="মোবাইল"><input id="fba" placeholder="ঠিকানা"><button onclick="saveBiz()">Save</button>',
-accounting:'<h3>💰 Accounting Settings</h3><input id="fac" value="৳" placeholder="Currency"><input id="fde" type="number" value="2" min="0" max="6" placeholder="Decimal"><button onclick="saveAcc()">Save</button>',
-party:'<h3>👥 Party Settings</h3><p>Customer, Supplier ও Site-এর পূর্ণ Statement রিপোর্ট থেকে ব্যবহার করুন।</p>',
-vehicle:'<h3>🚚 Vehicle & Boat</h3><p>গাড়ি/নৌকার Statement এবং CFT/Ton/Pcs হিসাব ব্যবহার করুন।</p>',
-bank:'<h3>🏦 Bank & Wallet</h3><p>Bank, bKash, Nagad, Rocket ও অন্যান্য account মূল Bank & Wallet খাতায় পরিচালনা করুন।</p>',
-print:'<h3>🖨️ Print & PDF</h3><p>A4, A5, Portrait ও Landscape-এর জন্য রিপোর্ট Print/PDF ব্যবহার করুন।</p>',
-report:'<h3>📊 Report Settings</h3><p>Date, Party, Vehicle, Boat ও Product অনুযায়ী রিপোর্ট filter করুন।</p>',
-backup:'<h3>💾 Backup & Restore</h3><button onclick="finalBackup()">Download Backup</button><input type="file" accept=".json" onchange="finalRestore(this.files[0])"><p>Restore করার আগে বর্তমান Backup নিন।</p>',
-security:'<h3>🔐 Security</h3><p>Firebase Authentication ব্যবহার করুন। Password HTML-এ সংরক্ষণ করবেন না।</p>',
-notify:'<h3>🔔 Notification</h3><p>Due ও Stock Reminder-এর জন্য আপনার বর্তমান Reminder system ব্যবহার করুন।</p>',
-trash:'<h3>🗑️ Recycle Bin</h3><p>বর্তমান Delete/Restore ব্যবস্থার সঙ্গে ব্যবহার করুন।</p>',
-history:'<h3>🕘 Complete History</h3><div id="final-history"></div><button onclick="printFinalHistory()">Print / PDF</button>'
-};p.innerHTML=q[t]||'';if(t==='history')renderHistory()};
-window.showFinalControlCenter=function(){
-  var home=document.getElementById('home-view'), sub=document.getElementById('sub-page-view'), content=document.getElementById('page-content'), title=document.getElementById('page-title'), source=document.getElementById('final-control-center');
-  if(!home||!sub||!content||!source)return;
-  document.querySelectorAll('.ledger-section').forEach(function(x){x.style.display='none'});
-  home.classList.remove('active-view'); sub.classList.add('active-view');
-  if(title) title.innerText='⚙️ সেটিংস ও কন্ট্রোল সেন্টার';
-  content.innerHTML='<div id="final-control-page" class="section-card final-control-page">'+source.innerHTML+'</div>';
-  var page=document.getElementById('final-control-page'); if(page) page.style.display='block';
-  audit('OPEN','Control Center','Opened as dedicated page');
-};
-window.saveBiz=function(){set('business',{name:fbn.value,owner:fbo.value,phone:fbp.value,address:fba.value});audit('SETTINGS','Business','Updated');alert('Saved')};
-window.saveAcc=function(){set('accounting',{currency:fac.value,decimal:+fde.value});audit('SETTINGS','Accounting','Updated');alert('Saved')};
-window.finalBackup=function(){const keys=['purchaseList','salesList','paymentHistory','expenseList','cashList','bankTransactions','generalDuePayments','investorList'];const data={version:2,createdAt:new Date().toISOString(),data:{},settings:{business:get('business',{}),accounting:get('accounting',{}),history:hist()}};keys.forEach(k=>data.data[k]=Array.isArray(window[k])?window[k]:[]);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='private-business-backup-'+Date.now()+'.json';a.click();audit('BACKUP','Data','Downloaded')};
-window.finalRestore=function(file){if(!file)return;const r=new FileReader();r.onload=()=>{let b;try{b=JSON.parse(r.result)}catch(e){return alert('Invalid backup')};if(!b.data||!confirm('Restore করবেন? আগে Backup নিন।'))return;Object.keys(b.data).forEach(k=>{if(Array.isArray(window[k]))window[k]=b.data[k]});audit('RESTORE','Data','Backup restored');if(typeof scheduleCloudSave==='function')scheduleCloudSave();if(typeof saveAllExtra==='function')saveAllExtra();if(typeof refreshAllDependentViews==='function')refreshAllDependentViews();alert('Restore complete')};r.readAsText(file)};
-function renderHistory(){let x=document.getElementById('final-history');if(x)x.innerHTML=hist().slice().reverse().map(h=>'<div><b>'+esc(h.action)+'</b> — '+esc(h.section)+' — '+esc(h.time)+'<br>'+esc(JSON.stringify(h.details))+'</div>').join('<hr>')||'No history'};
-window.printFinalHistory=function(){let w=window.open('','_blank');w.document.write('<html><body><h2>Private Business — Complete History</h2>'+document.getElementById('final-history').innerHTML+'</body></html>');w.document.close();w.print()};
-window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>(Array.isArray(window[k])?window[k]:[]).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(t>=0&&Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1)+': Total-Paid != Due');if(p>t+.01&&t>0)bad.push(k+' #'+(i+1)+': Paid > Total')}));alert(bad.length?'সমস্যা:\\n'+bad.slice(0,30).join('\\n'):'Data Health Check: মৌলিক Total/Paid/Due mismatch নেই।');audit('HEALTH_CHECK','Data',bad.length?bad:'OK')};
-const oldRefresh=window.refreshAllDependentViews;window.refreshAllDependentViews=function(){if(typeof oldRefresh==='function')oldRefresh();try{if(typeof buildBusinessReportRows==='function')buildBusinessReportRows()}catch(e){}try{if(typeof renderBusinessReportResults==='function')renderBusinessReportResults()}catch(e){}};
-})();
-</script><script id="responsive-table-auto-v6">
+</div><div id="final-control-panel" class="control-panel"><h3>একটি অপশন নির্বাচন করুন</h3></div></section><script id="responsive-table-auto-v6">
 (function(){
 function wrapTables(){
 document.querySelectorAll('table').forEach(function(t){
@@ -4133,6 +4119,90 @@ var w=document.createElement('div');w.className='table-responsive';p.insertBefor
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wrapTables);else wrapTables();
 new MutationObserver(wrapTables).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script><script id="final-control-js">
+(function(){
+'use strict';
+const P='pb_final_', K={biz:'business',acc:'accounting',hist:'history',trash:'trash'};
+function get(k,d){try{const v=localStorage.getItem(P+k);return v===null?d:JSON.parse(v)}catch(e){return d}}
+function set(k,v){localStorage.setItem(P+k,JSON.stringify(v))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function audit(action,section,details){
+ let h=get(K.hist,[]); h.push({time:new Date().toLocaleString('bn-BD'),action,section,details});
+ set(K.hist,h.slice(-5000));
+}
+function panel(){return document.getElementById('final-control-panel')}
+function dataArr(name){return Array.isArray(window[name])?window[name]:[]}
+function saveCore(){
+ try{if(typeof scheduleCloudSave==='function')scheduleCloudSave()}catch(e){}
+ try{if(typeof saveAllExtra==='function')saveAllExtra()}catch(e){}
+ try{if(typeof refreshAllDependentViews==='function')refreshAllDependentViews()}catch(e){}
+ try{if(typeof updateDashboard==='function')updateDashboard()}catch(e){}
+}
+window.finalPanel=function(t){
+ const p=panel(); if(!p)return;
+ const views={
+ display:`<h3>🎨 Display & Language</h3><p>বর্তমান Settings থেকে ভাষা ও Theme পরিবর্তন করুন।</p>
+ <div class="fc-actions"><button onclick="finalTheme('light')">☀️ Light</button><button onclick="finalTheme('dark')">🌙 Dark</button><button onclick="finalTheme('system')">🖥️ System</button></div>`,
+ business:`<h3>🏢 Business Information</h3><div class="fc-row">
+ <label>ব্যবসার নাম<input id="fc-bname"></label><label>মালিকের নাম<input id="fc-owner"></label>
+ <label>মোবাইল<input id="fc-phone"></label><label>ঠিকানা<input id="fc-address"></label></div>
+ <button onclick="saveBusinessSettings()">💾 Save</button>`,
+ accounting:`<h3>💰 Accounting Settings</h3><div class="fc-row">
+ <label>Currency<input id="fc-currency" value="৳"></label><label>Decimal<input id="fc-decimal" type="number" min="0" max="6" value="2"></label></div>
+ <button onclick="saveAccountingSettings()">💾 Save</button>`,
+ party:`<h3>👥 Party Settings</h3><p>Supplier/Customer/Site-এর হিসাব মূল খাতা থেকে পরিচালিত হবে।</p>
+ <div class="fc-actions"><button onclick="finalGo('purchase')">📒 Supplier Ledger</button><button onclick="finalGo('sale')">🧾 Customer Ledger</button></div>`,
+ vehicle:`<h3>🚚 Vehicle & Boat</h3><p>নৌকা ও গাড়ির হিসাব থেকে Statement/মোট CFT/Ton/Pcs দেখুন।</p><button onclick="finalGo('vehicleBoat')">🚚 নৌকা ও গাড়ির হিসাব খুলুন</button>`,
+ bank:`<h3>🏦 Bank & Wallet</h3><p>Bank ও Wallet-এর লেনদেন মূল খাতায় পরিচালনা করুন।</p><button onclick="finalGo('bank')">🏦 ব্যাংক ও ওয়ালেট খুলুন</button>`,
+ print:`<h3>🖨️ Print & PDF</h3><p>Report Center-এর Print/PDF ব্যবহার করুন। A4 ও orientation সেখান থেকে নির্বাচন করুন।</p><button onclick="finalGo('report')">📊 Report Center খুলুন</button>`,
+ report:`<h3>📊 Report Settings</h3><p>Date/Party/Vehicle/Product অনুযায়ী Business Report ব্যবহার করুন।</p><button onclick="finalGo('report')">📊 Business Report খুলুন</button>`,
+ backup:`<h3>💾 Backup & Restore</h3><div class="fc-actions"><button onclick="finalBackup()">⬇️ Backup Download</button><label style="padding:10px;border:1px solid #ccc;border-radius:8px;cursor:pointer">⬆️ Restore JSON<input hidden type="file" accept=".json,application/json" onchange="finalRestore(this.files[0])"></label></div><p>Restore করার আগে অবশ্যই বর্তমান Backup নিন।</p>`,
+ security:`<h3>🔐 Security</h3><p>Login নিরাপত্তা Firebase Authentication-এর মাধ্যমে রাখুন। Password HTML/LocalStorage-এ সংরক্ষণ করা হবে না।</p>`,
+ notify:`<h3>🔔 Notification</h3><p>তাগাদা রিমাইন্ডার খাতার মাধ্যমে Due Reminder পরিচালনা করুন।</p><button onclick="finalGo('reminder')">🔔 Reminder খুলুন</button>`,
+ trash:`<h3>🗑️ Recycle Bin</h3><p>ডিলিট করা রেকর্ড থাকলে এখানে রাখা হবে। স্থায়ীভাবে মুছে ফেলার আগে সতর্ক থাকুন।</p><div id="fc-trash-list" class="fc-list"></div><button onclick="renderTrash()">🔄 Refresh</button>`,
+ history:`<h3>🕘 Complete History</h3><div id="fc-history-list" class="fc-list"></div><div class="fc-actions"><button onclick="renderHistory()">🔄 Refresh</button><button onclick="printFinalHistory()">🖨️ Print / PDF</button></div>`,
+ };
+ p.innerHTML=views[t]||'<p>অপশন পাওয়া যায়নি।</p>';
+ if(t==='business'){let b=get(K.biz,{});['bname','owner','phone','address'].forEach(x=>document.getElementById('fc-'+x).value=b[{bname:'name',owner:'owner',phone:'phone',address:'address'}[x]]||'')}
+ if(t==='accounting'){let a=get(K.acc,{currency:'৳',decimal:2});document.getElementById('fc-currency').value=a.currency||'৳';document.getElementById('fc-decimal').value=a.decimal??2}
+ if(t==='history')renderHistory(); if(t==='trash')renderTrash();
+};
+window.finalGo=function(key){
+ const map={purchase:'openPurchaseLedger',sale:'openSalesLedger',vehicleBoat:'openVehicleBoatLedger',bank:'openBankWalletLedger',report:'openBusinessReport',reminder:'openDueReminderLedger'};
+ const fn=window[map[key]]; if(typeof fn==='function'){fn();return}
+ alert('এই ট্যাবের open function বর্তমান ফাইলে নেই।');
+};
+window.finalTheme=function(v){
+ if(v==='dark')document.body.classList.add('dark-theme'); else document.body.classList.remove('dark-theme');
+ localStorage.setItem('final_theme',v); audit('SETTINGS','Display','Theme: '+v);
+};
+window.saveBusinessSettings=function(){set(K.biz,{name:fc_bname.value.trim(),owner:fc_owner.value.trim(),phone:fc_phone.value.trim(),address:fc_address.value.trim()});audit('SETTINGS','Business','Updated');saveCore();alert('ব্যবসার তথ্য সংরক্ষণ হয়েছে।')};
+window.saveAccountingSettings=function(){set(K.acc,{currency:fc_currency.value||'৳',decimal:Math.max(0,Math.min(6,+fc_decimal.value||0))});audit('SETTINGS','Accounting','Updated');saveCore();alert('Accounting settings সংরক্ষণ হয়েছে।')};
+window.finalBackup=function(){
+ const names=['purchaseList','salesList','paymentHistory','expenseList','cashList','bankTransactions','investorList','investors','generalDuePayments','deletedRecords'];
+ const data={version:7,createdAt:new Date().toISOString(),arrays:{},settings:{business:get(K.biz,{}),accounting:get(K.acc,{}),history:get(K.hist,[])}};
+ names.forEach(n=>data.arrays[n]=dataArr(n));
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-'+Date.now()+'.json';a.click();
+ audit('BACKUP','Data','Downloaded'); alert('Backup Download শুরু হয়েছে।');
+};
+window.finalRestore=function(file){
+ if(!file)return;const r=new FileReader();
+ r.onload=function(){let b;try{b=JSON.parse(r.result)}catch(e){alert('সঠিক JSON Backup নয়।');return}
+ if(!b.arrays||!confirm('Backup Restore করবেন? বর্তমান ডাটার আগে Backup নেওয়া আছে তো?'))return;
+ Object.keys(b.arrays).forEach(n=>{if(Array.isArray(window[n]))window[n]=b.arrays[n]});
+ if(b.settings){if(b.settings.business)set(K.biz,b.settings.business);if(b.settings.accounting)set(K.acc,b.settings.accounting)}
+ audit('RESTORE','Data','Backup restored');saveCore();alert('Restore সম্পন্ন হয়েছে।');
+ };
+ r.readAsText(file);
+};
+window.renderHistory=function(){const x=document.getElementById('fc-history-list');if(!x)return;const h=get(K.hist,[]).slice().reverse();x.innerHTML=h.length?h.map(v=>'<div class="fc-list-item"><b>'+esc(v.action)+'</b> · '+esc(v.section)+'<br>'+esc(v.time)+'<br>'+esc(JSON.stringify(v.details))+'</div>').join(''):'কোনো History নেই।'};
+window.renderTrash=function(){const x=document.getElementById('fc-trash-list');if(!x)return;const t=get(K.trash,[]);x.innerHTML=t.length?t.map((v,i)=>'<div class="fc-list-item"><b>#'+(i+1)+'</b> '+esc(v.type||'Record')+'<br>'+esc(v.time||'')+'<br><button onclick="finalRestoreTrash('+i+')">Restore</button></div>').join(''):'Recycle Bin খালি।'};
+window.finalRestoreTrash=function(i){let t=get(K.trash,[]),v=t[i];if(!v)return;if(v.list&&Array.isArray(window[v.list]))window[v.list].push(v.record);t.splice(i,1);set(K.trash,t);audit('RESTORE','Recycle Bin','Restored');saveCore();renderTrash();};
+window.printFinalHistory=function(){const h=get(K.hist,[]),w=window.open('','_blank');if(!w)return;w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>History</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px;font-size:10px}th{background:#eee}</style></head><body><h2>সম্পূর্ণ হিস্ট্রি</h2><table><tr><th>সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr>'+h.map(v=>'<tr><td>'+esc(v.time)+'</td><td>'+esc(v.action)+'</td><td>'+esc(v.section)+'</td><td>'+esc(JSON.stringify(v.details))+'</td></tr>').join('')+'</table></body></html>');w.document.close();w.focus();w.print()};
+window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>dataArr(k).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1));}));alert(bad.length?'Mismatch পাওয়া গেছে: '+bad.length+' record':'মৌলিক Total/Paid/Due mismatch পাওয়া যায়নি।');audit('HEALTH_CHECK','Data',bad.length||'OK')};
+window.showFinalControlCenter=function(){document.querySelectorAll('.ledger-section').forEach(x=>x.style.display='none');const x=document.getElementById('final-control-center');if(x)x.style.display='block'};
 })();
 </script></body>
 </html>
