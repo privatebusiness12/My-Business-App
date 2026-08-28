@@ -415,6 +415,33 @@ input,select,textarea,button{max-width:100%;font-size:inherit}
   #vb-result .report-section h2{font-size:16px;line-height:1.4}
   #vb-result .report-section .table-responsive,#vb-result .report-section .br-table-wrap{padding-bottom:6px}
 }
+</style><style id="global-responsive-v6">
+html,body{max-width:100%;overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box}
+img,svg,canvas,video{max-width:100%}
+button,input,select,textarea{max-width:100%;font-size:16px}
+table{border-collapse:collapse}
+.table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.table-responsive,.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper{width:100%;max-width:100%;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch}
+.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table{min-width:720px}
+.dashboard,.dashboard-container,.main-content,.content,.page-content,.ledger-section,.sub-page,.section-content,.card,.form-container,.summary-container,.summary-grid,.stats-grid,.chart-container{max-width:100%}
+th,td{overflow-wrap:anywhere}
+@media(max-width:900px){.dashboard-grid,.cards-grid,.summary-grid,.stats-grid,.form-grid,.bank-card-grid,.control-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:600px){
+body{font-size:14px}
+.dashboard-grid,.cards-grid,.summary-grid,.stats-grid,.form-grid,.bank-card-grid,.control-grid{grid-template-columns:1fr!important}
+.dashboard,.dashboard-container,.main-content,.content,.page-content,.ledger-section,.sub-page{width:100%!important;margin-left:0!important;margin-right:0!important}
+.card,.form-container,.control-panel,.section-header{padding:12px!important}
+.section-header{gap:8px;flex-wrap:wrap}
+.section-header h1,.section-header h2,.section-header h3{font-size:18px!important}
+button{min-height:42px}
+.action-buttons,.button-group,.toolbar,.filter-row{display:flex;flex-wrap:wrap;gap:8px}
+.action-buttons>* ,.button-group>* ,.toolbar>* ,.filter-row>*{flex:1 1 140px}
+.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table{min-width:760px}
+}
+@media(max-width:380px){
+body{font-size:13px}
+.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table{min-width:700px}
+}
 </style></head>
 <body>
 
@@ -4094,6 +4121,18 @@ function renderHistory(){let x=document.getElementById('final-history');if(x)x.i
 window.printFinalHistory=function(){let w=window.open('','_blank');w.document.write('<html><body><h2>Private Business — Complete History</h2>'+document.getElementById('final-history').innerHTML+'</body></html>');w.document.close();w.print()};
 window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>(Array.isArray(window[k])?window[k]:[]).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(t>=0&&Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1)+': Total-Paid != Due');if(p>t+.01&&t>0)bad.push(k+' #'+(i+1)+': Paid > Total')}));alert(bad.length?'সমস্যা:\\n'+bad.slice(0,30).join('\\n'):'Data Health Check: মৌলিক Total/Paid/Due mismatch নেই।');audit('HEALTH_CHECK','Data',bad.length?bad:'OK')};
 const oldRefresh=window.refreshAllDependentViews;window.refreshAllDependentViews=function(){if(typeof oldRefresh==='function')oldRefresh();try{if(typeof buildBusinessReportRows==='function')buildBusinessReportRows()}catch(e){}try{if(typeof renderBusinessReportResults==='function')renderBusinessReportResults()}catch(e){}};
+})();
+</script><script id="responsive-table-auto-v6">
+(function(){
+function wrapTables(){
+document.querySelectorAll('table').forEach(function(t){
+if(t.closest('.table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.table-responsive,.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper'))return;
+var p=t.parentElement;if(!p)return;
+var w=document.createElement('div');w.className='table-responsive';p.insertBefore(w,t);w.appendChild(t);
+});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wrapTables);else wrapTables();
+new MutationObserver(wrapTables).observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script></body>
 </html>
