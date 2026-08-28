@@ -3092,13 +3092,41 @@
     }
 
     async function persistCorrectionSafely(){
-      /* Firebase-এ সরাসরি await করে save করি, যাতে refresh-এর আগে/পরে পুরোনো cloud snapshot ফিরে না আসে। */
+      /* Correction-এর সময় debounce/autosave-এর উপর নির্ভর না করে সর্বশেষ arrays-কে cloud-এ নিশ্চিতভাবে লিখি। */
       try {
         if(typeof saveCloudData==='function' && firebaseUser && firebaseDb && cloudLoaded){
-          await saveCloudData();
+          /* আগের save চললে শেষ হওয়া পর্যন্ত অপেক্ষা */
+          var wait=0;
+          while(cloudSaving && wait<5000){ await new Promise(function(resolve){setTimeout(resolve,100)}); wait+=100; }
+          if(typeof getCloudCollections==='function'){
+            var data=getCloudCollections();
+            data.updatedAt=firebase.firestore.FieldValue.serverTimestamp();
+            await firebaseDb.collection('users').doc(firebaseUser.uid).collection('appData').doc('main').set(data,{merge:true});
+          }else{ await saveCloudData(); }
         }
       } catch(e){ console.error('Correction cloud save failed',e); }
       try { if(typeof saveAllExtra==='function') saveAllExtra(); } catch(e){ console.error(e); }
+    }
+
+    function rebuildDerivedStateAfterCorrection(){
+      /* কোনো cached হিসাব stale না রাখার জন্য সব derived state নতুন মূল arrays থেকে তৈরি করি। */
+      try { businessReportRows = (typeof buildBusinessReportRows==='function') ? buildBusinessReportRows() : businessReportRows; } catch(e){ console.error(e); }
+      try { if(typeof refreshAllDependentViews==='function') refreshAllDependentViews(); } catch(e){ console.error(e); }
+      /* বর্তমান view যদি report/stock/due/ledger হয়, পুরো view-টিও নতুন করে build করি। */
+      try {
+        if(currentPageEn==='Business Report' && typeof openBusinessReport==='function') openBusinessReport();
+        else if(currentPageEn==='Stock Management' && typeof openStockManagement==='function') openStockManagement();
+        else if(currentPageEn==='Due Ledger' && typeof openDueLedger==='function') openDueLedger();
+        else if(currentPageEn==='Purchase Ledger' && typeof openPurchaseLedger==='function') openPurchaseLedger();
+        else if(currentPageEn==='Sales Ledger' && typeof openSalesLedger==='function') openSalesLedger();
+        else if(currentPageEn==='Cash Ledger' && typeof openCashLedger==='function') openCashLedger();
+        else if(currentPageEn==='Bank & Wallet' && typeof openBankLedger==='function') openBankLedger();
+        else if(currentPageEn==='Expense Ledger' && typeof openExpenseLedger==='function') openExpenseLedger();
+        else if(currentPageEn==='Profit & Loss Statement' && typeof openProfitLossLedger==='function') openProfitLossLedger();
+        else if(currentPageEn==='Shipment Tracking' && typeof openShipmentTracking==='function') openShipmentTracking();
+        else if(currentPageEn==='Investors' && typeof openInvestors==='function') openInvestors();
+        else if(currentPageEn==='Corrections' && typeof renderCorrections==='function') renderCorrections();
+      }catch(e){ console.error('Current view rebuild failed',e); }
     }
 
     async function saveCorrection(type,idx){
@@ -3168,7 +3196,7 @@
       /* প্রথমে modified arrays persist করি; তারপর সব dependent view একসাথে refresh করি। */
       /* আগে Firebase-এ পরিবর্তিত মূল arrays লিখি, তারপর সব dependent view refresh করি। */
       await persistCorrectionSafely();
-      refreshAllDependentViews();
+      rebuildDerivedStateAfterCorrection();
       closeCorrectionEditor();
       alert(T('তথ্য সফলভাবে সংশোধন হয়েছে। সব সংশ্লিষ্ট হিসাব, রিপোর্ট, স্টক ও তালিকা আপডেট হয়েছে। আগের ডাটা মুছে ফেলা হয়নি।','Record corrected successfully. All dependent accounts, reports, stock and lists have been refreshed. Existing data was not deleted.'));
     }
