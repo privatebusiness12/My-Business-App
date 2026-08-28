@@ -3061,31 +3061,47 @@
        সংশোধনের পর মূল data arrays থেকেই সব dependent table/report/stock/summary
        আবার render করা হয়। কোনো existing record delete বা reset করা হয় না। */
     function refreshAllDependentViews(){
-      try { if(typeof renderPurchaseTable==='function') renderPurchaseTable(); } catch(e){}
-      try { if(typeof renderSalesTable==='function') renderSalesTable(); } catch(e){}
-      try { if(typeof renderPaymentHistoryTable==='function') renderPaymentHistoryTable(); } catch(e){}
-      try { if(typeof renderDueTables==='function') renderDueTables(); } catch(e){}
-      try { if(typeof renderCashTable==='function') renderCashTable(); } catch(e){}
-      try { if(typeof renderBankHistoryTable==='function') renderBankHistoryTable(); } catch(e){}
-      try { if(typeof renderExpenseTable==='function') renderExpenseTable(); } catch(e){}
-      try { if(typeof renderStock==='function') renderStock(); } catch(e){}
-      try { if(typeof renderContacts==='function') renderContacts(); } catch(e){}
-      try { if(typeof renderProducts==='function') renderProducts(); } catch(e){}
-      try { if(typeof renderEmployees==='function') renderEmployees(); } catch(e){}
-      try { if(typeof renderReminders==='function') renderReminders(); } catch(e){}
-      try { if(typeof renderNotes==='function') renderNotes(); } catch(e){}
-      try { if(typeof renderShipmentTracking==='function') renderShipmentTracking(); } catch(e){}
-      try { if(typeof renderInvoiceList==='function') renderInvoiceList(); } catch(e){}
-      try { if(typeof renderInvestors==='function') renderInvestors(); } catch(e){}
-      try { if(typeof renderInvestorProfit==='function') renderInvestorProfit(); } catch(e){}
-      try { if(typeof renderVehicleBoatLedger==='function') renderVehicleBoatLedger(); } catch(e){}
-      try { if(typeof renderBusinessReportResults==='function') renderBusinessReportResults(); } catch(e){}
-      try { if(typeof renderMaterialQuantitySummary==='function') renderMaterialQuantitySummary(); } catch(e){}
-      try { if(typeof updateDashboardQuickStats==='function') updateDashboardQuickStats(); } catch(e){}
-      try { if(typeof renderCorrections==='function') renderCorrections(); } catch(e){}
+      /* সব summary/report যেন সর্বশেষ মূল arrays থেকে নতুন করে তৈরি হয়। */
+      try { if(typeof renderPurchaseTable==='function') renderPurchaseTable(); } catch(e){console.error(e)}
+      try { if(typeof renderSalesTable==='function') renderSalesTable(); } catch(e){console.error(e)}
+      try { if(typeof renderPaymentHistoryTable==='function') renderPaymentHistoryTable(); } catch(e){console.error(e)}
+      try { if(typeof renderDueTables==='function') renderDueTables(); } catch(e){console.error(e)}
+      try { if(typeof renderCashTable==='function') renderCashTable(); } catch(e){console.error(e)}
+      try { if(typeof renderBankHistoryTable==='function') renderBankHistoryTable(); } catch(e){console.error(e)}
+      try { if(typeof renderExpenseTable==='function') renderExpenseTable(); } catch(e){console.error(e)}
+      try { if(typeof renderStock==='function') renderStock(); } catch(e){console.error(e)}
+      try { if(typeof renderContacts==='function') renderContacts(); } catch(e){console.error(e)}
+      try { if(typeof renderProducts==='function') renderProducts(); } catch(e){console.error(e)}
+      try { if(typeof renderEmployees==='function') renderEmployees(); } catch(e){console.error(e)}
+      try { if(typeof renderReminders==='function') renderReminders(); } catch(e){console.error(e)}
+      try { if(typeof renderNotes==='function') renderNotes(); } catch(e){console.error(e)}
+      try { if(typeof renderShipmentTracking==='function') renderShipmentTracking(); } catch(e){console.error(e)}
+      try { if(typeof renderInvoiceList==='function') renderInvoiceList(); } catch(e){console.error(e)}
+      try { if(typeof renderInvestors==='function') renderInvestors(); } catch(e){console.error(e)}
+      try { if(typeof renderInvestorProfit==='function') renderInvestorProfit(); } catch(e){console.error(e)}
+      try { if(typeof renderVehicleBoatLedger==='function') renderVehicleBoatLedger(); } catch(e){console.error(e)}
+      try { if(typeof renderMaterialQuantitySummary==='function') renderMaterialQuantitySummary(); } catch(e){console.error(e)}
+      try { if(typeof updateDashboardQuickStats==='function') updateDashboardQuickStats(); } catch(e){console.error(e)}
+      try { if(typeof renderCorrections==='function') renderCorrections(); } catch(e){console.error(e)}
+
+      /* Business Report cached rows MUST be rebuilt after correction. */
+      try {
+        if(typeof buildBusinessReportRows==='function') businessReportRows=buildBusinessReportRows();
+        if(typeof renderBusinessReportResults==='function') renderBusinessReportResults();
+      } catch(e){console.error('Business report refresh failed',e)}
     }
 
-    function saveCorrection(type,idx){
+    async function persistCorrectionSafely(){
+      /* Firebase-এ সরাসরি await করে save করি, যাতে refresh-এর আগে/পরে পুরোনো cloud snapshot ফিরে না আসে। */
+      try {
+        if(typeof saveCloudData==='function' && firebaseUser && firebaseDb && cloudLoaded){
+          await saveCloudData();
+        }
+      } catch(e){ console.error('Correction cloud save failed',e); }
+      try { if(typeof saveAllExtra==='function') saveAllExtra(); } catch(e){ console.error(e); }
+    }
+
+    async function saveCorrection(type,idx){
       var arr=correctionArray(type),x=arr[idx];if(!x)return;
       var oldPaymentAmount=(type==='payment')?(parseFloat(x.amount)||0):0;
       var oldGeneralAmount=(type==='generalDue')?(parseFloat(x.amount)||0):0;
@@ -3150,8 +3166,8 @@
       }
       if(type==='invoice'){var q=parseFloat(x.qty)||0,rate=parseFloat(x.rate)||0;if(!document.getElementById('crf-total')?.value)x.total=q*rate;}
       /* প্রথমে modified arrays persist করি; তারপর সব dependent view একসাথে refresh করি। */
-      scheduleCloudSave();
-      saveAllExtra();
+      /* আগে Firebase-এ পরিবর্তিত মূল arrays লিখি, তারপর সব dependent view refresh করি। */
+      await persistCorrectionSafely();
       refreshAllDependentViews();
       closeCorrectionEditor();
       alert(T('তথ্য সফলভাবে সংশোধন হয়েছে। সব সংশ্লিষ্ট হিসাব, রিপোর্ট, স্টক ও তালিকা আপডেট হয়েছে। আগের ডাটা মুছে ফেলা হয়নি।','Record corrected successfully. All dependent accounts, reports, stock and lists have been refreshed. Existing data was not deleted.'));
