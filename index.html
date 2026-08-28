@@ -8,7 +8,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Firebase SDK: Authentication + Cloud Firestore -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js">
+    // Premium UI settings: presentation only; does not alter business records.
+    function pbSaveSetting(k,v){try{localStorage.setItem('pb_ui_'+k,v);}catch(e){}}
+    function pbAccent(v){document.documentElement.style.setProperty('--accent',v);pbSaveSetting('accent',v);}
+    function pbFont(v){document.documentElement.style.setProperty('--base-font-size',v);document.body.style.fontSize=v;pbSaveSetting('font',v);}
+    function pbDensity(v){document.body.classList.toggle('pb-compact',v==='compact');pbSaveSetting('density',v);}
+    function pbAnimation(v){document.body.classList.toggle('pb-no-animation',v==='off');pbSaveSetting('animation',v);}
+    function pbLoadSettings(){
+      try{var s=localStorage; var a=s.getItem('pb_ui_accent'),f=s.getItem('pb_ui_font'),d=s.getItem('pb_ui_density'),an=s.getItem('pb_ui_animation'),th=s.getItem('pb_ui_theme');
+        if(a)pbAccent(a); if(f)pbFont(f); if(d)pbDensity(d); if(an)pbAnimation(an); if(th)changeTheme(th);
+      }catch(e){}
+      var b=document.getElementById('pb-device-badge'); if(b)b.textContent=window.innerWidth<=700?'📱 Mobile View':'🖥️ Desktop View';
+    }
+    window.addEventListener('resize',function(){var b=document.getElementById('pb-device-badge');if(b)b.textContent=window.innerWidth<=700?'📱 Mobile View':'🖥️ Desktop View';});
+    try{document.addEventListener('DOMContentLoaded',pbLoadSettings);}catch(e){}
+
+</script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <style>
@@ -349,6 +365,7 @@
 @media(max-width:520px){.br-filter-grid,.stock-convert-grid{grid-template-columns:1fr}.br-filter-grid .wide{grid-column:span 1}}
 
 .edit-record-btn{border:0;border-radius:8px;padding:7px 10px;cursor:pointer;background:#eef2ff;color:#3730a3;font-weight:700}.delete-record-btn{border:0;border-radius:8px;padding:7px 10px;cursor:pointer;background:#fee2e2;color:#b91c1c;font-weight:700}.stock-filter-bar{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;align-items:end}.stock-filter-bar input,.stock-filter-bar select{width:100%;padding:11px;border:1px solid #dbe3ee;border-radius:10px}.stock-summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0}.stock-mini{padding:14px;border-radius:14px;background:linear-gradient(135deg,#f8fafc,#eef6ff);border:1px solid #e2e8f0}.stock-mini b{display:block;font-size:20px}.stock-movement{font-size:12px;color:#64748b}.edit-modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px}.edit-modal{width:min(720px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.edit-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.edit-field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:#475569}.edit-field input{width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:9px}.edit-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.edit-modal-actions button{padding:10px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer}@media(max-width:700px){.stock-filter-bar,.edit-fields,.stock-summary-grid{grid-template-columns:1fr}.edit-modal{padding:15px}}
+\n/* ===== Premium responsive UI enhancement v2 ===== */\n:root{--accent:#7c3aed;--accent-2:#06b6d4;--soft-bg:#f8fafc;--border:#e2e8f0;--radius:16px;--shadow:0 10px 30px rgba(15,23,42,.08);--density:1;}\nbody{background:radial-gradient(circle at 10% 0%,rgba(124,58,237,.10),transparent 30%),radial-gradient(circle at 90% 10%,rgba(6,182,212,.10),transparent 30%),var(--bg-color);min-height:100vh;}\n.app-header,.dashboard-topbar{box-shadow:0 10px 28px rgba(15,23,42,.12);border-radius:calc(var(--radius) + 2px);}\n.section-card,.summary-card,.ledger-card,.dashboard-card,.settings-panel,.report-card,.table-container,.form-card{border-radius:var(--radius)!important;box-shadow:var(--shadow)!important;border:1px solid rgba(148,163,184,.20);}\nbutton,.btn,.action-btn,.tab-btn{border-radius:12px!important;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important;}\nbutton:hover,.btn:hover,.action-btn:hover,.tab-btn:hover{transform:translateY(-1px);filter:brightness(1.03);box-shadow:0 7px 18px rgba(15,23,42,.12);}\ninput,select,textarea{border-radius:11px!important;border:1px solid var(--border)!important;background:var(--card-bg);}\ninput:focus,select:focus,textarea:focus{outline:none!important;border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(124,58,237,.12)!important;}\n.settings-panel{background:linear-gradient(145deg,var(--card-bg),rgba(124,58,237,.035));}\n.pb-settings-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px;}\n.pb-setting-box{padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.55);}\nbody.dark-theme .pb-setting-box{background:rgba(255,255,255,.03);}\n.pb-setting-box label{display:block;font-weight:700;margin-bottom:6px;font-size:.9em;}\n.pb-status{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}\n.pb-chip{padding:7px 11px;border-radius:999px;background:rgba(124,58,237,.10);color:var(--text-color);font-weight:700;font-size:.82em;}\n.pb-device-badge{position:fixed;right:12px;bottom:12px;z-index:9998;padding:7px 11px;border-radius:999px;background:var(--card-bg);box-shadow:0 6px 20px rgba(15,23,42,.15);font-size:11px;font-weight:800;opacity:.82;}\n.pb-compact *{line-height:1.15!important;}\n.pb-compact .section-card,.pb-compact .summary-card,.pb-compact .dashboard-card{padding:9px!important;}\n.pb-no-animation *, .pb-no-animation *::before,.pb-no-animation *::after{transition:none!important;animation:none!important;}\n@media (max-width:1100px){.pb-settings-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}\n@media (max-width:700px){\n body{padding:8px;font-size:var(--base-font-size);}\n .dashboard-topbar,.app-header{border-radius:13px!important;padding:11px!important;}\n .pb-settings-grid{grid-template-columns:1fr;}\n .settings-trigger{position:sticky;top:6px;z-index:1000;}\n .table-container,.section-card{overflow-x:auto;}\n table{min-width:680px;}\n .dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;}\n .dashboard-grid .dashboard-card{min-height:90px!important;}\n .form-row,.form-grid{grid-template-columns:1fr!important;}\n .print-toolbar{flex-direction:column!important;align-items:stretch!important;}\n .print-settings{margin-left:0!important;}\n .pb-device-badge{bottom:7px;right:7px;}\n}\n@media (min-width:701px){body{padding:18px 22px;}.dashboard-grid{gap:14px;}}\n@media print{body{background:#fff!important;padding:0!important;} .pb-device-badge{display:none!important;} }\n
 </style>
 <style id="correction-report-fix">.correction-note{background:#eff6ff;border:1px solid #bfdbfe;padding:10px;border-radius:10px}.cr-modal{display:block}.btn-action{border:0;border-radius:8px;padding:7px 10px;background:#0d6efd;color:#fff;cursor:pointer;font-weight:700}.br-result-meta{display:flex;gap:8px;flex-wrap:wrap}</style>
 <style>
@@ -401,6 +418,7 @@
       <div class="auth-secure-note"><i class="fa-solid fa-shield-halved"></i> আপনার হিসাব Firebase নিরাপত্তার মাধ্যমে সুরক্ষিত</div>
     </div>
   </div>
+  <div class="pb-device-badge" id="pb-device-badge">Responsive</div>
   <div id="app-shell">
   <!-- মূল ড্যাশবোর্ড স্ক্রিন -->
   <div id="home-view" class="page-view active-view">
@@ -516,20 +534,17 @@
     </div>
 
     <div id="settings-panel" class="settings-panel">
-      <div class="form-group">
-        <label data-bn="ভাষা নির্বাচন করুন (Language):" data-en="Select Language:">ভাষা (Language):</label>
-        <select onchange="changeLanguage(this.value)">
-          <option value="bn">বাংলা (Bengali)</option>
-          <option value="en">English</option>
-        </select>
+      <div class="pb-settings-grid">
+        <div class="pb-setting-box"><label data-bn="ভাষা" data-en="Language">ভাষা</label><select onchange="changeLanguage(this.value);pbSaveSetting('language',this.value)"><option value="bn">বাংলা</option><option value="en">English</option></select></div>
+        <div class="pb-setting-box"><label data-bn="থিম" data-en="Theme">থিম</label><select onchange="changeTheme(this.value);pbSaveSetting('theme',this.value)"><option value="light">লাইট</option><option value="dark">ডার্ক</option></select></div>
+        <div class="pb-setting-box"><label data-bn="অ্যাকসেন্ট কালার" data-en="Accent Color">অ্যাকসেন্ট কালার</label><select onchange="pbAccent(this.value)"><option value="#7c3aed">Royal Purple</option><option value="#2563eb">Ocean Blue</option><option value="#059669">Emerald</option><option value="#db2777">Rose</option><option value="#d97706">Amber</option></select></div>
+        <div class="pb-setting-box"><label data-bn="লেখার আকার" data-en="Font Size">লেখার আকার</label><select onchange="pbFont(this.value)"><option value="13px">ছোট</option><option value="14px" selected>মাঝারি</option><option value="15px">বড়</option><option value="16px">আরও বড়</option></select></div>
+        <div class="pb-setting-box"><label data-bn="স্ক্রিন ঘনত্ব" data-en="Display Density">স্ক্রিন ঘনত্ব</label><select onchange="pbDensity(this.value)"><option value="normal">Normal</option><option value="compact">Compact</option></select></div>
+        <div class="pb-setting-box"><label data-bn="অ্যানিমেশন" data-en="Animation">অ্যানিমেশন</label><select onchange="pbAnimation(this.value)"><option value="on">চালু</option><option value="off">বন্ধ</option></select></div>
+        <div class="pb-setting-box"><label data-bn="ডিলিট নিরাপত্তা" data-en="Delete Safety">ডিলিট নিরাপত্তা</label><select onchange="pbSaveSetting('confirmDelete',this.value)"><option value="on">নিশ্চিতকরণ চালু</option><option value="off">নিশ্চিতকরণ বন্ধ</option></select></div>
+        <div class="pb-setting-box"><label data-bn="অটো সেভ" data-en="Auto Save">অটো সেভ</label><div class="pb-status"><span class="pb-chip">Firebase Cloud Save</span><span class="pb-chip">Local Backup Ready</span></div></div>
       </div>
-      <div class="form-group">
-        <label data-bn="ডিসপ্লে থিম:" data-en="Display Theme:">ডিসপ্লে থিম:</label>
-        <select onchange="changeTheme(this.value)">
-          <option value="light" data-bn="লাইট মোড" data-en="Light Mode">লাইট মোড</option>
-          <option value="dark" data-bn="ডার্ক মোড" data-en="Dark Mode">ডার্ক মোড</option>
-        </select>
-      </div>
+      <div class="pb-status"><span class="pb-chip" data-bn="📱 Mobile responsive" data-en="📱 Mobile responsive">📱 Mobile responsive</span><span class="pb-chip" data-bn="🖥️ Desktop optimized" data-en="🖥️ Desktop optimized">🖥️ Desktop optimized</span><span class="pb-chip" data-bn="🖨️ A4 Print ready" data-en="🖨️ A4 Print ready">🖨️ A4 Print ready</span></div>
     </div>
   </div>
 
