@@ -510,6 +510,7 @@
         <div class="tab-item" onclick="openPage('স্টকের হিসাব', 'Stock Management')"><i class="fa-solid fa-boxes-stacked tab-icon icon-sale"></i><div class="tab-label" data-bn="স্টকের হিসাব" data-en="Stock Management">স্টকের হিসাব</div></div>
         <div class="tab-item" onclick="openPage('ব্যবসার রিপোর্ট', 'Business Report')"><i class="fa-solid fa-chart-line tab-icon icon-blue"></i><div class="tab-label" data-bn="ব্যবসার রিপোর্ট" data-en="Business Report">ব্যবসার রিপোর্ট</div></div>
         <div class="tab-item" onclick="openPage('সংশোধন', 'Corrections')"><i class="fa-solid fa-pen-to-square tab-icon icon-teal"></i><div class="tab-label" data-bn="সংশোধন" data-en="Corrections">সংশোধন</div></div>
+        <div class="tab-item" onclick="openDeleteManager()"><i class="fa-solid fa-trash-can tab-icon icon-red"></i><div class="tab-label" data-bn="ডাটা ম্যানেজমেন্ট" data-en="Data Management">ডাটা ম্যানেজমেন্ট</div></div>
         <div class="tab-item" onclick="openPage('চালান তৈরি', 'Invoice Generator')"><i class="fa-solid fa-file-invoice tab-icon icon-teal"></i><div class="tab-label" data-bn="চালান তৈরি" data-en="Invoice Generator">চালান তৈরি</div></div>
         <div class="tab-item" onclick="openPage('কর্মচারী হিসাব', 'Employee Management')"><i class="fa-solid fa-user-tie tab-icon icon-dark"></i><div class="tab-label" data-bn="কর্মচারী হিসাব" data-en="Employee Management">কর্মচারী হিসাব</div></div>
         <div class="tab-item" onclick="openPage('তাগাদা রিমাইন্ডার', 'Due Reminder')"><i class="fa-solid fa-bell tab-icon icon-red"></i><div class="tab-label" data-bn="তাগাদা রিমাইন্ডার" data-en="Due Reminder">তাগাদা রিমাইন্ডার</div></div>
@@ -858,7 +859,7 @@
         purchaseList: purchaseList, salesList: salesList, paymentHistory: paymentHistory, generalDuePayments: generalDuePayments, expenseList: expenseList,
         cashList: cashList, bankAccounts: bankAccounts, bankTransactions: bankTransactions, shipmentList: shipmentList,
         contactList: contactList, productList: productList, employeeList: employeeList, reminderList: reminderList,
-        noteList: noteList, invoiceList: invoiceList, stockConversionRules: stockConversionRules, investorList: investorList
+        noteList: noteList, invoiceList: invoiceList, stockConversionRules: stockConversionRules, investorList: investorList, auditLog: auditLog
       };
     }
 
@@ -880,6 +881,7 @@
       if(Array.isArray(data.noteList))noteList=data.noteList;
       if(Array.isArray(data.invoiceList))invoiceList=data.invoiceList;
       if(Array.isArray(data.investorList))investorList=data.investorList;
+      if(Array.isArray(data.auditLog))auditLog=data.auditLog;
       if(data.stockConversionRules && typeof data.stockConversionRules==='object') stockConversionRules=Object.assign(stockConversionRules,data.stockConversionRules);
     }
 
@@ -903,7 +905,74 @@
       }
     }
 
+    /* ---------------- সম্পূর্ণ হিস্ট্রি / Audit Trail ---------------- */
+    var AUDIT_KEYS=['purchaseList','salesList','paymentHistory','generalDuePayments','expenseList','cashList','bankTransactions','shipmentList','contactList','productList','employeeList','reminderList','noteList','invoiceList','investorList'];
+    var AUDIT_LABELS={purchaseList:'কেনার খাতা',salesList:'বেচার খাতা',paymentHistory:'পেমেন্ট',generalDuePayments:'বাকি সমন্বয়',expenseList:'খরচ',cashList:'ক্যাশ',bankTransactions:'ব্যাংক/ওয়ালেট',shipmentList:'মালপত্র',contactList:'যোগাযোগ',productList:'প্রোডাক্ট',employeeList:'কর্মচারী',reminderList:'রিমাইন্ডার',noteList:'নোট',invoiceList:'চালান',investorList:'ইনভেস্টরস'};
+    function auditNow(){return new Date().toISOString();}
+    function auditClone(v){try{return JSON.parse(JSON.stringify(v));}catch(e){return v;}}
+    function auditRecord(action,type,details,oldData,newData){
+      var entry={id:'AUD-'+Date.now()+'-'+Math.floor(Math.random()*100000),at:auditNow(),action:action||'পরিবর্তন',type:type||'অন্যান্য',details:String(details||''),oldData:oldData===undefined?null:auditClone(oldData),newData:newData===undefined?null:auditClone(newData)};
+      auditLog.unshift(entry); if(auditLog.length>2000)auditLog=auditLog.slice(0,2000);
+      try{localStorage.setItem('biz_audit_log',JSON.stringify(auditLog));}catch(e){}
+      return entry;
+    }
+    function auditArrayState(){
+      var st={};
+      AUDIT_KEYS.forEach(function(k){
+        var arr=Array.isArray(window[k])?window[k]:[];
+        st[k]={count:arr.length,byId:{},noId:[]};
+        arr.forEach(function(x,i){var id=(x&&x.id!=null)?String(x.id):'__idx_'+i;var sig='';try{sig=JSON.stringify(x);}catch(e){sig=String(x);}if(id.indexOf('__idx_')===0)st[k].noId.push(sig);else st[k].byId[id]=sig;});
+      });
+      return st;
+    }
+    function initializeAuditSnapshot(){
+      auditSnapshotState=auditArrayState();
+      try{localStorage.setItem('biz_audit_log',JSON.stringify(auditLog));}catch(e){}
+    }
+    function detectAuditChanges(){
+      if(auditBusy)return;
+      var now=auditArrayState();
+      if(!auditSnapshotState){auditSnapshotState=now;try{localStorage.setItem('biz_audit_log',JSON.stringify(auditLog));}catch(e){};return;}
+      auditBusy=true;
+      try{
+        AUDIT_KEYS.forEach(function(k){
+          var before=auditSnapshotState[k]||{byId:{},noId:[]}, after=now[k]||{byId:{},noId:[]}, label=AUDIT_LABELS[k]||k;
+          Object.keys(after.byId).forEach(function(id){if(!before.byId[id]){var x;try{x=JSON.parse(after.byId[id]);}catch(e){x=null;}auditRecord('যোগ',label,'নতুন রেকর্ড যোগ হয়েছে',null,x);}});
+          Object.keys(before.byId).forEach(function(id){if(!after.byId[id]){var x;try{x=JSON.parse(before.byId[id]);}catch(e){x=null;}auditRecord('মুছে ফেলা',label,'একটি রেকর্ড মুছে ফেলা হয়েছে',x,null);}});
+          Object.keys(after.byId).forEach(function(id){if(before.byId[id]&&before.byId[id]!==after.byId[id]){var o,n;try{o=JSON.parse(before.byId[id]);}catch(e){o=null;}try{n=JSON.parse(after.byId[id]);}catch(e){n=null;}auditRecord('পরিবর্তন',label,'একটি রেকর্ড পরিবর্তন করা হয়েছে',o,n);}});
+          if(before.noId.join('|')!==after.noId.join('|') && (before.noId.length||after.noId.length)) auditRecord('পরিবর্তন',label,'আইডি ছাড়া রেকর্ডের পরিবর্তন শনাক্ত হয়েছে',null,null);
+        });
+        auditSnapshotState=now;
+      }finally{auditBusy=false;try{localStorage.setItem('biz_audit_log',JSON.stringify(auditLog));}catch(e){}}
+    }
+    function auditAction(action,type,details,oldData,newData){auditRecord(action,type,details,oldData,newData);auditSnapshotState=auditArrayState();}
+    function auditDisplayText(e){
+      var d=e&&e.details?e.details:''; if(e&&e.type)d+=' — '+e.type; return d;
+    }
+    function formatAuditDate(v){try{return new Date(v).toLocaleString('bn-BD');}catch(e){return v||'';}}
+    function renderAuditHistory(){
+      var box=document.getElementById('audit-history-list');if(!box)return;
+      var q=((document.getElementById('audit-search')||{}).value||'').toLowerCase().trim();
+      var type=((document.getElementById('audit-type')||{}).value||'all');
+      var rows=(auditLog||[]).filter(function(e){return (type==='all'||e.action===type) && (!q || (String(e.details)+' '+String(e.type)+' '+String(e.action)).toLowerCase().includes(q));});
+      box.innerHTML=rows.slice(0,500).map(function(e){
+        var cls=e.action==='মুছে ফেলা'?'color:#b91c1c':(e.action==='যোগ'?'color:#047857':'color:#1d4ed8');
+        return '<div class="list-row" style="border-left:4px solid #2563eb;margin-bottom:6px"><b style="'+cls+'">'+esc(e.action)+'</b> — <b>'+esc(e.type)+'</b><br><small>'+esc(formatAuditDate(e.at))+'</small><br>'+esc(e.details)+'</div>';
+      }).join('') || '<div class="pl-empty">কোনো হিস্ট্রি পাওয়া যায়নি।</div>';
+      var meta=document.getElementById('audit-history-meta');if(meta)meta.innerText='মোট হিস্ট্রি: '+rows.length+' টি';
+    }
+    function openAuditHistory(){
+      auditSnapshotState=auditArrayState();
+      pageShell(['সম্পূর্ণ হিস্ট্রি','Complete History'],['এই ওয়েবঅ্যাপে কোন ডাটা যোগ, পরিবর্তন বা মুছে ফেলা হয়েছে তার আলাদা ইতিহাস।','A separate history of records added, changed or deleted in this web app.'],
+      '<div class="section-card"><h3>📚 সম্পূর্ণ হিস্ট্রি</h3><div class="module-grid"><select id="audit-type" onchange="renderAuditHistory()"><option value="all">সব</option><option value="যোগ">যোগ</option><option value="পরিবর্তন">পরিবর্তন</option><option value="মুছে ফেলা">মুছে ফেলা</option></select><input id="audit-search" oninput="renderAuditHistory()" placeholder="খাতা, নাম, পরিবর্তন..."> </div><div id="audit-history-meta" style="margin:10px 0;font-weight:700"></div><div id="audit-history-list"></div><div class="br-report-actions"><button class="rc-print" onclick="printAuditHistory()">🖨️ প্রিন্ট</button><button class="rc-pdf" onclick="printAuditHistory()">📄 PDF</button></div></div>');
+      renderAuditHistory();
+    }
+    function printAuditHistory(){
+      var rows=(auditLog||[]).map(function(e){return '<tr><td>'+esc(formatAuditDate(e.at))+'</td><td>'+esc(e.action)+'</td><td>'+esc(e.type)+'</td><td>'+esc(e.details)+'</td></tr>';}).join('');
+      var w=window.open('','_blank');if(!w)return alert('পপ-আপ অনুমতি দিন।');w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Complete History</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;padding:10px;color:#111}h1{text-align:center}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;vertical-align:top}th{background:#eef2f7}@page{size:A4 landscape;margin:8mm}</style></head><body><h1>সম্পূর্ণ হিস্ট্রি</h1><p>মোট: '+auditLog.length+' টি</p><table><thead><tr><th>তারিখ/সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr></thead><tbody>'+rows+'</tbody></table></body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+    }
     async function saveCloudData(){
+      try{ detectAuditChanges(); }catch(e){ console.error('Audit detection before cloud save failed',e); }
       if(!firebaseUser||!firebaseDb||!cloudLoaded&&firebaseUser)return;
       if(cloudSaving)return; cloudSaving=true;
       try{
@@ -915,6 +984,7 @@
     }
 
     function scheduleCloudSave(){
+      try{ detectAuditChanges(); }catch(e){ console.error('Audit detection failed',e); }
       if(!firebaseUser||!cloudLoaded)return;
       clearTimeout(cloudSaveTimer);
       cloudSaveTimer=setTimeout(saveCloudData,700);
@@ -943,6 +1013,7 @@
           updateDashboardUser(user);
           await loadCloudData();
           migrateGeneralDuePayments();
+          initializeAuditSnapshot();
           updateDashboardQuickStats();
           startCloudAutoSave();
         }else{
@@ -976,6 +1047,11 @@
 
     var currentPageBn = '';
     var currentPageEn = '';
+    // সম্পূর্ণ পরিবর্তন/যোগ/মুছে ফেলার ইতিহাস। পুরোনো ব্যবসায়িক ডাটা আলাদা থাকে।
+    var auditLog = (function(){try{return JSON.parse(localStorage.getItem('biz_audit_log')||'[]')||[];}catch(e){return [];}})();
+    if(!Array.isArray(auditLog)) auditLog=[];
+    var auditSnapshotState = null;
+    var auditBusy = false;
 
     function getTodayDate() {
       var today = new Date();
@@ -2478,6 +2554,7 @@
         cashList.push({ id: uid(), sourceId: id, autoSource: 'transport', date: date, type: 'out', title: 'গাড়ি ভাড়া প্রদান: ' + transportName, amount: transportPaid });
       }
 
+      scheduleCloudSave();
       renderPurchaseTable();
       alert(currentLang === 'en' ? "Purchase Entry Saved Successfully!" : "মাল কেনার হিসাব সফলভাবে যুক্ত হয়েছে!");
 
@@ -2584,6 +2661,7 @@
         cashList.push({ id: uid(), sourceId: id, autoSource: 'transport', date: date, type: 'out', title: 'গাড়ি ভাড়া প্রদান: ' + transportName, amount: transportPaid });
       }
 
+      scheduleCloudSave();
       renderSalesTable();
       alert(currentLang === 'en' ? "Sales Entry Saved Successfully!" : "বিক্রয়ের হিসাব সফলভাবে যুক্ত হয়েছে!");
 
@@ -2674,7 +2752,7 @@
     function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});}
     function pageShell(title,sub,body){document.getElementById('home-view').classList.remove('active-view');document.getElementById('sub-page-view').classList.add('active-view');document.getElementById('page-title').innerText=T(title[0],title[1]);document.getElementById('print-only-title').innerText=T(title[0],title[1]);document.getElementById('page-content').innerHTML='<div class="module-hero"><h2>'+T(title[0],title[1])+'</h2><p>'+T(sub[0],sub[1])+'</p></div>'+body;applyLanguageToCurrentView();}
     function uid(){return Date.now()+Math.floor(Math.random()*1000);}
-    function saveAllExtra(){storeSet('biz_contacts',contactList);storeSet('biz_products',productList);storeSet('biz_employees',employeeList);storeSet('biz_reminders',reminderList);storeSet('biz_notes',noteList);storeSet('biz_invoices',invoiceList);storeSet('biz_stock_conversion',stockConversionRules);storeSet('biz_investors',investorList);}
+    function saveAllExtra(){try{localStorage.setItem('biz_audit_log',JSON.stringify(auditLog));}catch(e){};storeSet('biz_contacts',contactList);storeSet('biz_products',productList);storeSet('biz_employees',employeeList);storeSet('biz_reminders',reminderList);storeSet('biz_notes',noteList);storeSet('biz_invoices',invoiceList);storeSet('biz_stock_conversion',stockConversionRules);storeSet('biz_investors',investorList);}
 
     function openContacts(){pageShell(['যোগাযোগ','Contacts'],['কাস্টমার, সাপ্লায়ার, পরিবহন ও অন্যান্য যোগাযোগ এক জায়গায় পরিচালনা করুন।','Manage customers, suppliers, transporters and other contacts in one place.'],`<div class="section-card"><div class="module-grid"><input id="ct-name" placeholder="${T('নাম','Name')}"><input id="ct-phone" placeholder="${T('মোবাইল','Phone')}"><select id="ct-type"><option value="customer">${T('কাস্টমার','Customer')}</option><option value="supplier">${T('সাপ্লায়ার','Supplier')}</option><option value="transporter">${T('পরিবহন','Transporter')}</option><option value="other">${T('অন্যান্য','Other')}</option></select><input id="ct-address" placeholder="${T('ঠিকানা','Address')}"><input id="ct-note" placeholder="${T('নোট','Note')}"><button class="btn-submit" onclick="addContact()">${T('যোগ করুন','Add Contact')}</button></div></div><div class="section-card"><input id="ct-search" oninput="renderContacts()" placeholder="${T('নাম/মোবাইল খুঁজুন','Search name/phone')}"><div class="table-responsive"><table><thead><tr><th>${T('নাম','Name')}</th><th>${T('ধরণ','Type')}</th><th>${T('মোবাইল','Phone')}</th><th>${T('ঠিকানা','Address')}</th><th>${T('অ্যাকশন','Action')}</th></tr></thead><tbody id="ct-records"></tbody></table></div></div>`);renderContacts();}
     function addContact(){var n=document.getElementById('ct-name').value.trim(),p=document.getElementById('ct-phone').value.trim();if(!n){alert(T('নাম দিন','Enter a name'));return;}contactList.push({id:uid(),name:n,phone:p,type:document.getElementById('ct-type').value,address:document.getElementById('ct-address').value,note:document.getElementById('ct-note').value});saveAllExtra();renderContacts();}
@@ -2859,6 +2937,8 @@
           ${reportCenterCard('profit','📈','লাভ-ক্ষতির হিসাব','Profit & Loss')}
           ${reportCenterCard('investor','👥','ইনভেস্টরস','Investors')}
           ${reportCenterCard('vehicleBoat','🚚','নৌকা ও গাড়ির হিসাব','Boat & Vehicle Ledger')}
+          <div class="report-center-card"><h4>📚 সম্পূর্ণ হিস্ট্রি</h4><p>যোগ, পরিবর্তন ও মুছে ফেলার আলাদা ইতিহাস দেখুন।</p><div class="report-center-actions"><button class="rc-print" onclick="openAuditHistory()">খুলুন</button><button class="rc-pdf" onclick="printAuditHistory()">📄 PDF</button></div></div>
+          <div class="report-center-card"><h4>🗑️ ডাটা ম্যানেজমেন্ট</h4><p>প্রয়োজনে নির্দিষ্ট রেকর্ড নিরাপদভাবে মুছুন।</p><div class="report-center-actions"><button class="rc-pdf" onclick="openDeleteManager()">ডাটা মুছুন</button></div></div>
         </div>
         <div class="section-card" style="margin-top:14px;text-align:center;background:#f0fdf4;border:1px solid #bbf7d0">
           <h3 style="margin:0 0 6px">📚 ${T('সকল রিপোর্ট একসাথে','All Reports Together')}</h3>
@@ -3069,6 +3149,40 @@
     }
     function correctionArray(type){return {purchase:purchaseList,sale:salesList,expense:expenseList,payment:paymentHistory,generalDue:generalDuePayments,cash:cashList,bank:bankTransactions,invoice:invoiceList,shipment:shipmentList,contact:contactList,product:productList,employee:employeeList,reminder:reminderList,note:noteList,investor:investorList}[type]||[];}
     function correctionLabel(type){return {purchase:'ক্রয়',sale:'বিক্রয়',expense:'খরচ',payment:'পেমেন্ট',generalDue:'সাধারণ বাকি পরিশোধ',cash:'ক্যাশ',bank:'ব্যাংক',invoice:'চালান',shipment:'মালপত্র',contact:'যোগাযোগ',product:'প্রোডাক্ট',employee:'কর্মচারী',reminder:'রিমাইন্ডার',note:'নোট',investor:'ইনভেস্টরস'}[type]||type;}
+    /* ---------------- ডাটা ম্যানেজমেন্ট / নিরাপদ Delete Center ---------------- */
+    function deleteArrayMap(type){return {purchase:purchaseList,sale:salesList,expense:expenseList,payment:paymentHistory,generalDue:generalDuePayments,cash:cashList,bank:bankTransactions,invoice:invoiceList,shipment:shipmentList,contact:contactList,product:productList,employee:employeeList,reminder:reminderList,note:noteList,investor:investorList};}
+    function deleteTypeLabel(type){return correctionLabel(type);}
+    function safeDeleteRecord(type,id){
+      var map=deleteArrayMap(type),arr=map[type];if(!Array.isArray(arr))return;
+      var idx=arr.findIndex(function(x){return String(x.id)===String(id);});if(idx<0)return;
+      var old=auditClone(arr[idx]);
+      if(type==='purchase'||type==='sale'){
+        var sid=String(id);
+        paymentHistory=paymentHistory.filter(function(p){return String(p.sourceId||'')!==sid;});
+        cashList=cashList.filter(function(c){return String(c.sourceId||'')!==sid;});
+      }
+      if(type==='generalDue'){
+        paymentHistory=paymentHistory.filter(function(p){return String(p.generalDueId||'')!==String(id);});
+        cashList=cashList.filter(function(c){return String(c.generalDueId||'')!==String(id);});
+      }
+      arr.splice(idx,1);
+      auditAction('মুছে ফেলা',deleteTypeLabel(type),'ব্যবহারকারী নির্দিষ্ট রেকর্ডটি মুছে ফেলেছেন',old,null);
+      saveAllExtra(); scheduleCloudSave(); rebuildAllOneTimeAllocations(); refreshAllDependentViews();
+      renderDeleteManager();
+      alert('রেকর্ডটি মুছে ফেলা হয়েছে।');
+    }
+    function renderDeleteManager(){
+      var d=document.getElementById('delete-manager-list');if(!d)return;
+      var type=(document.getElementById('del-type')||{}).value||'purchase',q=((document.getElementById('del-search')||{}).value||'').toLowerCase().trim(),arr=deleteArrayMap(type)[type]||[];
+      var rows=arr.map(function(x,i){var text=JSON.stringify(x).toLowerCase();return {x:x,i:i,ok:!q||text.includes(q)};}).filter(function(r){return r.ok;}).slice().reverse();
+      d.innerHTML=rows.map(function(r){var x=r.x;return '<div class="list-row"><b>'+esc(x.date||x.name||x.title||x.no||x.id)+'</b> — '+esc(x.supplier||x.customer||x.investorName||x.name||x.title||x.item||'রেকর্ড')+' '+(x.amount!=null?('— '+esc(x.amount)+' ৳'):(x.total!=null?('— '+esc(x.total)+' ৳'):''))+' <button class="delete-record-btn" onclick="safeDeleteRecord(\''+type+'\',\''+String(x.id).replace(/'/g,"\\'")+'\')">🗑️ মুছুন</button></div>';}).join('')||'<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';
+    }
+    function openDeleteManager(){
+      pageShell(['ডাটা ম্যানেজমেন্ট','Data Management'],['প্রয়োজনে নির্দিষ্ট রেকর্ড মুছুন। ভুল করে অন্য ডাটা মুছে যাওয়ার ঝুঁকি কমাতে একবারে একটি রেকর্ডই মুছতে পারবেন।','Safely delete a specific record. Only one record can be deleted at a time to reduce accidental deletion.'],
+      '<div class="section-card" style="border:2px solid #fecaca"><h3 style="color:#b91c1c">🗑️ ডাটা ম্যানেজমেন্ট / ডিলিট</h3><p>সতর্কতা: ডিলিট করা রেকর্ড আর মূল হিসাবে থাকবে না। তবে কী ডিলিট করা হয়েছে তার হিস্ট্রি আলাদা “সম্পূর্ণ হিস্ট্রি”তে থাকবে।</p><div class="module-grid"><select id="del-type" onchange="renderDeleteManager()"><option value="purchase">কেনার খাতা</option><option value="sale">বেচার খাতা</option><option value="expense">খরচ</option><option value="payment">পেমেন্ট</option><option value="generalDue">বাকি সমন্বয়</option><option value="cash">ক্যাশ</option><option value="bank">ব্যাংক</option><option value="invoice">চালান</option><option value="shipment">মালপত্র</option><option value="contact">যোগাযোগ</option><option value="product">প্রোডাক্ট</option><option value="employee">কর্মচারী</option><option value="reminder">রিমাইন্ডার</option><option value="note">নোট</option><option value="investor">ইনভেস্টরস</option></select><input id="del-search" oninput="renderDeleteManager()" placeholder="তারিখ, নাম, চালান, গাড়ি, পণ্য..."> </div><div id="delete-manager-list" style="margin-top:12px"></div></div>');
+      renderDeleteManager();
+    }
+
     function openCorrections(){
       pageShell(['সংশোধন','Corrections'],['যেকোনো সংরক্ষিত হিসাব খুঁজে ভুল তথ্য—তারিখ, নাম, পণ্য, পরিমাণ, মূল্য, বাকি ও অন্যান্য তথ্য—সংশোধন করুন।','Find and correct saved records including date, name, item, quantity, amount, due and other fields.'],`<div class="section-card"><div class="module-grid"><select id="cr-type" onchange="renderCorrections()"><option value="all">সব ধরনের হিসাব</option><option value="purchase">ক্রয়</option><option value="sale">বিক্রয়</option><option value="expense">খরচ</option><option value="payment">পেমেন্ট</option><option value="generalDue">সাধারণ বাকি পরিশোধ</option><option value="cash">ক্যাশ</option><option value="bank">ব্যাংক</option><option value="invoice">চালান</option><option value="shipment">মালপত্র</option><option value="contact">যোগাযোগ</option><option value="product">প্রোডাক্ট</option><option value="employee">কর্মচারী</option><option value="reminder">রিমাইন্ডার</option><option value="note">নোট</option><option value="investor">ইনভেস্টরস</option></select><input id="cr-search" oninput="renderCorrections()" placeholder="নাম, তারিখ, চালান, গাড়ি, পণ্য..."> </div></div><div class="section-card"><div id="cr-list"></div></div><div id="cr-modal" style="display:none"></div>`);renderCorrections();}
     function correctionRows(){var types=['purchase','sale','expense','payment','generalDue','cash','bank','invoice','shipment','contact','product','employee','reminder','note','investor'];var chosen=document.getElementById('cr-type')?.value||'all',q=(document.getElementById('cr-search')?.value||'').toLowerCase().trim(),out=[];types.filter(function(x){return chosen==='all'||x===chosen;}).forEach(function(type){var arr=correctionArray(type);arr.forEach(function(x,idx){var s=JSON.stringify(x).toLowerCase();if(!q||s.includes(q))out.push({type:type,idx:idx,x:x});});});return out.reverse();}
@@ -3153,11 +3267,54 @@
         else if(currentPageEn==='Shipment Tracking' && typeof openShipmentTracking==='function') openShipmentTracking();
         else if(currentPageEn==='Investors' && typeof openInvestors==='function') openInvestors();
         else if(currentPageEn==='Corrections' && typeof renderCorrections==='function') renderCorrections();
+        else if(currentPageEn==='Data Management' && typeof renderDeleteManager==='function') renderDeleteManager();
+        else if(currentPageEn==='Complete History' && typeof renderAuditHistory==='function') renderAuditHistory();
       }catch(e){ console.error('Current view rebuild failed',e); }
     }
 
+    function syncAutoLedgerRowsForCoreRecord(type,x){
+      if(!x||x.id==null)return;
+      var sid=String(x.id), isPurchase=type==='purchase', isSale=type==='sale';
+      var autoKind=isPurchase?'purchase':'sale';
+      var party=isPurchase?x.supplier:x.customer;
+      var payRows=paymentHistory.filter(function(p){return String(p.sourceId||'')===sid && p.autoSource===autoKind;});
+      var paid=Math.max(0,parseFloat(x.paid)||0);
+      if(payRows.length){
+        payRows[0].amount=paid;payRows[0].date=x.date;payRows[0].name=party;
+        if(paid<=0) paymentHistory=paymentHistory.filter(function(p){return p!==payRows[0];});
+        for(var pi=1;pi<payRows.length;pi++) paymentHistory=paymentHistory.filter(function(p){return p!==payRows[pi];});
+      }else if(paid>0){
+        paymentHistory.push({id:uid(),sourceId:x.id,autoSource:autoKind,date:x.date,name:party,type:isPurchase?'Supplier Payment':'Customer Collection',typeBn:isPurchase?'মহাজন পরিশোধ (পণ্য)':'কাস্টমার জমা (পণ্য)',amount:paid,note:isPurchase?'Purchase Payment':'Product Sale Collection'});
+      }
+      var cashRows=cashList.filter(function(c){return String(c.sourceId||'')===sid && c.autoSource===autoKind;});
+      if(cashRows.length){
+        cashRows[0].amount=paid;cashRows[0].date=x.date;cashRows[0].type=isPurchase?'out':'in';cashRows[0].title=(isPurchase?'পণ্য ক্রয় নগদ প্রদান: ':'পণ্য বিক্রি নগদ জমা: ')+party;
+        if(paid<=0) cashList=cashList.filter(function(c){return c!==cashRows[0];});
+        for(var ci=1;ci<cashRows.length;ci++) cashList=cashList.filter(function(c){return c!==cashRows[ci];});
+      }else if(paid>0){
+        cashList.push({id:uid(),sourceId:x.id,autoSource:autoKind,date:x.date,type:isPurchase?'out':'in',title:(isPurchase?'পণ্য ক্রয় নগদ প্রদান: ':'পণ্য বিক্রি নগদ জমা: ')+party,amount:paid});
+      }
+      var tRows=paymentHistory.filter(function(p){return String(p.sourceId||'')===sid && p.autoSource==='transport';});
+      var tp=Math.max(0,parseFloat(x.transportFarePaid)||0);
+      if(tRows.length){
+        tRows[0].amount=tp;tRows[0].date=x.date;tRows[0].name=x.transportName||'';
+        if(tp<=0) paymentHistory=paymentHistory.filter(function(p){return p!==tRows[0];});
+        for(var ti=1;ti<tRows.length;ti++) paymentHistory=paymentHistory.filter(function(p){return p!==tRows[ti];});
+      }else if(tp>0){
+        paymentHistory.push({id:uid(),sourceId:x.id,autoSource:'transport',date:x.date,name:x.transportName||'',type:'Transport Fare Paid',typeBn:'গাড়ি ভাড়া নগদ পরিশোধ',amount:tp,note:'Transport Fare'});
+      }
+      var tcRows=cashList.filter(function(c){return String(c.sourceId||'')===sid && c.autoSource==='transport';});
+      if(tcRows.length){
+        tcRows[0].amount=tp;tcRows[0].date=x.date;tcRows[0].type='out';tcRows[0].title='গাড়ি ভাড়া প্রদান: '+(x.transportName||'');
+        if(tp<=0) cashList=cashList.filter(function(c){return c!==tcRows[0];});
+        for(var tci=1;tci<tcRows.length;tci++) cashList=cashList.filter(function(c){return c!==tcRows[tci];});
+      }else if(tp>0){
+        cashList.push({id:uid(),sourceId:x.id,autoSource:'transport',date:x.date,type:'out',title:'গাড়ি ভাড়া প্রদান: '+(x.transportName||''),amount:tp});
+      }
+    }
     async function saveCorrection(type,idx){
       var arr=correctionArray(type),x=arr[idx];if(!x)return;
+      var beforeRecord=auditClone(x), recordId=(x.id!=null?String(x.id):'');
       var oldPaymentAmount=(type==='payment')?(parseFloat(x.amount)||0):0;
       var oldGeneralAmount=(type==='generalDue')?(parseFloat(x.amount)||0):0;
       var oldGeneralState=null;
@@ -3183,6 +3340,7 @@
           x.transportFare=Math.max(0,parseFloat(x.transportFare)||0);x.transportFarePaid=Math.max(0,parseFloat(x.transportFarePaid)||0);x.transportFarePaid=Math.min(x.transportFarePaid,x.transportFare);x.transportFareDue=Math.max(0,x.transportFare-x.transportFarePaid);
         }
       }
+      if(type==='purchase'||type==='sale'){ syncAutoLedgerRowsForCoreRecord(type,x); }
       if(type==='payment'){
         var delta=(parseFloat(x.amount)||0)-oldPaymentAmount;
         if(delta!==0&&x.sourceId){
@@ -3222,11 +3380,14 @@
       if(type==='invoice'){var q=parseFloat(x.qty)||0,rate=parseFloat(x.rate)||0;if(!document.getElementById('crf-total')?.value)x.total=q*rate;}
       rebuildAllOneTimeAllocations();
       /* প্রথমে modified arrays persist করি; তারপর সব dependent view একসাথে refresh করি। */
+      /* পুরোনো রেকর্ডের জায়গাতেই নতুন রেকর্ড বসানো হচ্ছে; একই ID বজায় থাকবে। */
+      if(recordId){ var ridx=arr.findIndex(function(r){return String(r.id)===recordId;}); if(ridx>=0) arr.splice(ridx,1,x); else arr[idx]=x; } else { x.id=uid(); arr.splice(idx,1,x); }
+      auditAction('পরিবর্তন',correctionLabel(type),'সংশোধন করে একই রেকর্ডে নতুন তথ্য বসানো হয়েছে',beforeRecord,x);
       /* আগে Firebase-এ পরিবর্তিত মূল arrays লিখি, তারপর সব dependent view refresh করি। */
       await persistCorrectionSafely();
       rebuildDerivedStateAfterCorrection();
       closeCorrectionEditor();
-      alert(T('তথ্য সফলভাবে সংশোধন হয়েছে। সব সংশ্লিষ্ট হিসাব, রিপোর্ট, স্টক ও তালিকা আপডেট হয়েছে। আগের ডাটা মুছে ফেলা হয়নি।','Record corrected successfully. All dependent accounts, reports, stock and lists have been refreshed. Existing data was not deleted.'));
+      alert(T('তথ্য সফলভাবে সংশোধন হয়েছে। সব সংশ্লিষ্ট হিসাব, রিপোর্ট, স্টক ও তালিকা আপডেট হয়েছে। আগের ডাটা মুছে ফেলা হয়নি।','Record corrected successfully. All dependent accounts, reports, stock and lists have been refreshed. The old version is replaced in the same record; a history entry is kept.'));
     }
 
     function openInvoiceGenerator(){pageShell(['চালান তৈরি','Invoice Generator'],['কাস্টমার ও পণ্যের তথ্য দিয়ে প্রিন্টযোগ্য চালান তৈরি ও সংরক্ষণ করুন।','Create and save a printable invoice with customer and product details.'],`<div class="section-card"><div class="module-grid"><input id="iv-no" placeholder="Invoice No."><input id="iv-date" type="date" value="${getTodayDate()}"><input id="iv-customer" placeholder="${T('কাস্টমার','Customer')}"><input id="iv-phone" placeholder="${T('মোবাইল','Phone')}"><input id="iv-site" placeholder="${T('সাইট/ঠিকানা','Site/Address')}"><input id="iv-item" placeholder="${T('পণ্য','Product')}"><input id="iv-qty" type="number" placeholder="${T('পরিমাণ','Quantity')}"><input id="iv-rate" type="number" placeholder="${T('দর','Rate')}"><textarea id="iv-note" placeholder="${T('নোট','Note')}"></textarea><button class="btn-submit" onclick="saveInvoice()">${T('চালান সংরক্ষণ','Save Invoice')}</button></div></div><div class="section-card" id="invoice-preview"></div><div class="section-card"><h3>${T('সংরক্ষিত চালান','Saved Invoices')}</h3><div id="iv-list"></div></div>`);renderInvoiceList();}
