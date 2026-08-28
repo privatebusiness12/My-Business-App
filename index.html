@@ -365,6 +365,7 @@
 @media print{.report-section table tfoot{display:table-row-group}}
 </style>
 
+<!-- Correction Sync v4: central refresh enabled -->
 </head>
 <body>
 
@@ -3055,6 +3056,35 @@
         h.type=g.type||h.type;h.typeBn=g.typeBn||h.typeBn;
       }
     }
+
+    /* কেন্দ্রীয় Recalculate + Refresh:
+       সংশোধনের পর মূল data arrays থেকেই সব dependent table/report/stock/summary
+       আবার render করা হয়। কোনো existing record delete বা reset করা হয় না। */
+    function refreshAllDependentViews(){
+      try { if(typeof renderPurchaseTable==='function') renderPurchaseTable(); } catch(e){}
+      try { if(typeof renderSalesTable==='function') renderSalesTable(); } catch(e){}
+      try { if(typeof renderPaymentHistoryTable==='function') renderPaymentHistoryTable(); } catch(e){}
+      try { if(typeof renderDueTables==='function') renderDueTables(); } catch(e){}
+      try { if(typeof renderCashTable==='function') renderCashTable(); } catch(e){}
+      try { if(typeof renderBankHistoryTable==='function') renderBankHistoryTable(); } catch(e){}
+      try { if(typeof renderExpenseTable==='function') renderExpenseTable(); } catch(e){}
+      try { if(typeof renderStock==='function') renderStock(); } catch(e){}
+      try { if(typeof renderContacts==='function') renderContacts(); } catch(e){}
+      try { if(typeof renderProducts==='function') renderProducts(); } catch(e){}
+      try { if(typeof renderEmployees==='function') renderEmployees(); } catch(e){}
+      try { if(typeof renderReminders==='function') renderReminders(); } catch(e){}
+      try { if(typeof renderNotes==='function') renderNotes(); } catch(e){}
+      try { if(typeof renderShipmentTracking==='function') renderShipmentTracking(); } catch(e){}
+      try { if(typeof renderInvoiceList==='function') renderInvoiceList(); } catch(e){}
+      try { if(typeof renderInvestors==='function') renderInvestors(); } catch(e){}
+      try { if(typeof renderInvestorProfit==='function') renderInvestorProfit(); } catch(e){}
+      try { if(typeof renderVehicleBoatLedger==='function') renderVehicleBoatLedger(); } catch(e){}
+      try { if(typeof renderBusinessReportResults==='function') renderBusinessReportResults(); } catch(e){}
+      try { if(typeof renderMaterialQuantitySummary==='function') renderMaterialQuantitySummary(); } catch(e){}
+      try { if(typeof updateDashboardQuickStats==='function') updateDashboardQuickStats(); } catch(e){}
+      try { if(typeof renderCorrections==='function') renderCorrections(); } catch(e){}
+    }
+
     function saveCorrection(type,idx){
       var arr=correctionArray(type),x=arr[idx];if(!x)return;
       var oldPaymentAmount=(type==='payment')?(parseFloat(x.amount)||0):0;
@@ -3119,12 +3149,12 @@
         syncGeneralDuePaymentHistory(x);
       }
       if(type==='invoice'){var q=parseFloat(x.qty)||0,rate=parseFloat(x.rate)||0;if(!document.getElementById('crf-total')?.value)x.total=q*rate;}
-      scheduleCloudSave();saveAllExtra();updateDashboardQuickStats();closeCorrectionEditor();renderCorrections();
-      if(type==='purchase'&&document.getElementById('purchase-records'))renderPurchaseTable();
-      if(type==='sale'&&document.getElementById('sales-records'))renderSalesTable();
-      if(type==='payment'&&document.getElementById('payment-history-records'))renderPaymentHistoryTable();
-      if(typeof renderDueTables==='function')renderDueTables();
-      alert(T('তথ্য সফলভাবে সংশোধন হয়েছে। আগের ডাটা মুছে ফেলা হয়নি।','Record corrected successfully. Existing data was not deleted.'));
+      /* প্রথমে modified arrays persist করি; তারপর সব dependent view একসাথে refresh করি। */
+      scheduleCloudSave();
+      saveAllExtra();
+      refreshAllDependentViews();
+      closeCorrectionEditor();
+      alert(T('তথ্য সফলভাবে সংশোধন হয়েছে। সব সংশ্লিষ্ট হিসাব, রিপোর্ট, স্টক ও তালিকা আপডেট হয়েছে। আগের ডাটা মুছে ফেলা হয়নি।','Record corrected successfully. All dependent accounts, reports, stock and lists have been refreshed. Existing data was not deleted.'));
     }
 
     function openInvoiceGenerator(){pageShell(['চালান তৈরি','Invoice Generator'],['কাস্টমার ও পণ্যের তথ্য দিয়ে প্রিন্টযোগ্য চালান তৈরি ও সংরক্ষণ করুন।','Create and save a printable invoice with customer and product details.'],`<div class="section-card"><div class="module-grid"><input id="iv-no" placeholder="Invoice No."><input id="iv-date" type="date" value="${getTodayDate()}"><input id="iv-customer" placeholder="${T('কাস্টমার','Customer')}"><input id="iv-phone" placeholder="${T('মোবাইল','Phone')}"><input id="iv-site" placeholder="${T('সাইট/ঠিকানা','Site/Address')}"><input id="iv-item" placeholder="${T('পণ্য','Product')}"><input id="iv-qty" type="number" placeholder="${T('পরিমাণ','Quantity')}"><input id="iv-rate" type="number" placeholder="${T('দর','Rate')}"><textarea id="iv-note" placeholder="${T('নোট','Note')}"></textarea><button class="btn-submit" onclick="saveInvoice()">${T('চালান সংরক্ষণ','Save Invoice')}</button></div></div><div class="section-card" id="invoice-preview"></div><div class="section-card"><h3>${T('সংরক্ষিত চালান','Saved Invoices')}</h3><div id="iv-list"></div></div>`);renderInvoiceList();}
