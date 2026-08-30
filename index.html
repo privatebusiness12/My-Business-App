@@ -458,7 +458,7 @@ body{font-size:13px}
 .settings-bottom-card{margin-bottom:18px}
 .settings-bottom-card .grid-container{margin-top:0}
 </style>
-</head>
+<style id="font-color-system-v10">:root{--ui-text:#1f2937;--ui-muted:#64748b;--ui-heading:#111827;--ui-border:#d7dee8;--ui-input:#fff;--ui-input-text:#111827;--ui-table-head:#eef2f7}body{color:var(--ui-text);background:var(--bg-color,#f5f7fb)}h1,h2,h3,h4,h5,h6,.title,.page-title{color:var(--ui-heading)}input,select,textarea{color:var(--ui-input-text)!important;background:var(--ui-input)!important;border-color:var(--ui-border)!important}input::placeholder,textarea::placeholder{color:#64748b!important;opacity:1}table,table td{color:var(--ui-text)}table th{color:#111827!important;background:var(--ui-table-head)!important}.muted,.secondary,.text-muted,.help-text,.subtitle{color:var(--ui-muted)!important}.dark-theme{--ui-text:#e5e7eb;--ui-muted:#aab4c3;--ui-heading:#f8fafc;--ui-border:#3b4656;--ui-input:#1f2937;--ui-input-text:#f8fafc;--ui-table-head:#273244}.dark-theme,.dark-theme body{color:var(--ui-text);background:var(--bg-color,#111827)}.dark-theme h1,.dark-theme h2,.dark-theme h3,.dark-theme h4,.dark-theme h5,.dark-theme h6,.dark-theme .title,.dark-theme .page-title{color:var(--ui-heading)}.dark-theme table,.dark-theme td{color:var(--ui-text)}.dark-theme table th{color:#f8fafc!important;background:var(--ui-table-head)!important}.dark-theme input::placeholder,.dark-theme textarea::placeholder{color:#aab4c3!important}@media print{body{background:#fff!important;color:#111!important}h1,h2,h3,h4,h5,h6,p,span,label,small,td,th{color:#111!important}table th{background:#eee!important;color:#111!important}}</style></head>
 <body>
 
 
@@ -4203,6 +4203,22 @@ window.finalRestoreTrash=function(i){let t=get(K.trash,[]),v=t[i];if(!v)return;i
 window.printFinalHistory=function(){const h=get(K.hist,[]),w=window.open('','_blank');if(!w)return;w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>History</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px;font-size:10px}th{background:#eee}</style></head><body><h2>সম্পূর্ণ হিস্ট্রি</h2><table><tr><th>সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr>'+h.map(v=>'<tr><td>'+esc(v.time)+'</td><td>'+esc(v.action)+'</td><td>'+esc(v.section)+'</td><td>'+esc(JSON.stringify(v.details))+'</td></tr>').join('')+'</table></body></html>');w.document.close();w.focus();w.print()};
 window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>dataArr(k).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1));}));alert(bad.length?'Mismatch পাওয়া গেছে: '+bad.length+' record':'মৌলিক Total/Paid/Due mismatch পাওয়া যায়নি।');audit('HEALTH_CHECK','Data',bad.length||'OK')};
 window.showFinalControlCenter=function(){document.querySelectorAll('.ledger-section').forEach(x=>x.style.display='none');const x=document.getElementById('final-control-center');if(x)x.style.display='block'};
+})();
+</script><script id="settings-first-dashboard-only-js-v9">
+(function(){
+  function keepSettingsOnlyOnHome(){
+    const labels=['সেটিংস ও কন্ট্রোল সেন্টার','Settings & Control Center'];
+    document.querySelectorAll('button,a,div').forEach(function(el){
+      const txt=(el.textContent||'').trim();
+      if(!labels.some(function(x){return txt===x || txt.indexOf(x)>=0;})) return;
+      if(el.closest('.ledger-section,.sub-page,.page-content')) el.style.display='none';
+    });
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',keepSettingsOnlyOnHome);
+  else keepSettingsOnlyOnHome();
+  new MutationObserver(keepSettingsOnlyOnHome)
+    .observe(document.documentElement,{childList:true,subtree:true});
 })();
 </script></body>
 </html>
