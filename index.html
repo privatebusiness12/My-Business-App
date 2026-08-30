@@ -461,6 +461,25 @@ body{font-size:13px}
 #home-view > .settings-bottom-card{display:block!important}
 #app-shell > .settings-bottom-card, #sub-page-view .settings-bottom-card, .ledger-section .settings-bottom-card{display:none!important}
 </style>
+
+<style id="print-pdf-standard-v14">
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  body{background:#fff!important;color:#111!important}
+  .no-print,.print-hide,.dashboard,.header,.footer,.modal-backdrop{display:none!important}
+  .print-report{display:block!important;width:100%!important}
+  table{width:100%!important;border-collapse:collapse!important;table-layout:auto}
+  th,td{border:1px solid #777!important;padding:5px 6px!important;vertical-align:top}
+  thead th{font-weight:800!important}
+  tfoot th,tfoot td{font-weight:900!important;border-top:2px solid #222!important}
+  .col-total-label,.col-total{font-weight:900!important}
+}
+.print-report-head{font-family:Arial,sans-serif;margin-bottom:10px}
+.print-report-head h1{margin:0 0 4px;font-size:20px}
+.print-report-head .meta{font-size:11px}
+.print-report-sign{margin-top:34px;display:flex;justify-content:space-between;gap:30px}
+.print-report-sign>div{width:30%;text-align:center;border-top:1px solid #555;padding-top:5px}
+</style>
 </head>
 <body>
 
@@ -3502,7 +3521,7 @@ body{font-size:13px}
     function saveInvoice(){var x=invoiceData();if(!x.customer||!x.item)return alert(T('কাস্টমার ও পণ্য দিন','Enter customer and product'));invoiceList.push(x);saveAllExtra();showInvoice(x);renderInvoiceList();}
     function showInvoice(x){document.getElementById('invoice-preview').innerHTML='<div id="print-invoice"><h2>'+T('চালান','Invoice')+' #'+esc(x.no)+'</h2><p>'+esc(x.date)+' | '+esc(x.customer)+' | '+esc(x.phone)+'</p><p>'+esc(x.site)+'</p><table><tr><th>'+T('পণ্য','Product')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('দর','Rate')+'</th><th>'+T('মোট','Total')+'</th></tr><tr><td>'+esc(x.item)+'</td><td>'+x.qty+'</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.total.toFixed(2)+'</td></tr></table><h3 style="text-align:right">'+T('সর্বমোট','Grand Total')+': '+x.total.toFixed(2)+' ৳</h3><p>'+esc(x.note)+'</p></div>';}
     function renderInvoiceList(){var d=document.getElementById('iv-list');if(!d)return;d.innerHTML=invoiceList.slice().reverse().map(x=>'<div class="list-row"><b>'+esc(x.no)+'</b> — '+esc(x.customer)+' — '+x.total.toFixed(2)+' ৳ <button class="btn-action" onclick="showInvoice('+JSON.stringify(x).replace(/"/g,'&quot;')+')">'+T('দেখুন','View')+'</button></div>').join('')||T('কোনো চালান নেই','No invoices');}
-    function printInvoicePreview(){var x=document.getElementById('print-invoice');if(!x)return alert(T('আগে চালান তৈরি করুন','Create an invoice first'));var w=window.open('','_blank');w.document.write('<html><head><title>Invoice</title></head><body>'+x.outerHTML+'</body></html>');w.document.close();w.print();}
+    function printInvoicePreview(){var x=document.getElementById('print-invoice');if(!x)return alert(T('আগে চালান তৈরি করুন','Create an invoice first'));var w=window.open('','_blank');if(!w)return;w.document.write('<html><head><meta charset="utf-8"><title>Invoice</title><style>@page{size:A4 portrait;margin:10mm}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:7px}th{background:#eef2f7}.col-total-label,.col-total{font-weight:800}</style></head><body>'+x.outerHTML+'</body></html>');w.document.close();addAutomaticPrintTotals(w.document);setTimeout(function(){w.focus();w.print();},150);}
 
     function investorSummary(){
       var map={};
@@ -3798,6 +3817,44 @@ body{font-size:13px}
       if(pt) pt.innerText = title;
       document.title = title + ' - ' + T('রিপোর্ট','Report');
     }
+    function addAutomaticPrintTotals(doc){
+      if(!doc || !doc.querySelectorAll) return;
+      doc.querySelectorAll('table').forEach(function(table){
+        if(table.querySelector('tfoot')) return;
+        var head=table.querySelector('thead');
+        var body=table.querySelector('tbody');
+        if(!head || !body) return;
+        var headers=Array.from(head.querySelectorAll('th')).map(function(x){return (x.textContent||'').trim().toLowerCase();});
+        var rows=Array.from(body.querySelectorAll('tr')).filter(function(r){return r.querySelectorAll('td').length;});
+        if(!rows.length) return;
+
+        var money=/মোট|amount|total|মূল্য|দাম|পরিশোধ|paid|জমা|বাকি|due|balance|ব্যালেন্স|খরচ|expense|বেতন|salary|অগ্রিম|advance|ভাড়া|fare|মূল্য/i;
+        var qty=/পরিমাণ|qty|quantity|cft|টন|ton|pcs|pieces|পিচ|গাড়ি সংখ্যা|vehicle/i;
+        var skip=/তারিখ|date|ফোন|phone|মোবাইল|mobile|চালান|challan|memo|রেফ|ref|নাম|name|পণ্য|product|মাল|item|সাইট|site|ঠিকানা|address|মাধ্যম|method|ধরন|type|নোট|note|status|স্ট্যাটাস|sku/i;
+        var foot=doc.createElement('tfoot'), tr=doc.createElement('tr');
+
+        headers.forEach(function(h,i){
+          var th=doc.createElement('th');
+          th.className=(i===0?'col-total-label':'col-total');
+          if(i===0){th.textContent='মোট:';tr.appendChild(th);return;}
+          var allow=(money.test(h)||qty.test(h))&&!skip.test(h);
+          if(!allow){th.textContent='—';tr.appendChild(th);return;}
+          var sum=0,seen=false;
+          rows.forEach(function(r){
+            var cells=r.querySelectorAll('td'), c=cells[i]; if(!c)return;
+            var s=(c.textContent||'').replace(/,/g,'').replace(/৳/g,'').trim();
+            var nums=s.match(/[-+]?(?:\\d+\\.?\\d*|\\.\\d+)/g);
+            /* A cell such as "2 গাড়ি × 10 CFT = 20 CFT" represents the
+               final quantity, so use the last number. */
+            if(nums && nums.length){var n=parseFloat(nums[nums.length-1]);if(isFinite(n)){sum+=n;seen=true;}}
+          });
+          th.textContent=seen ? sum.toFixed(/ton|টন/i.test(h)?3:2) : '—';
+          tr.appendChild(th);
+        });
+        foot.appendChild(tr);table.appendChild(foot);
+      });
+    }
+
     function printCurrentPage(){
       if(!document.getElementById('sub-page-view').classList.contains('active-view')) return printHomeDashboard();
       preparePrintPage();
@@ -3808,7 +3865,7 @@ body{font-size:13px}
       var st=document.getElementById('dynamic-page-print-style');
       if(!st){st=document.createElement('style');st.id='dynamic-page-print-style';document.head.appendChild(st);}
       st.textContent='@media print{@page{size:A4 '+ps.orientation+';margin:10mm}.col-total-label,.col-total{font-weight:700!important}.report-section table tfoot th{border-top:2px solid #222!important;background:#fff!important}.report-section table tfoot{display:table-footer-group}}';
-      setTimeout(function(){window.print();},80);
+      addAutomaticPrintTotals(document); try{standardizePrintDocumentV14(document,document.title||'Business Report')}catch(e){}; setTimeout(function(){window.print();},80);
     }
 
     function printHomeDashboard(){
@@ -3944,22 +4001,23 @@ body{font-size:13px}
       var sums = {}, seen = {};
       keys.forEach(function(k){ sums[k]=0; seen[k]=false; });
 
-      // Only these fields are allowed to receive a numeric column total.
-      // This prevents dates such as 2026-08-06, phone numbers, challans, etc.
-      // from being accidentally added together.
+      /* Only real quantitative/accounting columns are summed.
+         Text, dates, phone numbers, IDs, rates and minimum thresholds are not
+         added together. */
       var numericKeys = {
-        qty:true, total:true, paid:true, due:true, amount:true, balance:true,
-        buy:true, sell:true, min:true, salary:true, advance:true,
-        rate:true, cft:true, cftQty:true, ton:true, tonQty:true,
-        metricTon:true, metric_ton:true, pc:true, pcs:true, pieces:true, pcQty:true
+        qty:true,total:true,paid:true,due:true,amount:true,balance:true,
+        salary:true,advance:true,transportFare:true,transportFarePaid:true,
+        transportFareDue:true,vehicleCount:true,qtyPerVehicle:true,
+        cft:true,cftQty:true,ton:true,tonQty:true,metricTon:true,metric_ton:true,
+        pc:true,pcs:true,pieces:true,pcQty:true,other:true
       };
 
       function n(v){
         if(v===null || v===undefined || v==='') return null;
         if(typeof v === 'number') return isFinite(v) ? v : null;
-        var str=String(v).trim();
-        if(!str || !/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?(?:\s*৳)?$/.test(str.replace(/,/g,''))) return null;
-        var x=parseFloat(str.replace(/,/g,'').replace(/৳/g,'').trim());
+        var str=String(v).trim().replace(/,/g,'').replace(/৳/g,'').trim();
+        if(!str || !/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/.test(str)) return null;
+        var x=parseFloat(str);
         return isFinite(x) ? x : null;
       }
 
@@ -3971,12 +4029,14 @@ body{font-size:13px}
         });
       });
 
-      var cells=keys.map(function(k,i){
-        if(i===0) return '<th class="col-total-label"><strong>মোট:</strong></th>';
-        if(numericKeys[k] && seen[k]) return '<th class="col-total"><strong>'+sums[k].toFixed(2)+'</strong></th>';
+      return '<tfoot><tr>'+keys.map(function(k,i){
+        if(i===0) return '<th class="col-total-label"><strong>'+T('মোট:','Total:')+'</strong></th>';
+        if(numericKeys[k] && seen[k]){
+          var decimals=(k==='ton'||k==='tonQty'||k==='metricTon'||k==='metric_ton')?3:2;
+          return '<th class="col-total"><strong>'+sums[k].toFixed(decimals)+'</strong></th>';
+        }
         return '<th class="col-total">—</th>';
-      }).join('');
-      return '<tfoot><tr>'+cells+'</tr></tfoot>';
+      }).join('')+'</tr></tfoot>';
     }
 
 
