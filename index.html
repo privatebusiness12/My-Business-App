@@ -782,6 +782,15 @@ body{font-size:13px}
       var x=normalizePartyName(a), y=normalizePartyName(b);
       return !!x && !!y && x===y;
     }
+    function transportIdentityName(x){
+      if(!x)return '';
+      var raw=String(x.transportName||x.vehicleNo||x.vehicleNumber||x.boatName||'').trim();
+      if(!raw)return '';
+      var m=raw.match(/^(?:গাড়ি|বালগেট|নৌকা)\s*:\s*(.*?)\s*\((.*?)\)\s*$/i);
+      if(m&&m[1])return m[1].trim();
+      return raw.replace(/^(গাড়ি|বালগেট|নৌকা)\s*:\s*/i,'').trim().split(' (')[0].trim();
+    }
+    function transportIdentityMatches(x,name){ return partyNameMatches(transportIdentityName(x),name); }
     function generalDueAllocationsTotal(g){
       return (Array.isArray(g&&g.allocations)?g.allocations:[]).reduce(function(sum,a){return sum+(parseFloat(a.amount)||0);},0);
     }
@@ -833,15 +842,17 @@ body{font-size:13px}
       if(direction==='receivable'){
         salesList.forEach(function(x){
           var match=(matchType==='customer' && partyNameMatches(x.customer,target)) ||
-                    (matchType==='site' && partyNameMatches(x.site,target));
+                    (matchType==='site' && partyNameMatches(x.site,target)) ||
+                    ((matchType==='vehicle'||matchType==='boat') && transportIdentityMatches(x,name));
           if(match && (parseFloat(x.due)||0)>0) out.push({type:'sale',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
         });
       }else if(direction==='payable'){
         purchaseList.forEach(function(x){
           var match=(matchType==='supplier' && partyNameMatches(x.supplier,target)) ||
-                    (matchType==='driver' && partyNameMatches(transportPersonName(x),target));
+                    (matchType==='driver' && partyNameMatches(transportPersonName(x),target)) ||
+                    ((matchType==='vehicle'||matchType==='boat') && transportIdentityMatches(x,name));
           if(match){
-            if(matchType==='supplier' && (parseFloat(x.due)||0)>0) out.push({type:'purchase',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
+            if((matchType==='supplier'||matchType==='vehicle'||matchType==='boat') && (parseFloat(x.due)||0)>0) out.push({type:'purchase',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
             if(matchType==='driver' && (parseFloat(x.transportFareDue)||0)>0) out.push({type:'purchaseTransport',id:x.id,obj:x,field:'transportFareDue',available:parseFloat(x.transportFareDue)||0});
           }
         });
@@ -2184,7 +2195,7 @@ body{font-size:13px}
             '</div>' +
           '</div>' +
           '<div class="form-group" id="pay-person-wrap"><label data-bn="ব্যক্তি / পরিবহন নির্বাচন করুন:" data-en="Select Person / Transport:">ব্যক্তি / পরিবহন নির্বাচন করুন:</label><select id="pay-person-id"></select></div>' +
-          '<div class="form-group" id="pay-one-time-type-wrap" style="display:none;"><label data-bn="এককালীন সমন্বয়ের ধরন:" data-en="One-time Match Type:">এককালীন সমন্বয়ের ধরন:</label><select id="pay-one-time-type"><option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option></select></div>' +
+          '<div class="form-group" id="pay-one-time-type-wrap" style="display:none;"><label data-bn="এককালীন সমন্বয়ের ধরন:" data-en="One-time Match Type:">এককালীন সমন্বয়ের ধরন:</label><select id="pay-one-time-type"><option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option><option value="vehicle">গাড়ি নম্বর</option><option value="boat">নৌকা / বালগেট</option></select></div>' +
           '<div class="form-group" id="pay-general-name-wrap" style="display:none;"><label>ব্যক্তি / প্রতিষ্ঠান / সাইটের নাম:</label><input type="text" id="pay-general-name" list="pay-party-suggestions" placeholder="যে নামের আগের বাকি সমন্বয় হবে"><datalist id="pay-party-suggestions"></datalist></div>' +
           '<div style="display: flex; gap: 10px; flex-wrap:wrap;">' +
             '<div class="form-group" style="flex: 1; min-width:180px;"><label data-bn="টাকার পরিমাণ:" data-en="Amount:">টাকার পরিমাণ:</label><input type="number" id="pay-amount" min="0.01" step="0.01" placeholder="৳"></div>' +
@@ -2197,7 +2208,7 @@ body{font-size:13px}
         '<div class="section-card"><h3 data-bn="কাস্টমারের পন্যের বাকির তালিকা (পাবো)" data-en="Customer Product Due List (Receivable)">কাস্টমারের পন্যের বাকির তালিকা (পাবো)</h3><div class="table-responsive"><table><thead><tr><th data-bn="কাস্টমার নাম" data-en="Customer Name">কাস্টমার নাম</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="সাইট" data-en="Site">সাইট</th><th data-bn="পণ্যের বাকি" data-en="Product Due">পণ্যের বাকি</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="customer-due-records"></tbody></table></div></div>' +
         '<div class="section-card"><h3 data-bn="মহাজন/সাপ্লায়ারের পন্যের বাকির তালিকা (দিতে হবে)" data-en="Supplier Product Due List (Payable)">মহাজন/সাপ্লায়ারের পন্যের বাকির তালিকা (দিতে হবে)</h3><div class="table-responsive"><table><thead><tr><th data-bn="সাপ্লায়ার নাম" data-en="Supplier Name">সাপ্লায়ার নাম</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="পণ্যের বাকি" data-en="Product Due">পণ্যের বাকি</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="supplier-due-records"></tbody></table></div></div>' +
         '<div class="section-card"><h3 style="color: #6f42c1;" data-bn="গাড়ি ভাড়া/ট্রান্সপোর্ট বাকির তালিকা" data-en="Transport Fare Due List">গাড়ি ভাড়া/ট্রান্সপোর্ট বাকির তালিকা</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="গাড়ি/ট্রান্সপোর্ট বিবরণ" data-en="Vehicle / Transport Details">গাড়ি/ট্রান্সপোর্ট বিবরণ</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="বাকি ভাড়া" data-en="Fare Due">বাকি ভাড়া</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="transport-due-records"></tbody></table></div></div>' +
-        '<div class="section-card"><h3 style="color: #007bff;" data-bn="তারিখ ভিত্তিক পেমেন্ট ইতিহাস" data-en="Date-wise Payment History">তারিখ ভিত্তিক পেমেন্ট ইতিহাস</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="নাম/বিবরণ" data-en="Name / Description">নাম/বিবরণ</th><th data-bn="লেনদেনের ধরণ" data-en="Transaction Type">লেনদেনের ধরণ</th><th data-bn="পরিমাণ" data-en="Quantity">পরিমাণ</th><th data-bn="নোট/মাধ্যম" data-en="Note / Method">নোট/মাধ্যম</th></tr></thead><tbody id="payment-history-records"></tbody></table></div></div>';
+        '<div class="section-card"><h3 data-bn="নাম/নৌকা/গাড়ি অনুযায়ী সমন্বিত বাকি" data-en="Consolidated Due by Party / Boat / Vehicle">নাম/নৌকা/গাড়ি অনুযায়ী সমন্বিত বাকি</h3><div class="table-responsive"><table><thead><tr><th>ধরন</th><th>নাম / নম্বর</th><th>এককালীন সমন্বয়</th><th>বর্তমান বাকি</th></tr></thead><tbody id="consolidated-due-records"></tbody></table></div></div><div class="section-card"><h3 style="color: #007bff;" data-bn="তারিখ ভিত্তিক পেমেন্ট ইতিহাস" data-en="Date-wise Payment History">তারিখ ভিত্তিক পেমেন্ট ইতিহাস</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="নাম/বিবরণ" data-en="Name / Description">নাম/বিবরণ</th><th data-bn="লেনদেনের ধরণ" data-en="Transaction Type">লেনদেনের ধরণ</th><th data-bn="পরিমাণ" data-en="Quantity">পরিমাণ</th><th data-bn="নোট/মাধ্যম" data-en="Note / Method">নোট/মাধ্যম</th></tr></thead><tbody id="payment-history-records"></tbody></table></div></div>';
 
       togglePersonDropdown();
       togglePersonDropdown();
@@ -2245,8 +2256,8 @@ body{font-size:13px}
         if(nameWrap)nameWrap.style.display='block';
         if(matchWrap)matchWrap.style.display=(type==='general'?'none':'block');
         if(select)select.innerHTML='<option value="general">সাধারণ বাকি</option>';
-        if(matchSel && type==='oneTimeReceivable') matchSel.innerHTML='<option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option>';
-        if(matchSel && type==='oneTimePayable') matchSel.innerHTML='<option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option>';
+        if(matchSel && type==='oneTimeReceivable') matchSel.innerHTML='<option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="vehicle">গাড়ি নম্বর</option><option value="boat">নৌকা / বালগেট</option>';
+        if(matchSel && type==='oneTimePayable') matchSel.innerHTML='<option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option><option value="vehicle">গাড়ি নম্বর</option><option value="boat">নৌকা / বালগেট</option>';
         buildPartySuggestions(type);
       }else{
         if(wrap)wrap.style.display='block';
@@ -2258,9 +2269,9 @@ body{font-size:13px}
       var dl=document.getElementById('pay-party-suggestions'); if(!dl)return;
       var names=[];
       if(type==='oneTimeReceivable'){
-        salesList.forEach(function(x){ if((parseFloat(x.due)||0)>0){names.push(x.customer);names.push(x.site);} });
+        salesList.forEach(function(x){ if((parseFloat(x.due)||0)>0){names.push(x.customer);names.push(x.site);names.push(transportIdentityName(x));} });
       }else if(type==='oneTimePayable'){
-        purchaseList.forEach(function(x){ if((parseFloat(x.due)||0)>0)names.push(x.supplier); if((parseFloat(x.transportFareDue)||0)>0)names.push(transportPersonName(x)); });
+        purchaseList.forEach(function(x){ if((parseFloat(x.due)||0)>0){names.push(x.supplier);names.push(transportIdentityName(x));} if((parseFloat(x.transportFareDue)||0)>0)names.push(transportPersonName(x)); });
       }
       var seen={}; dl.innerHTML=''; names.forEach(function(n){var k=normalizePartyName(n);if(k&&!seen[k]){seen[k]=1;dl.innerHTML+='<option value="'+esc(String(n))+'"></option>';}});
     }
