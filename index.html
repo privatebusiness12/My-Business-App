@@ -454,15 +454,12 @@ body{font-size:13px}
 @media(max-width:700px){#final-control-center .control-grid{grid-template-columns:1fr 1fr}.fc-row{grid-template-columns:1fr}}
 @media(max-width:420px){#final-control-center .control-grid{grid-template-columns:1fr}}
 </style>
-<style id="settings-bottom-v8">
-.settings-bottom-card{margin-bottom:18px}
-.settings-bottom-card .grid-container{margin-top:0}
-</style>
-<style id="settings-home-only-v10">
-#home-view:not(.active-view) .settings-bottom-card{display:none!important}
-#home-view:not(.active-view) .settings-trigger,#home-view:not(.active-view) #settings-panel{display:none!important}
-#sub-page-view.active-view ~ #final-control-center{display:none!important}
-#final-control-center.control-center-active{display:block!important}
+
+
+<style id="settings-home-only-v12">
+/* Settings trigger: only the main Dashboard may contain it. */
+#home-view > .settings-bottom-card{display:block!important}
+#app-shell > .settings-bottom-card, #sub-page-view .settings-bottom-card, .ledger-section .settings-bottom-card{display:none!important}
 </style>
 </head>
 <body>
@@ -638,7 +635,19 @@ body{font-size:13px}
         </select>
       </div>
     </div>
+    <!-- একদম নিচে: সেটিংস ও কন্ট্রোল সেন্টার -->
+  <div class="section-card dashboard-section-card settings-bottom-card" style="margin-top:15px">
+    <div class="section-title"><i class="fa-solid fa-gears" style="color:#6f42c1"></i>
+      <span data-bn="সেটিংস ও কন্ট্রোল সেন্টার" data-en="Settings & Control Center">সেটিংস ও কন্ট্রোল সেন্টার</span>
+    </div>
+    <div class="grid-container" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+      <div class="tab-item" onclick="showFinalControlCenter()">
+        <i class="fa-solid fa-gears tab-icon icon-purple"></i>
+        <div class="tab-label" data-bn="⚙️ সেটিংস ও কন্ট্রোল সেন্টার খুলুন" data-en="⚙️ Open Settings & Control Center">⚙️ সেটিংস ও কন্ট্রোল সেন্টার খুলুন</div>
+      </div>
+    </div>
   </div>
+</div>
 
   <div class="section-card dashboard-section-card" style="margin-top:15px">
     <div class="section-title"><i class="fa-solid fa-shield-halved" style="color:#198754"></i>
@@ -652,19 +661,6 @@ body{font-size:13px}
       <button class="logout-btn" style="background:#dc3545" onclick="confirmFirebaseLogout()">
         <i class="fa-solid fa-right-from-bracket"></i><span data-bn="নিরাপদে লগআউট" data-en="Secure Logout">নিরাপদে লগআউট</span>
       </button>
-    </div>
-  </div>
-
-  <!-- একদম নিচে: সেটিংস ও কন্ট্রোল সেন্টার -->
-  <div class="section-card dashboard-section-card settings-bottom-card" style="margin-top:15px">
-    <div class="section-title"><i class="fa-solid fa-gears" style="color:#6f42c1"></i>
-      <span data-bn="সেটিংস ও কন্ট্রোল সেন্টার" data-en="Settings & Control Center">সেটিংস ও কন্ট্রোল সেন্টার</span>
-    </div>
-    <div class="grid-container" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
-      <div class="tab-item" onclick="showFinalControlCenter()">
-        <i class="fa-solid fa-gears tab-icon icon-purple"></i>
-        <div class="tab-label" data-bn="⚙️ সেটিংস ও কন্ট্রোল সেন্টার খুলুন" data-en="⚙️ Open Settings & Control Center">⚙️ সেটিংস ও কন্ট্রোল সেন্টার খুলুন</div>
-      </div>
     </div>
   </div>
 
@@ -4241,5 +4237,17 @@ window.showFinalControlCenter=function(){
   new MutationObserver(keepSettingsOnlyOnHome)
     .observe(document.documentElement,{childList:true,subtree:true});
 })();
-</script></body>
+</script><script id="settings-home-only-runtime-v12">
+(function(){
+function enforce(){
+ var home=document.getElementById('home-view');
+ document.querySelectorAll('.settings-bottom-card').forEach(function(el){
+   el.style.display=(home && el.parentElement===home)?'block':'none';
+ });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforce);else enforce();
+new MutationObserver(enforce).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+</body>
 </html>
