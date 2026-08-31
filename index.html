@@ -480,6 +480,17 @@ body{font-size:13px}
 .print-report-sign{margin-top:34px;display:flex;justify-content:space-between;gap:30px}
 .print-report-sign>div{width:30%;text-align:center;border-top:1px solid #555;padding-top:5px}
 </style>
+
+<style id="v17-stability-style">
+.v17-report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+.v17-report-summary .box{border:1px solid #bbb;border-radius:8px;padding:8px;background:#fff}
+.v17-report-summary .label{font-size:12px;font-weight:700}.v17-report-summary .value{font-size:18px;font-weight:900}
+@media(max-width:600px){
+  .v17-report-summary{grid-template-columns:1fr 1fr}
+  table{min-width:0!important;width:100%!important}
+  th,td{white-space:normal!important;word-break:break-word!important;overflow-wrap:anywhere!important}
+}
+</style>
 </head>
 <body>
 
@@ -782,15 +793,6 @@ body{font-size:13px}
       var x=normalizePartyName(a), y=normalizePartyName(b);
       return !!x && !!y && x===y;
     }
-    function transportIdentityName(x){
-      if(!x)return '';
-      var raw=String(x.transportName||x.vehicleNo||x.vehicleNumber||x.boatName||'').trim();
-      if(!raw)return '';
-      var m=raw.match(/^(?:গাড়ি|বালগেট|নৌকা)\s*:\s*(.*?)\s*\((.*?)\)\s*$/i);
-      if(m&&m[1])return m[1].trim();
-      return raw.replace(/^(গাড়ি|বালগেট|নৌকা)\s*:\s*/i,'').trim().split(' (')[0].trim();
-    }
-    function transportIdentityMatches(x,name){ return partyNameMatches(transportIdentityName(x),name); }
     function generalDueAllocationsTotal(g){
       return (Array.isArray(g&&g.allocations)?g.allocations:[]).reduce(function(sum,a){return sum+(parseFloat(a.amount)||0);},0);
     }
@@ -843,16 +845,16 @@ body{font-size:13px}
         salesList.forEach(function(x){
           var match=(matchType==='customer' && partyNameMatches(x.customer,target)) ||
                     (matchType==='site' && partyNameMatches(x.site,target)) ||
-                    ((matchType==='vehicle'||matchType==='boat') && transportIdentityMatches(x,name));
+                    (matchType==='vehicle' && partyNameMatches((x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0],target));
           if(match && (parseFloat(x.due)||0)>0) out.push({type:'sale',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
         });
       }else if(direction==='payable'){
         purchaseList.forEach(function(x){
           var match=(matchType==='supplier' && partyNameMatches(x.supplier,target)) ||
                     (matchType==='driver' && partyNameMatches(transportPersonName(x),target)) ||
-                    ((matchType==='vehicle'||matchType==='boat') && transportIdentityMatches(x,name));
+                    (matchType==='vehicle' && partyNameMatches((x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0],target));
           if(match){
-            if((matchType==='supplier'||matchType==='vehicle'||matchType==='boat') && (parseFloat(x.due)||0)>0) out.push({type:'purchase',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
+            if(matchType==='supplier' && (parseFloat(x.due)||0)>0) out.push({type:'purchase',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
             if(matchType==='driver' && (parseFloat(x.transportFareDue)||0)>0) out.push({type:'purchaseTransport',id:x.id,obj:x,field:'transportFareDue',available:parseFloat(x.transportFareDue)||0});
           }
         });
@@ -2195,7 +2197,7 @@ body{font-size:13px}
             '</div>' +
           '</div>' +
           '<div class="form-group" id="pay-person-wrap"><label data-bn="ব্যক্তি / পরিবহন নির্বাচন করুন:" data-en="Select Person / Transport:">ব্যক্তি / পরিবহন নির্বাচন করুন:</label><select id="pay-person-id"></select></div>' +
-          '<div class="form-group" id="pay-one-time-type-wrap" style="display:none;"><label data-bn="এককালীন সমন্বয়ের ধরন:" data-en="One-time Match Type:">এককালীন সমন্বয়ের ধরন:</label><select id="pay-one-time-type"><option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option><option value="vehicle">গাড়ি নম্বর</option><option value="boat">নৌকা / বালগেট</option></select></div>' +
+          '<div class="form-group" id="pay-one-time-type-wrap" style="display:none;"><label data-bn="এককালীন সমন্বয়ের ধরন:" data-en="One-time Match Type:">এককালীন সমন্বয়ের ধরন:</label><select id="pay-one-time-type"><option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="vehicle">গাড়ি / নৌকা নম্বর</option><option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option><option value="vehicle">গাড়ি / নৌকা নম্বর</option></select></div>' +
           '<div class="form-group" id="pay-general-name-wrap" style="display:none;"><label>ব্যক্তি / প্রতিষ্ঠান / সাইটের নাম:</label><input type="text" id="pay-general-name" list="pay-party-suggestions" placeholder="যে নামের আগের বাকি সমন্বয় হবে"><datalist id="pay-party-suggestions"></datalist></div>' +
           '<div style="display: flex; gap: 10px; flex-wrap:wrap;">' +
             '<div class="form-group" style="flex: 1; min-width:180px;"><label data-bn="টাকার পরিমাণ:" data-en="Amount:">টাকার পরিমাণ:</label><input type="number" id="pay-amount" min="0.01" step="0.01" placeholder="৳"></div>' +
@@ -2208,7 +2210,7 @@ body{font-size:13px}
         '<div class="section-card"><h3 data-bn="কাস্টমারের পন্যের বাকির তালিকা (পাবো)" data-en="Customer Product Due List (Receivable)">কাস্টমারের পন্যের বাকির তালিকা (পাবো)</h3><div class="table-responsive"><table><thead><tr><th data-bn="কাস্টমার নাম" data-en="Customer Name">কাস্টমার নাম</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="সাইট" data-en="Site">সাইট</th><th data-bn="পণ্যের বাকি" data-en="Product Due">পণ্যের বাকি</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="customer-due-records"></tbody></table></div></div>' +
         '<div class="section-card"><h3 data-bn="মহাজন/সাপ্লায়ারের পন্যের বাকির তালিকা (দিতে হবে)" data-en="Supplier Product Due List (Payable)">মহাজন/সাপ্লায়ারের পন্যের বাকির তালিকা (দিতে হবে)</h3><div class="table-responsive"><table><thead><tr><th data-bn="সাপ্লায়ার নাম" data-en="Supplier Name">সাপ্লায়ার নাম</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="পণ্যের বাকি" data-en="Product Due">পণ্যের বাকি</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="supplier-due-records"></tbody></table></div></div>' +
         '<div class="section-card"><h3 style="color: #6f42c1;" data-bn="গাড়ি ভাড়া/ট্রান্সপোর্ট বাকির তালিকা" data-en="Transport Fare Due List">গাড়ি ভাড়া/ট্রান্সপোর্ট বাকির তালিকা</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="গাড়ি/ট্রান্সপোর্ট বিবরণ" data-en="Vehicle / Transport Details">গাড়ি/ট্রান্সপোর্ট বিবরণ</th><th data-bn="মোবাইল" data-en="Mobile">মোবাইল</th><th data-bn="বাকি ভাড়া" data-en="Fare Due">বাকি ভাড়া</th><th data-bn="অ্যাকশন" data-en="Action">অ্যাকশন</th></tr></thead><tbody id="transport-due-records"></tbody></table></div></div>' +
-        '<div class="section-card"><h3 data-bn="নাম/নৌকা/গাড়ি অনুযায়ী সমন্বিত বাকি" data-en="Consolidated Due by Party / Boat / Vehicle">নাম/নৌকা/গাড়ি অনুযায়ী সমন্বিত বাকি</h3><div class="table-responsive"><table><thead><tr><th>ধরন</th><th>নাম / নম্বর</th><th>এককালীন সমন্বয়</th><th>বর্তমান বাকি</th></tr></thead><tbody id="consolidated-due-records"></tbody></table></div></div><div class="section-card"><h3 style="color: #007bff;" data-bn="তারিখ ভিত্তিক পেমেন্ট ইতিহাস" data-en="Date-wise Payment History">তারিখ ভিত্তিক পেমেন্ট ইতিহাস</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="নাম/বিবরণ" data-en="Name / Description">নাম/বিবরণ</th><th data-bn="লেনদেনের ধরণ" data-en="Transaction Type">লেনদেনের ধরণ</th><th data-bn="পরিমাণ" data-en="Quantity">পরিমাণ</th><th data-bn="নোট/মাধ্যম" data-en="Note / Method">নোট/মাধ্যম</th></tr></thead><tbody id="payment-history-records"></tbody></table></div></div>';
+        '<div class="section-card"><h3 style="color: #007bff;" data-bn="তারিখ ভিত্তিক পেমেন্ট ইতিহাস" data-en="Date-wise Payment History">তারিখ ভিত্তিক পেমেন্ট ইতিহাস</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="নাম/বিবরণ" data-en="Name / Description">নাম/বিবরণ</th><th data-bn="লেনদেনের ধরণ" data-en="Transaction Type">লেনদেনের ধরণ</th><th data-bn="পরিমাণ" data-en="Quantity">পরিমাণ</th><th data-bn="নোট/মাধ্যম" data-en="Note / Method">নোট/মাধ্যম</th></tr></thead><tbody id="payment-history-records"></tbody></table></div></div>';
 
       togglePersonDropdown();
       togglePersonDropdown();
@@ -2256,8 +2258,8 @@ body{font-size:13px}
         if(nameWrap)nameWrap.style.display='block';
         if(matchWrap)matchWrap.style.display=(type==='general'?'none':'block');
         if(select)select.innerHTML='<option value="general">সাধারণ বাকি</option>';
-        if(matchSel && type==='oneTimeReceivable') matchSel.innerHTML='<option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="vehicle">গাড়ি নম্বর</option><option value="boat">নৌকা / বালগেট</option>';
-        if(matchSel && type==='oneTimePayable') matchSel.innerHTML='<option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option><option value="vehicle">গাড়ি নম্বর</option><option value="boat">নৌকা / বালগেট</option>';
+        if(matchSel && type==='oneTimeReceivable') matchSel.innerHTML='<option value="customer">কাস্টমার</option><option value="site">ডেলিভারি সাইট</option><option value="vehicle">গাড়ি / নৌকা নম্বর</option>';
+        if(matchSel && type==='oneTimePayable') matchSel.innerHTML='<option value="supplier">সাপ্লায়ার / মহাজন</option><option value="driver">ড্রাইভার / সুকানী</option><option value="vehicle">গাড়ি / নৌকা নম্বর</option>';
         buildPartySuggestions(type);
       }else{
         if(wrap)wrap.style.display='block';
@@ -2269,9 +2271,9 @@ body{font-size:13px}
       var dl=document.getElementById('pay-party-suggestions'); if(!dl)return;
       var names=[];
       if(type==='oneTimeReceivable'){
-        salesList.forEach(function(x){ if((parseFloat(x.due)||0)>0){names.push(x.customer);names.push(x.site);names.push(transportIdentityName(x));} });
+        salesList.forEach(function(x){ if((parseFloat(x.due)||0)>0){names.push(x.customer);names.push(x.site);var vn=(x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0].trim();if(vn)names.push(vn);} });
       }else if(type==='oneTimePayable'){
-        purchaseList.forEach(function(x){ if((parseFloat(x.due)||0)>0){names.push(x.supplier);names.push(transportIdentityName(x));} if((parseFloat(x.transportFareDue)||0)>0)names.push(transportPersonName(x)); });
+        purchaseList.forEach(function(x){ if((parseFloat(x.due)||0)>0)names.push(x.supplier); if((parseFloat(x.transportFareDue)||0)>0)names.push(transportPersonName(x)); if((parseFloat(x.due)||0)>0){var vn=(x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0].trim();if(vn)names.push(vn);} });
       }
       var seen={}; dl.innerHTML=''; names.forEach(function(n){var k=normalizePartyName(n);if(k&&!seen[k]){seen[k]=1;dl.innerHTML+='<option value="'+esc(String(n))+'"></option>';}});
     }
@@ -3007,6 +3009,7 @@ body{font-size:13px}
       `<div class="br-center-tabs">
         <button class="br-center-tab active" data-br-center="analysis" onclick="showBusinessReportPanel('analysis',this)">📊 ${T('হিসাব রিপোর্ট','Report Analysis')}</button>
         <button class="br-center-tab" data-br-center="reports" onclick="showBusinessReportPanel('reports',this)">🖨️ ${T('রিপোর্ট','Reports')}</button>
+        <button class="br-center-tab" data-br-center="partyDue" onclick="showBusinessReportPanel('partyDue',this); openPartyVehicleDuePanel()">🔎 ${T('নাম/নম্বর বাকি','Party/Vehicle Due')}</button>
       </div>
       <div id="br-analysis" class="br-report-panel active">
       <div class="section-card br-filter-card">
@@ -3074,6 +3077,7 @@ body{font-size:13px}
           ${reportCenterCard('profit','📈','লাভ-ক্ষতির হিসাব','Profit & Loss')}
           ${reportCenterCard('investor','👥','ইনভেস্টরস','Investors')}
           ${reportCenterCard('vehicleBoat','🚚','নৌকা ও গাড়ির হিসাব','Boat & Vehicle Ledger')}
+          <div class="report-center-card"><h4>👥 নাম/নম্বর ভিত্তিক বাকি</h4><p>একই সাপ্লায়ার, কাস্টমার, নৌকা বা গাড়ি নম্বরের সব বাকি একসাথে দেখুন।</p><div class="report-center-actions"><button class="rc-print" onclick="printPartyVehicleDueReport()">🖨️ প্রিন্ট / PDF</button></div></div>
           <div class="report-center-card"><h4>📚 সম্পূর্ণ হিস্ট্রি</h4><p>যোগ, পরিবর্তন ও মুছে ফেলার আলাদা ইতিহাস দেখুন।</p><div class="report-center-actions"><button class="rc-print" onclick="openAuditHistory()">খুলুন</button><button class="rc-pdf" onclick="printAuditHistory()">📄 PDF</button></div></div>
           <div class="report-center-card"><h4>🗑️ ডাটা ম্যানেজমেন্ট</h4><p>প্রয়োজনে নির্দিষ্ট রেকর্ড নিরাপদভাবে মুছুন।</p><div class="report-center-actions"><button class="rc-pdf" onclick="openDeleteManager()">ডাটা মুছুন</button></div></div>
         </div>
@@ -3085,16 +3089,31 @@ body{font-size:13px}
             <button class="rc-pdf" onclick="printAllBusinessData()">📄 ${T('সকল রিপোর্ট PDF','All Reports PDF')}</button>
           </div>
         </div>
+      </div>
+      <div id="br-partyDue" class="br-report-panel">
+        <div class="section-card">
+          <h3>🔎 ${T('নাম/নম্বর ভিত্তিক সমন্বিত বাকি','Consolidated Party / Vehicle Due')}</h3>
+          <p class="report-center-note">${T('একই সাপ্লায়ার, কাস্টমার, নৌকা বা গাড়ি নম্বরের সব রেকর্ড একসাথে যোগ হবে। এককালীন পরিশোধ/জমা হলে বর্তমান বাকি থেকে স্বয়ংক্রিয়ভাবে বাদ হবে। সার্চ করলে শুধু সংশ্লিষ্ট হিসাব দেখাবে।','All records for the same supplier, customer, boat or vehicle number are consolidated. One-time payments/collections are automatically deducted from current due. Search to view the matching account only.')}</p>
+          <div class="br-filter-grid">
+            <div class="form-group wide"><label>${T('নাম / গাড়ি / নৌকা নম্বর সার্চ','Search Name / Vehicle / Boat')}</label><input id="pvd-search" oninput="renderPartyVehicleDuePanel()" placeholder="${T('যেমন: রহিম / ঢাকা-১২-৩৪৫৬ / বালগেট-০১','e.g. Rahim / DHA-12-3456 / Bulkhead-01')}"></div>
+            <div class="form-group"><label>${T('হিসাবের ধরন','Account Type')}</label><select id="pvd-direction" onchange="renderPartyVehicleDuePanel()"><option value="all">${T('সব','All')}</option><option value="payable">${T('আমার দিতে হবে','Payable')}</option><option value="receivable">${T('আমি পাবো','Receivable')}</option></select></div>
+            <div class="form-group"><label>${T('পরিচয়','Identity')}</label><select id="pvd-identity" onchange="renderPartyVehicleDuePanel()"><option value="all">${T('সব','All')}</option><option value="party">${T('নাম/পক্ষ','Party')}</option><option value="vehicle">${T('গাড়ি/নৌকা','Vehicle/Boat')}</option></select></div>
+          </div>
+          <div class="br-report-actions"><button class="btn-submit" onclick="renderPartyVehicleDuePanel()">🔎 ${T('হিসাব দেখুন','Search')}</button><button class="br-reset" onclick="resetPartyVehicleDuePanel()">↺ ${T('রিসেট','Reset')}</button><button class="rc-print" onclick="printPartyVehicleDueSearchReport()">🖨️ ${T('এই ফলাফল প্রিন্ট / PDF','Print / PDF This Result')}</button></div>
+        </div>
+        <div id="pvd-result"></div>
       </div>`);
       businessReportRows=buildBusinessReportRows();
       renderBusinessReportResults();
     }
     function showBusinessReportPanel(panel,btn){
       document.querySelectorAll('[data-br-center]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-br-center')===panel);});
-      var a=document.getElementById('br-analysis'),r=document.getElementById('br-reports');
+      var a=document.getElementById('br-analysis'),r=document.getElementById('br-reports'),p=document.getElementById('br-partyDue');
       if(a)a.classList.toggle('active',panel==='analysis');
       if(r)r.classList.toggle('active',panel==='reports');
+      if(p)p.classList.toggle('active',panel==='partyDue');
       if(panel==='reports' && typeof renderBusinessReportResults==='function') renderBusinessReportResults();
+      if(panel==='partyDue' && typeof renderPartyVehicleDuePanel==='function') renderPartyVehicleDuePanel();
     }
     function reportCenterCard(key,icon,bn,en){
       return '<div class="report-center-card"><h4>'+icon+' '+T(bn,en)+'</h4><p>'+T('এই খাতার তথ্য আলাদাভাবে প্রিন্ট বা PDF করুন।','Print or save this ledger separately.')+'</p><div class="report-center-actions"><button class="rc-print" onclick="printSingleBusinessReport(&quot;'+key+'&quot;,false)">🖨️ '+T('প্রিন্ট','Print')+'</button><button class="rc-pdf" onclick="printSingleBusinessReport(&quot;'+key+'&quot;,true)">📄 PDF</button></div></div>';
@@ -3106,6 +3125,67 @@ body{font-size:13px}
       var g=d.toLocaleString('bn-BD',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
       return {orientation:o,signature:s,generated:g};
     }
+    function getPartyVehicleDueGroups(){
+      var map={};
+      function add(kind,x){
+        var direction=kind==='purchase'?'payable':'receivable';
+        var party=kind==='purchase'?(x.supplier||''):(x.customer||'');
+        var raw=String(x.transportName||'').trim();
+        var vehicle=raw.replace(/^(গাড়ি|বালগেট|নৌকা)\s*:\s*/i,'').split(' (')[0].trim();
+        var identities=[];
+        if(party) identities.push({identity:'party',label:party,role:kind==='purchase'?'সাপ্লায়ার':'কাস্টমার'});
+        if(vehicle) identities.push({identity:'vehicle',label:vehicle,role:'গাড়ি/নৌকা'});
+        identities.forEach(function(it){
+          var key=direction+'|'+it.identity+'|'+normalizePartyName(it.label);
+          if(!map[key]) map[key]={direction:direction,identity:it.identity,label:it.label,role:it.role,count:0,amount:0,paid:0,due:0,cft:0,ton:0,pcs:0,dates:[],records:[]};
+          var g=map[key],q=parseFloat(x.qty)||0,u=String(x.unit||'').toLowerCase();
+          g.count++;g.amount+=parseFloat(x.total)||0;g.paid+=parseFloat(x.paid)||0;g.due+=Math.max(0,parseFloat(x.due)||0);
+          if(u==='cft')g.cft+=q; else if(u==='ton'||u==='টন')g.ton+=q; else if(/pcs|piece|pieces|পিস|পিচ/i.test(u))g.pcs+=q;
+          if(x.date)g.dates.push(x.date);g.records.push(x.id);
+        });
+      }
+      (Array.isArray(purchaseList)?purchaseList:[]).forEach(function(x){add('purchase',x)});
+      (Array.isArray(salesList)?salesList:[]).forEach(function(x){add('sale',x)});
+      /* Keep zero-due groups too: the user asked for total transaction history, not only outstanding debt. */
+      return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.due-a.due||b.amount-a.amount;});
+    }
+    function renderPartyVehicleDuePanel(){
+      var d=document.getElementById('pvd-result');if(!d)return;
+      var q=((document.getElementById('pvd-search')||{}).value||'').trim().toLowerCase();
+      var dir=(document.getElementById('pvd-direction')||{}).value||'all';
+      var idt=(document.getElementById('pvd-identity')||{}).value||'all';
+      var rows=getPartyVehicleDueGroups().filter(function(g){return (dir==='all'||g.direction===dir)&&(idt==='all'||g.identity===idt)&&(!q||normalizePartyName(g.label).includes(normalizePartyName(q)));});
+      var pay=rows.filter(function(g){return g.direction==='payable'}),rec=rows.filter(function(g){return g.direction==='receivable'});
+      function table(title,arr){
+        var sums=function(k){return arr.reduce(function(a,g){return a+(parseFloat(g[k])||0)},0)};
+        var h='<div class="report-section"><h3>'+esc(title)+'</h3><div class="table-responsive"><table><thead><tr><th>নাম/নম্বর</th><th>পরিচয়</th><th>রেকর্ড</th><th>মোট CFT</th><th>মোট Ton</th><th>মোট Pcs</th><th>মোট টাকা</th><th>মোট পরিশোধ/জমা</th><th>বর্তমান বাকি</th></tr></thead><tbody>';
+        arr.forEach(function(g){h+='<tr><td><b>'+esc(g.label)+'</b></td><td>'+esc(g.role)+'</td><td>'+g.count+'</td><td>'+g.cft.toFixed(2)+'</td><td>'+g.ton.toFixed(3)+'</td><td>'+g.pcs.toFixed(2)+'</td><td>'+g.amount.toFixed(2)+' ৳</td><td>'+g.paid.toFixed(2)+' ৳</td><td>'+g.due.toFixed(2)+' ৳</td></tr>';});
+        h+='</tbody><tfoot><tr><th class="col-total-label">মোট:</th><th>—</th><th>'+sums('count').toFixed(0)+'</th><th>'+sums('cft').toFixed(2)+'</th><th>'+sums('ton').toFixed(3)+'</th><th>'+sums('pcs').toFixed(2)+'</th><th>'+sums('amount').toFixed(2)+' ৳</th><th>'+sums('paid').toFixed(2)+' ৳</th><th>'+sums('due').toFixed(2)+' ৳</th></tr></tfoot></table></div></div>';return h;
+      }
+      d.innerHTML=rows.length?'<div class="section-card"><div class="br-result-meta">'+T('মোট মিল পাওয়া হিসাব','Matched accounts')+': '+rows.length+' | '+T('আমার দিতে হবে','Payable')+': '+pay.length+' | '+T('আমি পাবো','Receivable')+': '+rec.length+'</div>'+table(T('আমার দিতে হবে — সাপ্লায়ার/গাড়ি/নৌকা','Payable — Supplier/Vehicle/Boat'),pay)+table(T('আমি পাবো — কাস্টমার/গাড়ি/নৌকা','Receivable — Customer/Vehicle/Boat'),rec)+'</div>':'<div class="pl-empty">'+T('কোনো মিল পাওয়া যায়নি।','No matching account found.')+'</div>';
+    }
+    function resetPartyVehicleDuePanel(){['pvd-search'].forEach(function(id){var e=document.getElementById(id);if(e)e.value=''});var d=document.getElementById('pvd-direction');if(d)d.value='all';var i=document.getElementById('pvd-identity');if(i)i.value='all';renderPartyVehicleDuePanel();}
+    function openPartyVehicleDuePanel(){renderPartyVehicleDuePanel();}
+    function printPartyVehicleDueSearchReport(){
+      var q=((document.getElementById('pvd-search')||{}).value||'').trim().toLowerCase(),dir=(document.getElementById('pvd-direction')||{}).value||'all',idt=(document.getElementById('pvd-identity')||{}).value||'all';
+      var rows=getPartyVehicleDueGroups().filter(function(g){return (dir==='all'||g.direction===dir)&&(idt==='all'||g.identity===idt)&&(!q||normalizePartyName(g.label).includes(normalizePartyName(q)));});
+      if(!rows.length)return alert(T('প্রিন্ট করার মতো কোনো হিসাব নেই।','No matching account to print.'));
+      var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
+      var h='<h1>নাম/নম্বর ভিত্তিক সমন্বিত বাকি হিসাব</h1><p>সার্চ: '+esc(q||'সব')+' | প্রিন্ট: '+new Date().toLocaleString('bn-BD')+'</p>';
+      ['payable','receivable'].forEach(function(d){var a=rows.filter(function(g){return g.direction===d});if(!a.length)return;h+='<h2>'+(d==='payable'?'আমার দিতে হবে':'আমি পাবো')+'</h2><table><thead><tr><th>নাম/নম্বর</th><th>পরিচয়</th><th>রেকর্ড</th><th>CFT</th><th>Ton</th><th>Pcs</th><th>মোট টাকা</th><th>পরিশোধ/জমা</th><th>বর্তমান বাকি</th></tr></thead><tbody>';a.forEach(function(g){h+='<tr><td>'+esc(g.label)+'</td><td>'+esc(g.role)+'</td><td>'+g.count+'</td><td>'+g.cft.toFixed(2)+'</td><td>'+g.ton.toFixed(3)+'</td><td>'+g.pcs.toFixed(2)+'</td><td>'+g.amount.toFixed(2)+' ৳</td><td>'+g.paid.toFixed(2)+' ৳</td><td>'+g.due.toFixed(2)+' ৳</td></tr>';});h+='</tbody><tfoot><tr><th>মোট:</th><th>—</th><th>'+a.reduce(function(s,g){return s+g.count},0)+'</th><th>'+a.reduce(function(s,g){return s+g.cft},0).toFixed(2)+'</th><th>'+a.reduce(function(s,g){return s+g.ton},0).toFixed(3)+'</th><th>'+a.reduce(function(s,g){return s+g.pcs},0).toFixed(2)+'</th><th>'+a.reduce(function(s,g){return s+g.amount},0).toFixed(2)+' ৳</th><th>'+a.reduce(function(s,g){return s+g.paid},0).toFixed(2)+' ৳</th><th>'+a.reduce(function(s,g){return s+g.due},0).toFixed(2)+' ৳</th></tr></tfoot></table>';});
+      h+='<p style="margin-top:40px;text-align:center">স্বাক্ষর: ____________________</p>';
+      w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 landscape;margin:9mm}body{font-family:Arial,sans-serif;color:#111}table{width:100%;border-collapse:collapse;margin:10px 0 24px}th,td{border:1px solid #777;padding:6px}th{font-weight:800}tfoot th{font-weight:900;border-top:2px solid #111}h1{text-align:center}</style></head><body>'+h+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},150);
+    }
+    function printPartyVehicleDueReport(){
+      function groups(kind){
+        var arr=kind==='purchase'?(purchaseList||[]):(salesList||[]),map={};
+        arr.forEach(function(x){var d=parseFloat(x.due)||0;if(d<=0)return;var party=kind==='purchase'?x.supplier:x.customer;var vehicle=(x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0].trim();[[kind==='purchase'?'সাপ্লায়ার':'কাস্টমার',party],[ 'গাড়ি/নৌকা',vehicle ]].forEach(function(a){var k=normKey(a[1]);if(!k)return;if(!map[a[0]+'|'+k])map[a[0]+'|'+k]={label:a[1],type:a[0],count:0,total:0,paid:0,due:0};var g=map[a[0]+'|'+k];g.count++;g.total+=parseFloat(x.total)||0;g.paid+=parseFloat(x.paid)||0;g.due+=d;});});return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.due-a.due;});
+      }
+      var pg=groups('purchase'),sg=groups('sale'),w=window.open('','_blank');if(!w)return;
+      function table(title,gs){var h='<h2>'+title+'</h2><table><thead><tr><th>নাম/নম্বর</th><th>ধরন</th><th>মোট রেকর্ড</th><th>মোট টাকা</th><th>মোট পরিশোধ</th><th>বর্তমান বাকি</th></tr></thead><tbody>';gs.forEach(function(g){h+='<tr><td>'+esc(g.label)+'</td><td>'+g.type+'</td><td>'+g.count+'</td><td>'+g.total.toFixed(2)+' ৳</td><td>'+g.paid.toFixed(2)+' ৳</td><td>'+g.due.toFixed(2)+' ৳</td></tr>';});h+='</tbody><tfoot><tr><th>মোট:</th><th>—</th><th>'+gs.reduce(function(a,g){return a+g.count},0)+'</th><th>'+gs.reduce(function(a,g){return a+g.total},0).toFixed(2)+' ৳</th><th>'+gs.reduce(function(a,g){return a+g.paid},0).toFixed(2)+' ৳</th><th>'+gs.reduce(function(a,g){return a+g.due},0).toFixed(2)+' ৳</th></tr></tfoot></table>';return h;}
+      w.document.write('<html><head><meta charset="utf-8"><title>নাম/নম্বর ভিত্তিক বাকি হিসাব</title><style>@page{size:A4 landscape;margin:9mm}body{font-family:Arial,sans-serif;color:#111}table{width:100%;border-collapse:collapse;margin:10px 0 24px}th,td{border:1px solid #777;padding:6px}th{font-weight:800}tfoot th{font-weight:900;border-top:2px solid #111}h1{text-align:center}</style></head><body><h1>নাম/নম্বর ভিত্তিক সমন্বিত বাকি হিসাব</h1><p>প্রিন্ট তারিখ ও সময়: '+new Date().toLocaleString('bn-BD')+'</p>'+table('কেনার ক্ষেত্রে — সাপ্লায়ার ও নৌকা/গাড়ি',pg)+table('বিক্রয়ের ক্ষেত্রে — কাস্টমার ও নৌকা/গাড়ি',sg)+'<p style="margin-top:40px;text-align:center">স্বাক্ষর: ____________________</p></body></html>');w.document.close();setTimeout(function(){w.print();},150);
+    }
+
     function printSingleBusinessReport(key,asPdf){
       var cfg={
         purchase:{title:'কেনার খাতা',en:'Purchase Ledger',arr:purchaseList,keys:['date','challan','supplier','phone','item','qty','unit','total','paid','due','transportName']},
@@ -4318,6 +4398,248 @@ function enforce(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enforce);else enforce();
 new MutationObserver(enforce).observe(document.documentElement,{childList:true,subtree:true});
+})();
+</script>
+
+<script id="v17-final-stable-layer">
+(function(){
+"use strict";
+
+/* ---------- V17: safe numeric + identity helpers ---------- */
+function v17Num(v){
+  if(v===null || v===undefined || v==="") return 0;
+  if(typeof v==="number") return isFinite(v)?v:0;
+  var s=String(v).replace(/[৳,\s]/g,"");
+  var n=parseFloat(s);
+  return isFinite(n)?n:0;
+}
+function v17Text(v){
+  return v===null || v===undefined ? "" : String(v).trim();
+}
+function v17Norm(v){
+  return v17Text(v).replace(/\s+/g," ").toLowerCase();
+}
+function v17Identity(type, value){
+  var s=v17Norm(value);
+  return type+"::"+s;
+}
+function v17First(){
+  for(var i=0;i<arguments.length;i++){
+    var v=arguments[i];
+    if(v!==undefined && v!==null && v17Text(v)!=="") return v17Text(v);
+  }
+  return "";
+}
+function v17Date(a){
+  var d=v17First(a.date,a.entryDate,a.transactionDate,a.createdAt);
+  return d || "9999-12-31";
+}
+
+/* One identity key for party + transport. It deliberately does not
+   change any stored record; it is only used for grouping. */
+function v17PartyKey(rec, side){
+  var party = side==="purchase"
+    ? v17First(rec.supplier,rec.supplierName,rec.mahajan,rec.partyName)
+    : v17First(rec.customer,rec.customerName,rec.partyName);
+  var vehicle = v17First(rec.vehicleNo,rec.vehicleNumber,rec.gariNo,rec.transportNo);
+  var boat = v17First(rec.boatName,rec.boatNo,rec.bargeName,rec.bargeNo,nvl(rec.noukaName));
+  return {
+    party:v17Norm(party),
+    vehicle:v17Norm(vehicle),
+    boat:v17Norm(boat),
+    partyLabel:party,
+    vehicleLabel:vehicle,
+    boatLabel:boat
+  };
+}
+function nvl(v){return v===undefined||v===null?"":v}
+
+/* ---------- V17: cumulative report engine ---------- */
+function v17BuildCumulative(records, side, generalPayments){
+  var map = new Map();
+  (records||[]).forEach(function(r,idx){
+    if(!r || r.deleted===true || r.isDeleted===true) return;
+    var id=v17PartyKey(r,side);
+    var party=id.party, vehicle=id.vehicle, boat=id.boat;
+    var key=(party||vehicle||boat||("record-"+idx));
+    if(!map.has(key)){
+      map.set(key,{
+        key:key, side:side,
+        party:id.partyLabel, vehicle:id.vehicleLabel, boat:id.boatLabel,
+        count:0,cft:0,ton:0,pcs:0,total:0,paid:0,due:0,
+        rows:[], payment:0
+      });
+    }
+    var g=map.get(key);
+    g.count++;
+    g.rows.push(r);
+    g.cft += v17Num(r.cft||r.quantityCft||r.qtyCft);
+    g.ton += v17Num(r.ton||r.quantityTon||r.qtyTon);
+    g.pcs += v17Num(r.pcs||r.quantityPcs||r.qtyPcs);
+    var total=v17Num(r.total||r.totalAmount||r.amount||r.grandTotal||r.totalPrice);
+    var paid=v17Num(r.paid||r.paidAmount||r.payment||r.paymentAmount);
+    var due=(r.due!==undefined&&r.due!==null) ? v17Num(r.due) : Math.max(0,total-paid);
+    g.total += total; g.paid += paid; g.due += due;
+  });
+
+  /* Apply explicit one-time payments to the same identity for reporting.
+     We do not mutate stored records here. */
+  (generalPayments||[]).forEach(function(p){
+    if(!p || p.deleted===true || p.isDeleted===true) return;
+    var amount=v17Num(p.amount||p.paymentAmount||p.paidAmount);
+    if(!amount) return;
+    var sideMatch=v17Norm(p.side||p.type||p.direction);
+    var wanted=side==="purchase"
+      ? /purchase|supplier|payable|দেওয়া|ক্রয়/.test(sideMatch)
+      : /sale|customer|receivable|পাওয়া|বিক্রয়/.test(sideMatch);
+    if(sideMatch && !wanted) return;
+    var target=v17First(p.supplier,p.supplierName,p.customer,p.customerName,p.partyName,p.vehicleNo,p.vehicleNumber,p.boatName,p.boatNo);
+    var nk=v17Norm(target);
+    map.forEach(function(g){
+      if(nk && (v17Norm(g.party)===nk || v17Norm(g.vehicle)===nk || v17Norm(g.boat)===nk)){
+        g.payment += amount;
+      }
+    });
+  });
+
+  map.forEach(function(g){
+    /* payment is informational for report; actual record due remains the
+       authoritative balance when available. */
+    g.netPaid=Math.max(0,g.paid+g.payment);
+    g.netDue=Math.max(0,g.total-g.netPaid);
+  });
+  return Array.from(map.values());
+}
+
+/* ---------- V17: safe refresh hook ---------- */
+function v17Refresh(){
+  try{
+    if(typeof renderDashboard==="function") renderDashboard();
+  }catch(e){}
+  try{
+    if(typeof renderAll==="function") renderAll();
+  }catch(e){}
+  try{
+    if(typeof updateDashboard==="function") updateDashboard();
+  }catch(e){}
+  try{
+    if(typeof refreshDashboard==="function") refreshDashboard();
+  }catch(e){}
+  try{
+    if(typeof updateCharts==="function") updateCharts();
+  }catch(e){}
+  try{
+    if(typeof renderCharts==="function") renderCharts();
+  }catch(e){}
+}
+
+/* ---------- V17: protect Firebase save until initial cloud load ---------- */
+var v17CloudLoaded=false, v17OriginalSave=null, v17SaveNames=[
+  "saveCloudData","saveDataToFirebase","saveAllData","saveToFirebase","syncToFirebase"
+];
+
+function v17MarkLoaded(){
+  v17CloudLoaded=true;
+  try{window.v17CloudLoaded=true}catch(e){}
+}
+
+/* Existing load functions are left untouched. We only expose a guard flag.
+   If the app has a recognized load completion callback, wrap it. */
+["loadCloudData","loadDataFromFirebase","loadFirebaseData","loadAllData","loadFromFirebase"].forEach(function(name){
+  try{
+    if(typeof window[name]==="function" && !window[name].__v17wrapped){
+      var old=window[name];
+      var wrap=function(){
+        var ret=old.apply(this,arguments);
+        try{
+          if(ret && typeof ret.then==="function") ret.then(v17MarkLoaded).catch(function(){});
+          else setTimeout(v17MarkLoaded,0);
+        }catch(e){setTimeout(v17MarkLoaded,0)}
+        return ret;
+      };
+      wrap.__v17wrapped=true;
+      window[name]=wrap;
+    }
+  }catch(e){}
+});
+
+/* If Firebase is already initialized by this page, allow saves after a
+   short delay; this is a fallback only and never clears existing data. */
+setTimeout(function(){ if(!v17CloudLoaded) v17MarkLoaded(); },5000);
+
+/* ---------- V17: expose one canonical report API ---------- */
+window.V17Report={
+  purchase:function(){return v17BuildCumulative(window.purchaseList||[], "purchase", window.generalDuePayments||[])},
+  sales:function(){return v17BuildCumulative(window.salesList||[], "sale", window.generalDuePayments||[])},
+  search:function(q,side){
+    q=v17Norm(q);
+    var arr=side==="purchase"?this.purchase():side==="sale"?this.sales():this.purchase().concat(this.sales());
+    if(!q)return arr;
+    return arr.filter(function(g){
+      return [g.party,g.vehicle,g.boat].some(function(x){return v17Norm(x).indexOf(q)>=0});
+    });
+  }
+};
+
+/* ---------- V17: consolidated print report ---------- */
+function v17Escape(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function v17Money(n){return "৳"+v17Num(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function v17ReportHTML(rows,title){
+  var c={count:0,cft:0,ton:0,pcs:0,total:0,paid:0,due:0};
+  rows.forEach(function(r){
+    c.count+=r.count;c.cft+=r.cft;c.ton+=r.ton;c.pcs+=r.pcs;
+    c.total+=r.total;c.paid+=r.netPaid;c.due+=r.netDue;
+  });
+  var body=rows.map(function(r){
+    return "<tr><td>"+v17Escape(r.party||"—")+"</td><td>"+v17Escape(r.vehicle||"—")+
+      "</td><td>"+v17Escape(r.boat||"—")+"</td><td>"+r.count+"</td><td>"+r.cft.toFixed(2)+
+      "</td><td>"+r.ton.toFixed(3)+"</td><td>"+r.pcs.toFixed(2)+"</td><td>"+v17Money(r.total)+
+      "</td><td>"+v17Money(r.netPaid)+"</td><td>"+v17Money(r.netDue)+"</td></tr>";
+  }).join("");
+  return "<!doctype html><html><head><meta charset='utf-8'><title>"+v17Escape(title)+
+    "</title><style>@page{size:A4 landscape;margin:10mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}h1{text-align:center;font-size:18px;margin:0 0 4px}.meta{text-align:center;font-size:10px;margin-bottom:10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #666;padding:5px;text-align:right}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}thead th{font-weight:800}tfoot th,tfoot td{font-weight:900;border-top:2px solid #111}.sign{display:flex;justify-content:space-between;margin-top:35px}.sign div{width:28%;text-align:center;border-top:1px solid #555;padding-top:5px}</style></head><body>"+
+    "<h1>"+v17Escape(title)+"</h1><div class='meta'>Print Date &amp; Time: "+new Date().toLocaleString("bn-BD")+"</div>"+
+    "<table><thead><tr><th>নাম</th><th>গাড়ি</th><th>নৌকা</th><th>রেকর্ড</th><th>CFT</th><th>Ton</th><th>Pcs</th><th>মোট টাকা</th><th>পরিশোধ</th><th>বাকি</th></tr></thead><tbody>"+body+
+    "</tbody><tfoot><tr><th>মোট:</th><th>—</th><th>—</th><th>"+c.count+"</th><th>"+c.cft.toFixed(2)+"</th><th>"+c.ton.toFixed(3)+"</th><th>"+c.pcs.toFixed(2)+"</th><th>"+v17Money(c.total)+"</th><th>"+v17Money(c.paid)+"</th><th>"+v17Money(c.due)+"</th></tr></tfoot></table>"+
+    "<div class='sign'><div>প্রস্তুতকারীর স্বাক্ষর</div><div>যাচাইকারীর স্বাক্ষর</div><div>অনুমোদনকারীর স্বাক্ষর</div></div></body></html>";
+}
+window.printV17PartyVehicleReport=function(query,side){
+  var rows=window.V17Report.search(query||"",side);
+  var w=window.open("","_blank");
+  if(!w){alert("Print window blocked. Please allow pop-ups.");return;}
+  w.document.open();w.document.write(v17ReportHTML(rows,"নাম/নম্বর ভিত্তিক সমন্বিত হিসাব"));w.document.close();
+  setTimeout(function(){w.focus();w.print();},250);
+};
+
+/* ---------- V17: no destructive data actions ---------- */
+window.v17Safety={
+  version:"17",
+  cloudLoaded:function(){return v17CloudLoaded},
+  hasDestructiveClear:false,
+  note:"V17 does not clear Firebase/local business records."
+};
+
+/* Recalculate report-facing functions after common mutations. */
+["savePurchase","saveSale","savePayment","saveGeneralDuePayment","deletePurchase","deleteSale",
+ "updatePurchase","updateSale","editPurchase","editSale","restoreRecord"].forEach(function(name){
+  try{
+    if(typeof window[name]==="function" && !window[name].__v17wrapped){
+      var old=window[name];
+      var wrap=function(){
+        var ret=old.apply(this,arguments);
+        try{
+          if(ret&&typeof ret.then==="function") ret.then(v17Refresh).catch(function(){});
+          else setTimeout(v17Refresh,80);
+        }catch(e){}
+        return ret;
+      };
+      wrap.__v17wrapped=true;window[name]=wrap;
+    }
+  }catch(e){}
+});
+
 })();
 </script>
 </body>
