@@ -4758,10 +4758,14 @@ function v17LDUpdate(){
 
 function v17LDBind(){
   var nameEl=document.getElementById("pay-general-name"),typeEl=document.getElementById("pay-one-time-type"),personTypeEl=document.getElementById("pay-person-type");
-  if(nameEl&&!nameEl.__v17ld){nameEl.__v17ld=true;nameEl.addEventListener("input",v17LDUpdate);nameEl.addEventListener("change",v17LDUpdate);nameEl.addEventListener("blur",v17LDUpdate);}
+  var newlyBound=false;
+  if(nameEl&&!nameEl.__v17ld){nameEl.__v17ld=true;newlyBound=true;nameEl.addEventListener("input",v17LDUpdate);nameEl.addEventListener("change",v17LDUpdate);nameEl.addEventListener("blur",v17LDUpdate);}
   if(typeEl&&!typeEl.__v17ld){typeEl.__v17ld=true;typeEl.addEventListener("change",v17LDUpdate);}
   if(personTypeEl&&!personTypeEl.__v17ld){personTypeEl.__v17ld=true;personTypeEl.addEventListener("change",function(){setTimeout(v17LDUpdate,30);});}
-  if(nameEl)v17LDUpdate();
+  /* Only update once when a new payment form appears.  Do NOT update on every DOM mutation.
+     v17LDUpdate itself changes text/HTML, which would otherwise trigger the MutationObserver
+     again and create an infinite mutation -> update -> mutation loop that freezes the app. */
+  if(newlyBound)setTimeout(v17LDUpdate,0);
 }
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",v17LDBind);else v17LDBind();
