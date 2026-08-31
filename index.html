@@ -3405,20 +3405,43 @@ body{font-size:13px}
       var map=deleteArrayMap(type),arr=map[type];if(!Array.isArray(arr))return;
       var idx=arr.findIndex(function(x){return String(x.id)===String(id);});if(idx<0)return;
       var old=auditClone(arr[idx]);
+      var related=[];
+      /* Keep the primary record AND any dependent payment/cash records in Recycle Bin.
+         This makes Restore actually reversible instead of restoring only the header record. */
       if(type==='purchase'||type==='sale'){
         var sid=String(id);
-        paymentHistory=paymentHistory.filter(function(p){return String(p.sourceId||'')!==sid;});
-        cashList=cashList.filter(function(c){return String(c.sourceId||'')!==sid;});
+        paymentHistory.filter(function(p){return String(p.sourceId||'')===sid;}).forEach(function(p){related.push({list:'paymentHistory',record:auditClone(p)});});
+        cashList.filter(function(c){return String(c.sourceId||'')===sid;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
       }
       if(type==='generalDue'){
-        paymentHistory=paymentHistory.filter(function(p){return String(p.generalDueId||'')!==String(id);});
-        cashList=cashList.filter(function(c){return String(c.generalDueId||'')!==String(id);});
+        var gid=String(id);
+        paymentHistory.filter(function(p){return String(p.generalDueId||'')===gid;}).forEach(function(p){related.push({list:'paymentHistory',record:auditClone(p)});});
+        cashList.filter(function(c){return String(c.generalDueId||'')===gid;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
+      }
+      var trash=get(K.trash,[]);
+      trash.push({
+        trashId:'TR-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+        time:new Date().toLocaleString('bn-BD'),
+        type:deleteTypeLabel(type), list:type, record:old, related:related,
+        originalId:String(id)
+      });
+      /* newest deleted item first; keep all items unless user explicitly empties the bin */
+      set(K.trash,trash);
+      if(type==='purchase'||type==='sale'){
+        var sid2=String(id);
+        paymentHistory=paymentHistory.filter(function(p){return String(p.sourceId||'')!==sid2;});
+        cashList=cashList.filter(function(c){return String(c.sourceId||'')!==sid2;});
+      }
+      if(type==='generalDue'){
+        var gid2=String(id);
+        paymentHistory=paymentHistory.filter(function(p){return String(p.generalDueId||'')!==gid2;});
+        cashList=cashList.filter(function(c){return String(c.generalDueId||'')!==gid2;});
       }
       arr.splice(idx,1);
-      auditAction('মুছে ফেলা',deleteTypeLabel(type),'ব্যবহারকারী নির্দিষ্ট রেকর্ডটি মুছে ফেলেছেন',old,null);
+      auditAction('মুছে ফেলা',deleteTypeLabel(type),'রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে; স্থায়ীভাবে মুছে ফেলা হয়নি',old,null);
       saveAllExtra(); scheduleCloudSave(); rebuildAllOneTimeAllocations(); refreshAllDependentViews();
       renderDeleteManager();
-      alert('রেকর্ডটি মুছে ফেলা হয়েছে।');
+      alert('রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে। মূল হিসাব থেকে সরানো হয়েছে, কিন্তু স্থায়ীভাবে মুছে ফেলা হয়নি।');
     }
     function renderDeleteManager(){
       var d=document.getElementById('delete-manager-list');if(!d)return;
@@ -4345,7 +4368,7 @@ window.finalPanel=function(t){
  backup:`<h3>💾 Backup & Restore</h3><div class="fc-actions"><button onclick="finalBackup()">⬇️ Backup Download</button><label style="padding:10px;border:1px solid #ccc;border-radius:8px;cursor:pointer">⬆️ Restore JSON<input hidden type="file" accept=".json,application/json" onchange="finalRestore(this.files[0])"></label></div><p>Restore করার আগে অবশ্যই বর্তমান Backup নিন।</p>`,
  security:`<h3>🔐 Security</h3><p>Login নিরাপত্তা Firebase Authentication-এর মাধ্যমে রাখুন। Password HTML/LocalStorage-এ সংরক্ষণ করা হবে না।</p>`,
  notify:`<h3>🔔 Notification</h3><p>তাগাদা রিমাইন্ডার খাতার মাধ্যমে Due Reminder পরিচালনা করুন।</p><button onclick="finalGo('reminder')">🔔 Reminder খুলুন</button>`,
- trash:`<h3>🗑️ Recycle Bin</h3><p>ডিলিট করা রেকর্ড থাকলে এখানে রাখা হবে। স্থায়ীভাবে মুছে ফেলার আগে সতর্ক থাকুন।</p><div id="fc-trash-list" class="fc-list"></div><button onclick="renderTrash()">🔄 Refresh</button>`,
+ trash:`<h3>🗑️ Recycle Bin</h3><p>ডাটা ম্যানেজমেন্ট থেকে মুছে ফেলা রেকর্ড এখানে জমা হবে। এখান থেকে Restore করলে রেকর্ডটি আবার মূল হিসাবে ফিরে আসবে।</p><div id="fc-trash-list" class="fc-list"></div><button onclick="renderTrash()">🔄 Refresh</button>`,
  history:`<h3>🕘 Complete History</h3><div id="fc-history-list" class="fc-list"></div><div class="fc-actions"><button onclick="renderHistory()">🔄 Refresh</button><button onclick="printFinalHistory()">🖨️ Print / PDF</button></div>`,
  };
  p.innerHTML=views[t]||'<p>অপশন পাওয়া যায়নি।</p>';
@@ -4383,8 +4406,13 @@ window.finalRestore=function(file){
  r.readAsText(file);
 };
 window.renderHistory=function(){const x=document.getElementById('fc-history-list');if(!x)return;const h=get(K.hist,[]).slice().reverse();x.innerHTML=h.length?h.map(v=>'<div class="fc-list-item"><b>'+esc(v.action)+'</b> · '+esc(v.section)+'<br>'+esc(v.time)+'<br>'+esc(JSON.stringify(v.details))+'</div>').join(''):'কোনো History নেই।'};
-window.renderTrash=function(){const x=document.getElementById('fc-trash-list');if(!x)return;const t=get(K.trash,[]);x.innerHTML=t.length?t.map((v,i)=>'<div class="fc-list-item"><b>#'+(i+1)+'</b> '+esc(v.type||'Record')+'<br>'+esc(v.time||'')+'<br><button onclick="finalRestoreTrash('+i+')">Restore</button></div>').join(''):'Recycle Bin খালি।'};
-window.finalRestoreTrash=function(i){let t=get(K.trash,[]),v=t[i];if(!v)return;if(v.list&&Array.isArray(window[v.list]))window[v.list].push(v.record);t.splice(i,1);set(K.trash,t);audit('RESTORE','Recycle Bin','Restored');saveCore();renderTrash();};
+window.renderTrash=function(){const x=document.getElementById('fc-trash-list');if(!x)return;const t=get(K.trash,[]).slice().reverse();x.innerHTML=t.length?t.map((v,i)=>'<div class="fc-list-item"><b>#'+(i+1)+'</b> '+esc(v.type||'Record')+' — '+esc(v.record&&((v.record.name||v.record.customer||v.record.supplier||v.record.title||v.record.date)||''))+'<br>'+esc(v.time||'')+'<br><button onclick="finalRestoreTrash('+i+')">↩️ Restore</button></div>').join(''):'Recycle Bin খালি।'};
+window.finalRestoreTrash=function(displayIndex){let t=get(K.trash,[]),ordered=t.slice().reverse(),v=ordered[displayIndex];if(!v)return;if(!confirm('এই রেকর্ডটি আবার মূল হিসাবে Restore করবেন?'))return;
+  var exists=v.list&&Array.isArray(window[v.list])&&window[v.list].some(function(x){return String(x.id)===String(v.record&&v.record.id);});
+  if(!exists&&v.list&&Array.isArray(window[v.list]))window[v.list].push(v.record);
+  (v.related||[]).forEach(function(r){if(r&&r.list&&Array.isArray(window[r.list])){var dup=window[r.list].some(function(x){return String(x.id)===String(r.record&&r.record.id);});if(!dup)window[r.list].push(r.record);}});
+  var realIndex=t.indexOf(v);if(realIndex>=0)t.splice(realIndex,1);set(K.trash,t);audit('RESTORE','Recycle Bin',{type:v.type,recordId:v.originalId||''});saveCore();try{rebuildAllOneTimeAllocations();refreshAllDependentViews();}catch(e){}renderTrash();alert('রেকর্ডটি মূল হিসাবে Restore হয়েছে।');
+};
 window.printFinalHistory=function(){const h=get(K.hist,[]),w=window.open('','_blank');if(!w)return;w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>History</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px;font-size:10px}th{background:#eee}</style></head><body><h2>সম্পূর্ণ হিস্ট্রি</h2><table><tr><th>সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr>'+h.map(v=>'<tr><td>'+esc(v.time)+'</td><td>'+esc(v.action)+'</td><td>'+esc(v.section)+'</td><td>'+esc(JSON.stringify(v.details))+'</td></tr>').join('')+'</table></body></html>');w.document.close();w.focus();w.print()};
 window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>dataArr(k).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1));}));alert(bad.length?'Mismatch পাওয়া গেছে: '+bad.length+' record':'মৌলিক Total/Paid/Due mismatch পাওয়া যায়নি।');audit('HEALTH_CHECK','Data',bad.length||'OK')};
 window.showFinalControlCenter=function(){
