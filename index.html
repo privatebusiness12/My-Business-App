@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- V17-PRINT-FIX-2026-08-31 -->
+
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
@@ -1119,7 +1121,7 @@ body{font-size:13px}
     }
     function printAuditHistory(){
       var rows=(auditLog||[]).map(function(e){return '<tr><td>'+esc(formatAuditDate(e.at))+'</td><td>'+esc(e.action)+'</td><td>'+esc(e.type)+'</td><td>'+esc(e.details)+'</td></tr>';}).join('');
-      var w=window.open('','_blank');if(!w)return alert('পপ-আপ অনুমতি দিন।');w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Complete History</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;padding:10px;color:#111}h1{text-align:center}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;vertical-align:top}th{background:#eef2f7}@page{size:A4 landscape;margin:8mm}</style></head><body><h1>সম্পূর্ণ হিস্ট্রি</h1><p>মোট: '+auditLog.length+' টি</p><table><thead><tr><th>তারিখ/সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr></thead><tbody>'+rows+'</tbody></table></body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+      var w=window.open('','_blank');if(!w)return alert('পপ-আপ অনুমতি দিন।');w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Complete History</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;padding:10px;color:#111}h1{text-align:center}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;vertical-align:top}th{background:#eef2f7}@page{size:A4 landscape;margin:8mm}</style></head><body><h1>সম্পূর্ণ হিস্ট্রি</h1><p style="text-align:center">প্রিন্ট তারিখ ও সময়: '+new Date().toLocaleString('bn-BD')+'</p><table><thead><tr><th>তারিখ/সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr></thead><tbody>'+rows+'</tbody></table><div style="text-align:right;margin-top:35px"><span style="display:inline-block;min-width:180px;text-align:center;border-top:1px solid #222;padding-top:5px">স্বাক্ষর</span></div></body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
     }
     async function saveCloudData(){
       try{ detectAuditChanges(); }catch(e){ console.error('Audit detection before cloud save failed',e); }
@@ -3182,19 +3184,38 @@ body{font-size:13px}
       var rows=getPartyVehicleDueGroups().filter(function(g){return (dir==='all'||g.direction===dir)&&(idt==='all'||g.identity===idt)&&(!q||normalizePartyName(g.label).includes(normalizePartyName(q)));});
       if(!rows.length)return alert(T('প্রিন্ট করার মতো কোনো হিসাব নেই।','No matching account to print.'));
       var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
-      var h='<h1>নাম/নম্বর ভিত্তিক সমন্বিত বাকি হিসাব</h1><p>সার্চ: '+esc(q||'সব')+' | প্রিন্ট: '+new Date().toLocaleString('bn-BD')+'</p>';
+      var h='<h1>নাম/নম্বর ভিত্তিক সমন্বিত বাকি হিসাব</h1><p class="print-meta">সার্চ: '+esc(q||'সব')+' | প্রিন্ট: '+new Date().toLocaleString('bn-BD')+'</p>';
       ['payable','receivable'].forEach(function(d){var a=rows.filter(function(g){return g.direction===d});if(!a.length)return;h+='<h2>'+(d==='payable'?'আমার দিতে হবে':'আমি পাবো')+'</h2><table><thead><tr><th>নাম/নম্বর</th><th>পরিচয়</th><th>রেকর্ড</th><th>CFT</th><th>Ton</th><th>Pcs</th><th>মোট টাকা</th><th>পরিশোধ/জমা</th><th>বর্তমান বাকি</th></tr></thead><tbody>';a.forEach(function(g){h+='<tr><td>'+esc(g.label)+'</td><td>'+esc(g.role)+'</td><td>'+g.count+'</td><td>'+g.cft.toFixed(2)+'</td><td>'+g.ton.toFixed(3)+'</td><td>'+g.pcs.toFixed(2)+'</td><td>'+g.amount.toFixed(2)+' ৳</td><td>'+g.paid.toFixed(2)+' ৳</td><td>'+g.due.toFixed(2)+' ৳</td></tr>';});h+='</tbody><tfoot><tr><th>মোট:</th><th>—</th><th>'+a.reduce(function(s,g){return s+g.count},0)+'</th><th>'+a.reduce(function(s,g){return s+g.cft},0).toFixed(2)+'</th><th>'+a.reduce(function(s,g){return s+g.ton},0).toFixed(3)+'</th><th>'+a.reduce(function(s,g){return s+g.pcs},0).toFixed(2)+'</th><th>'+a.reduce(function(s,g){return s+g.amount},0).toFixed(2)+' ৳</th><th>'+a.reduce(function(s,g){return s+g.paid},0).toFixed(2)+' ৳</th><th>'+a.reduce(function(s,g){return s+g.due},0).toFixed(2)+' ৳</th></tr></tfoot></table>';});
-      h+='<p style="margin-top:55px;text-align:right;padding-right:12px">স্বাক্ষর: ____________________</p>';
-      w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 landscape;margin:9mm}body{font-family:Arial,sans-serif;color:#111}table{width:100%;border-collapse:collapse;margin:10px 0 24px}th,td{border:1px solid #777;padding:6px}th{font-weight:800}tfoot th{font-weight:900;border-top:2px solid #111}h1{text-align:center}</style></head><body>'+h+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},150);
+      h+='<div class="signature-block"><div class="sig-line">স্বাক্ষর: ____________________</div></div>';
+      w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 landscape;margin:9mm}body{font-family:Arial,sans-serif;color:#111;position:relative;min-height:calc(297mm - 18mm)}table{width:100%;border-collapse:collapse;margin:10px 0 24px}th,td{border:1px solid #777;padding:6px}th{font-weight:800}tfoot th{font-weight:900;border-top:2px solid #111}h1{text-align:center}.print-meta{text-align:center!important;display:block;width:100%;margin:10px 0 14px!important}.signature-block{position:fixed;right:10mm;bottom:12mm;width:55mm;text-align:center;margin:0}.sig-line{display:block;min-width:180px;text-align:center;border-top:1px solid #222;padding-top:5px}</style></head><body>'+h+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},150);
     }
     function printPartyVehicleDueReport(){
-      function groups(kind){
-        var arr=kind==='purchase'?(purchaseList||[]):(salesList||[]),map={};
-        arr.forEach(function(x){var d=parseFloat(x.due)||0;if(d<=0)return;var party=kind==='purchase'?x.supplier:x.customer;var vehicle=(x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0].trim();[[kind==='purchase'?'সাপ্লায়ার':'কাস্টমার',party],[ 'গাড়ি/নৌকা',vehicle ]].forEach(function(a){var k=normKey(a[1]);if(!k)return;if(!map[a[0]+'|'+k])map[a[0]+'|'+k]={label:a[1],type:a[0],count:0,total:0,paid:0,due:0};var g=map[a[0]+'|'+k];g.count++;g.total+=parseFloat(x.total)||0;g.paid+=parseFloat(x.paid)||0;g.due+=d;});});return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.due-a.due;});
+      /* V17 PRINT FIX: one canonical layout for the consolidated due report.
+         This function is presentation-only: it never changes Firebase/local data. */
+      var rows=getPartyVehicleDueGroups();
+      if(!rows.length)return alert(T('প্রিন্ট করার মতো কোনো বাকি হিসাব নেই।','No due records to print.'));
+      var settings=getReportCenterSettings();
+      function table(title,gs){
+        var sums=function(k){return gs.reduce(function(a,g){return a+(parseFloat(g[k])||0)},0)};
+        var h='<div class="report-section"><h2>'+esc(title)+'</h2><table><thead><tr><th>নাম/নম্বর</th><th>পরিচয়</th><th>রেকর্ড</th><th>CFT</th><th>Ton</th><th>Pcs</th><th>মোট টাকা</th><th>পরিশোধ/জমা</th><th>বর্তমান বাকি</th></tr></thead><tbody>';
+        gs.forEach(function(g){h+='<tr><td>'+esc(g.label||'—')+'</td><td>'+esc(g.role||'—')+'</td><td>'+Number(g.count||0)+'</td><td>'+Number(g.cft||0).toFixed(2)+'</td><td>'+Number(g.ton||0).toFixed(3)+'</td><td>'+Number(g.pcs||0).toFixed(2)+'</td><td>'+Number(g.amount||0).toFixed(2)+' ৳</td><td>'+Number(g.paid||0).toFixed(2)+' ৳</td><td>'+Number(g.due||0).toFixed(2)+' ৳</td></tr>';});
+        h+='</tbody><tfoot><tr><th class="col-total-label">মোট:</th><th>—</th><th>'+sums('count').toFixed(0)+'</th><th>'+sums('cft').toFixed(2)+'</th><th>'+sums('ton').toFixed(3)+'</th><th>'+sums('pcs').toFixed(2)+'</th><th>'+sums('amount').toFixed(2)+' ৳</th><th>'+sums('paid').toFixed(2)+' ৳</th><th>'+sums('due').toFixed(2)+' ৳</th></tr></tfoot></table></div>';
+        return h;
       }
-      var pg=groups('purchase'),sg=groups('sale'),w=window.open('','_blank');if(!w)return;
-      function table(title,gs){var h='<h2>'+title+'</h2><table><thead><tr><th>নাম/নম্বর</th><th>ধরন</th><th>মোট রেকর্ড</th><th>মোট টাকা</th><th>মোট পরিশোধ</th><th>বর্তমান বাকি</th></tr></thead><tbody>';gs.forEach(function(g){h+='<tr><td>'+esc(g.label)+'</td><td>'+g.type+'</td><td>'+g.count+'</td><td>'+g.total.toFixed(2)+' ৳</td><td>'+g.paid.toFixed(2)+' ৳</td><td>'+g.due.toFixed(2)+' ৳</td></tr>';});h+='</tbody><tfoot><tr><th>মোট:</th><th>—</th><th>'+gs.reduce(function(a,g){return a+g.count},0)+'</th><th>'+gs.reduce(function(a,g){return a+g.total},0).toFixed(2)+' ৳</th><th>'+gs.reduce(function(a,g){return a+g.paid},0).toFixed(2)+' ৳</th><th>'+gs.reduce(function(a,g){return a+g.due},0).toFixed(2)+' ৳</th></tr></tfoot></table>';return h;}
-      w.document.write('<html><head><meta charset="utf-8"><title>নাম/নম্বর ভিত্তিক বাকি হিসাব</title><style>@page{size:A4 landscape;margin:9mm}body{font-family:Arial,sans-serif;color:#111}table{width:100%;border-collapse:collapse;margin:10px 0 24px}th,td{border:1px solid #777;padding:6px}th{font-weight:800}tfoot th{font-weight:900;border-top:2px solid #111}h1{text-align:center}</style></head><body><h1>নাম/নম্বর ভিত্তিক সমন্বিত বাকি হিসাব</h1><p>প্রিন্ট তারিখ ও সময়: '+new Date().toLocaleString('bn-BD')+'</p>'+table('কেনার ক্ষেত্রে — সাপ্লায়ার ও নৌকা/গাড়ি',pg)+table('বিক্রয়ের ক্ষেত্রে — কাস্টমার ও নৌকা/গাড়ি',sg)+'<p style="margin-top:55px;text-align:right;padding-right:12px">স্বাক্ষর: ____________________</p></body></html>');w.document.close();setTimeout(function(){w.print();},150);
+      var payable=rows.filter(function(g){return g.direction==='payable';});
+      var receivable=rows.filter(function(g){return g.direction==='receivable';});
+      var html='<div class="report-head"><h1>'+T('নাম/নম্বর ভিত্তিক সমন্বিত বাকি হিসাব','Consolidated Party / Vehicle Due Report')+'</h1><p class="print-meta">'+T('প্রিন্ট তারিখ ও সময়','Print Date & Time')+': '+esc(settings.generated)+'</p></div>'+
+        (payable.length?table(T('আমার দিতে হবে — সাপ্লায়ার/গাড়ি/নৌকা','Payable — Supplier/Vehicle/Boat'),payable):'')+
+        (receivable.length?table(T('আমি পাবো — কাস্টমার/গাড়ি/নৌকা','Receivable — Customer/Vehicle/Boat'),receivable):'')+
+        '<div class="signature-block"><div class="sig-line">'+(settings.signature?esc(settings.signature):T('স্বাক্ষর','Signature'))+'</div></div>';
+      var w=window.open('','_blank');
+      if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
+      w.document.open();
+      w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+T('নাম/নম্বর ভিত্তিক সমন্বিত বাকি হিসাব','Consolidated Due Report')+'</title><style>'+
+        'html,body{max-width:100%;overflow-x:hidden}body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff;padding:0;margin:0;font-size:10px}.report-head{text-align:center;margin-bottom:14px}.report-head h1{margin:0 0 6px;font-size:18px}.print-meta{text-align:center!important;display:block;width:100%;margin:0!important;font-size:10px;color:#444}.report-section{margin-bottom:20px;break-inside:auto}.report-section h2{font-size:14px;margin:8px 0;border-bottom:1px solid #bbb;padding-bottom:4px}table{width:100%;border-collapse:collapse;table-layout:auto}th,td{border:1px solid #777;padding:5px;vertical-align:middle}th{font-weight:800;background:#eef2f7;text-align:center}td{text-align:right}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}tfoot th,tfoot td{font-weight:900;border-top:2px solid #111;background:#fff}.col-total-label{text-align:left!important}.signature-block{text-align:right;width:100%;margin-top:34px}.sig-line{display:inline-block;min-width:180px;text-align:center;border-top:1px solid #222;padding-top:5px}@page{size:A4 '+(settings.orientation==='landscape'?'landscape':'portrait')+';margin:9mm}@media print{.report-section{break-inside:auto}.signature-block{break-inside:avoid}}'+
+        '</style></head><body>'+html+'</body></html>');
+      w.document.close();
+      setTimeout(function(){w.focus();w.print();},200);
     }
 
     function printSingleBusinessReport(key,asPdf){
@@ -4610,11 +4631,11 @@ function v17ReportHTML(rows,title){
       "</td><td>"+v17Money(r.netPaid)+"</td><td>"+v17Money(r.netDue)+"</td></tr>";
   }).join("");
   return "<!doctype html><html><head><meta charset='utf-8'><title>"+v17Escape(title)+
-    "</title><style>@page{size:A4 landscape;margin:10mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}h1{text-align:center;font-size:18px;margin:0 0 4px}.meta{text-align:center;font-size:10px;margin-bottom:10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #666;padding:5px;text-align:right}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}thead th{font-weight:800}tfoot th,tfoot td{font-weight:900;border-top:2px solid #111}.sign{display:flex;justify-content:space-between;margin-top:35px}.sign div{width:28%;text-align:center;border-top:1px solid #555;padding-top:5px}</style></head><body>"+
+    "</title><style>@page{size:A4 landscape;margin:10mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}h1{text-align:center;font-size:18px;margin:0 0 4px}.meta{text-align:center;font-size:10px;margin-bottom:10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #666;padding:5px;text-align:right}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}thead th{font-weight:800}tfoot th,tfoot td{font-weight:900;border-top:2px solid #111}.sign{text-align:right;width:100%;margin-top:34px}.sign div{display:inline-block;min-width:180px;text-align:center;border-top:1px solid #555;padding-top:5px}.meta{text-align:center!important;display:block;width:100%;margin:0 0 10px}</style></head><body>"+
     "<h1>"+v17Escape(title)+"</h1><div class='meta'>Print Date &amp; Time: "+new Date().toLocaleString("bn-BD")+"</div>"+
     "<table><thead><tr><th>নাম</th><th>গাড়ি</th><th>নৌকা</th><th>রেকর্ড</th><th>CFT</th><th>Ton</th><th>Pcs</th><th>মোট টাকা</th><th>পরিশোধ</th><th>বাকি</th></tr></thead><tbody>"+body+
     "</tbody><tfoot><tr><th>মোট:</th><th>—</th><th>—</th><th>"+c.count+"</th><th>"+c.cft.toFixed(2)+"</th><th>"+c.ton.toFixed(3)+"</th><th>"+c.pcs.toFixed(2)+"</th><th>"+v17Money(c.total)+"</th><th>"+v17Money(c.paid)+"</th><th>"+v17Money(c.due)+"</th></tr></tfoot></table>"+
-    "<div class='sign'><div>প্রস্তুতকারীর স্বাক্ষর</div><div>যাচাইকারীর স্বাক্ষর</div><div>অনুমোদনকারীর স্বাক্ষর</div></div></body></html>";
+    "<div class='sign'><div>স্বাক্ষর</div></div></body></html>";
 }
 window.printV17PartyVehicleReport=function(query,side){
   var rows=window.V17Report.search(query||"",side);
