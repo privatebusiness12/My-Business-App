@@ -491,6 +491,17 @@ body{font-size:13px}
   th,td{white-space:normal!important;word-break:break-word!important;overflow-wrap:anywhere!important}
 }
 </style>
+
+<style id="v17-live-due-style">
+.v17-live-due-card{margin:10px 0 4px;padding:12px 14px;border:1px solid #b8e0c2;border-radius:12px;background:linear-gradient(135deg,#f4fff6,#fff);box-shadow:0 3px 10px rgba(0,0,0,.05)}
+.v17-live-due-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-weight:700;color:#176b36}
+.v17-live-due-value{font-size:1.18em;color:#c62828;font-weight:800}
+.v17-live-due-sub{font-size:.82em;color:#68727d;margin-top:5px}
+.v17-live-due-zero .v17-live-due-value{color:#198754}
+.v17-live-due-breakdown{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+.v17-live-due-chip{padding:5px 9px;border-radius:999px;background:#eef6ff;color:#24527a;font-size:.78em}
+</style>
+
 </head>
 <body>
 
@@ -4642,5 +4653,122 @@ window.v17Safety={
 
 })();
 </script>
+
+<script id="v17-live-due-runtime">
+(function(){
+"use strict";
+
+function v17LDNorm(v){return String(v==null?"":v).trim().replace(/\s+/g," ").toLowerCase();}
+function v17LDNum(v){var n=parseFloat(String(v==null?"":v).replace(/[৳,\s]/g,""));return isFinite(n)?n:0;}
+function v17LDFirst(){for(var i=0;i<arguments.length;i++){var s=String(arguments[i]==null?"":arguments[i]).trim();if(s)return s;}return "";}
+function v17LDVehicle(x){
+  return v17LDFirst(x.vehicleNo,x.vehicleNumber,x.gariNo,x.transportNo,
+    (x.transportName||"").replace(/^গাড়ি:\s*/i,"").replace(/^বালগেট:\s*/i,"").split(" (")[0]);
+}
+function v17LDBoat(x){return v17LDFirst(x.boatName,x.boatNo,x.bargeName,x.bargeNo,x.noukaName);}
+function v17LDParty(x,side){
+  return side==="sale" ? v17LDFirst(x.customer,x.customerName,x.partyName)
+                        : v17LDFirst(x.supplier,x.supplierName,x.mahajan,x.partyName);
+}
+function v17LDTransportPerson(x){
+  try{if(typeof transportPersonName==="function")return transportPersonName(x);}catch(e){}
+  return v17LDFirst(x.driverName,x.driver,x.sukaniName,x.sukani,x.transportPerson,x.transportOwner);
+}
+function v17LDSite(x){return v17LDFirst(x.site,x.deliverySite,x.siteName,x.deliverySiteName);}
+
+function v17LDCalculate(name,matchType,direction){
+  var target=v17LDNorm(name),r={total:0,product:0,transport:0,sales:0,purchases:0,matched:false};
+  if(!target)return r;
+
+  function addProduct(x,side){
+    var due=v17LDNum(x.due); if(due<=0)return;
+    r.product+=due;r.total+=due;r.matched=true;
+    if(side==="sale")r.sales++;else r.purchases++;
+  }
+  function addTransport(x){
+    var due=v17LDNum(x.transportFareDue); if(due<=0)return;
+    r.transport+=due;r.total+=due;r.matched=true;
+  }
+
+  var doReceivable=(direction==="receivable" || !direction);
+  var doPayable=(direction==="payable" || !direction);
+
+  if(doReceivable){
+    (window.salesList||[]).forEach(function(x){
+      var party=v17LDNorm(v17LDParty(x,"sale")),site=v17LDNorm(v17LDSite(x)),vehicle=v17LDNorm(v17LDVehicle(x));
+      var ok=(matchType==="customer"&&party===target)||(matchType==="site"&&site===target)||
+             (matchType==="vehicle"&&vehicle===target)||(!matchType&&(party===target||site===target||vehicle===target));
+      if(ok){addProduct(x,"sale");if(matchType==="vehicle")addTransport(x);}
+    });
+  }
+
+  if(doPayable){
+    (window.purchaseList||[]).forEach(function(x){
+      var party=v17LDNorm(v17LDParty(x,"purchase")),driver=v17LDNorm(v17LDTransportPerson(x));
+      var vehicle=v17LDNorm(v17LDVehicle(x)),boat=v17LDNorm(v17LDBoat(x));
+      var ok=(matchType==="supplier"&&party===target)||(matchType==="driver"&&driver===target)||
+             (matchType==="vehicle"&&(vehicle===target||boat===target))||
+             (!matchType&&(party===target||driver===target||vehicle===target||boat===target));
+      if(ok){
+        if(matchType==="driver")addTransport(x);
+        else {addProduct(x,"purchase");if(matchType==="vehicle")addTransport(x);}
+      }
+    });
+  }
+  return r;
+}
+
+function v17LDEnsureCard(){
+  var wrap=document.getElementById("pay-general-name-wrap");
+  if(!wrap)return null;
+  var old=document.getElementById("v17-live-due-indicator");
+  if(old)return old;
+  var card=document.createElement("div");
+  card.id="v17-live-due-indicator";
+  card.className="v17-live-due-card v17-live-due-zero";
+  card.innerHTML='<div class="v17-live-due-head"><span>💰 নির্বাচিত নামের বর্তমান বাকি</span><span class="v17-live-due-value">৳ 0.00</span></div>'+
+    '<div class="v17-live-due-sub">নাম লিখলে/নির্বাচন করলে বর্তমানে যে বাকি আছে তা স্বয়ংক্রিয়ভাবে দেখাবে। বাকি না থাকলে ০.০০ ৳ দেখাবে।</div>'+
+    '<div class="v17-live-due-breakdown"></div>';
+  wrap.parentNode.insertBefore(card,wrap.nextSibling);
+  return card;
+}
+
+function v17LDUpdate(){
+  var nameEl=document.getElementById("pay-general-name"),typeEl=document.getElementById("pay-one-time-type");
+  var personTypeEl=document.getElementById("pay-person-type"),card=v17LDEnsureCard();
+  if(!card||!nameEl)return;
+  var name=(nameEl.value||"").trim(),matchType=typeEl?typeEl.value:"";
+  var pt=personTypeEl?personTypeEl.value:"";
+  var direction=pt==="oneTimeReceivable"?"receivable":pt==="oneTimePayable"?"payable":"";
+  var r=v17LDCalculate(name,matchType,direction);
+  var value=card.querySelector(".v17-live-due-value"),sub=card.querySelector(".v17-live-due-sub"),breakdown=card.querySelector(".v17-live-due-breakdown");
+  if(!name){
+    value.textContent="৳ 0.00";sub.textContent="নাম লিখলে/নির্বাচন করলে বর্তমানে যে বাকি আছে তা স্বয়ংক্রিয়ভাবে দেখাবে।";
+    breakdown.innerHTML="";card.classList.add("v17-live-due-zero");return;
+  }
+  value.textContent="৳ "+r.total.toFixed(2);card.classList.toggle("v17-live-due-zero",r.total<=0);
+  var label=direction==="receivable"?"পাবো":direction==="payable"?"দিতে হবে":"মোট বাকি";
+  sub.textContent="“"+name+"” এর "+label+" বর্তমান হিসাব।";
+  var parts=[];
+  if(r.product>0)parts.push('<span class="v17-live-due-chip">পণ্য বাকি: ৳ '+r.product.toFixed(2)+'</span>');
+  if(r.transport>0)parts.push('<span class="v17-live-due-chip">গাড়ি/ট্রান্সপোর্ট বাকি: ৳ '+r.transport.toFixed(2)+'</span>');
+  if(!parts.length)parts.push('<span class="v17-live-due-chip">বর্তমানে কোনো বাকি নেই</span>');
+  breakdown.innerHTML=parts.join("");
+}
+
+function v17LDBind(){
+  var nameEl=document.getElementById("pay-general-name"),typeEl=document.getElementById("pay-one-time-type"),personTypeEl=document.getElementById("pay-person-type");
+  if(nameEl&&!nameEl.__v17ld){nameEl.__v17ld=true;nameEl.addEventListener("input",v17LDUpdate);nameEl.addEventListener("change",v17LDUpdate);nameEl.addEventListener("blur",v17LDUpdate);}
+  if(typeEl&&!typeEl.__v17ld){typeEl.__v17ld=true;typeEl.addEventListener("change",v17LDUpdate);}
+  if(personTypeEl&&!personTypeEl.__v17ld){personTypeEl.__v17ld=true;personTypeEl.addEventListener("change",function(){setTimeout(v17LDUpdate,30);});}
+  if(nameEl)v17LDUpdate();
+}
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",v17LDBind);else v17LDBind();
+new MutationObserver(function(){v17LDBind();}).observe(document.documentElement,{childList:true,subtree:true});
+window.v17UpdateLiveDue=v17LDUpdate;
+})();
+</script>
+
 </body>
 </html>
