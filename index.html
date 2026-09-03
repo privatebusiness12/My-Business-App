@@ -3089,8 +3089,8 @@ body{font-size:13px}
           <h3 style="margin:0 0 6px">📚 ${T('সকল রিপোর্ট একসাথে','All Reports Together')}</h3>
           <p style="margin:0 0 12px;color:#475569">${T('কেনা, বেচা, খরচ, পেমেন্ট, ক্যাশ, ব্যাংক, স্টক, ট্র্যাকিং, যোগাযোগসহ সব রিপোর্ট এক A4 রিপোর্টে থাকবে।','Purchase, sales, expenses, payments, cash, bank, stock, tracking, contacts and other reports in one A4 report.')}</p>
           <div class="report-center-actions" style="justify-content:center">
-            <button class="rc-all" onclick="printAllBusinessData()">📚 ${T('সকল রিপোর্ট প্রিন্ট','Print All Reports')}</button>
-            <button class="rc-pdf" onclick="printAllBusinessData()">📄 ${T('সকল রিপোর্ট PDF','All Reports PDF')}</button>
+            <button class="rc-all" onclick="printAllBusinessData(false)">📚 ${T('সকল রিপোর্ট প্রিন্ট','Print All Reports')}</button>
+            <button class="rc-pdf" onclick="printAllBusinessData(true)">📄 ${T('সকল রিপোর্ট PDF','All Reports PDF')}</button>
           </div>
         </div>
       </div>
@@ -4221,46 +4221,71 @@ body{font-size:13px}
       h+='</tbody>'+reportColumnTotalsHtml(arr,keys)+'</table></div>';
       return h;
     }
-    function printAllBusinessData(){
-      var oldSub=document.getElementById('sub-page-view').classList.contains('active-view');
-      var oldHome=document.getElementById('home-view').classList.contains('active-view');
-      var purchase=Array.isArray(purchaseList)?purchaseList:[], sales=Array.isArray(salesList)?salesList:[], expenses=Array.isArray(expenseList)?expenseList:[];
-      var customerDue=sales.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0), supplierDue=purchase.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
-      var totalSales=sales.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalPurchase=purchase.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalExpense=expenses.reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0);
-      var net=totalSales-totalPurchase-totalExpense;
-      var allPaymentsTotal=sumAllRecordedPayments();
-      var currentDue=calculateOutstandingDue();
-      var allPrintSettings=(document.getElementById('br-reports')&&document.getElementById('br-reports').classList.contains('active'))?getReportCenterSettings():getPrintSettings('print');
-       var materialRows=materialQuantitySummary(), totalCft=materialRows.reduce(function(a,x){return a+x.cft},0), totalTon=materialRows.reduce(function(a,x){return a+x.ton},0), totalPc=materialRows.reduce(function(a,x){return a+x.pc},0);
-       var materialHtml='<div class="report-section"><h2>'+T('মালের হিসাব','Material Details')+'</h2><table><thead><tr><th>'+T('মাল','Material')+'</th><th>CFT</th><th>'+T('টন','Metric Ton')+'</th><th>'+T('পিচ','Pieces')+'</th><th>'+T('অন্যান্য','Other')+'</th></tr></thead><tbody>';
-       materialRows.forEach(function(x){materialHtml+='<tr><td>'+esc(x.item)+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(2)+'</td><td>'+x.pc.toFixed(2)+'</td><td>'+x.other.toFixed(2)+'</td></tr>';});
-       materialHtml+='</tbody><tfoot><tr><th class="col-total-label"><strong>মোট:</strong></th><th class="col-total"><strong>'+totalCft.toFixed(2)+'</strong></th><th class="col-total"><strong>'+totalTon.toFixed(2)+'</strong></th><th class="col-total"><strong>'+totalPc.toFixed(2)+'</strong></th><th class="col-total"><strong>'+materialRows.reduce(function(a,x){return a+x.other},0).toFixed(2)+'</strong></th></tr></tfoot></table></div>';
+    function printAllBusinessData(saveAsPdf){
+      /* Open the print window FIRST so mobile browsers do not treat a later
+         calculation error as a blocked popup. Every report section is built
+         independently so one optional module cannot break the complete report. */
+      var w=window.open('','_blank');
+      if(!w){alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups, then try again.'));return;}
+      var allPrintSettings;
+      try{allPrintSettings=(document.getElementById('br-reports')&&document.getElementById('br-reports').classList.contains('active'))?getReportCenterSettings():getPrintSettings('print');}
+      catch(e){allPrintSettings={orientation:'portrait',signature:'',generated:new Date().toLocaleString('bn-BD')};}
 
+      function safeBuild(label,fn){
+        try{return fn();}
+        catch(e){console.error('All-report section failed:',label,e);return '<div class="report-section"><h2>'+T(label,label)+'</h2><p>'+T('এই অংশটি তৈরি করা যায়নি; অন্য রিপোর্টগুলো ঠিকভাবে রাখা হয়েছে।','This section could not be generated; the other reports are still included.')+'</p></div>';}
+      }
+      function arr(name){return Array.isArray(window[name])?window[name]:[];}
+
+      var purchase=arr('purchaseList'), sales=arr('salesList'), expenses=arr('expenseList');
+      var payment=arr('paymentHistory'), cash=arr('cashList'), bank=arr('bankAccounts');
+      var shipment=arr('shipmentList'), contacts=arr('contactList'), products=arr('productList');
+      var employees=arr('employeeList'), reminders=arr('reminderList'), notes=arr('noteList');
+      var invoices=arr('invoiceList'), investors=arr('investorList');
+
+      var materialHtml=safeBuild('মালের হিসাব',function(){
+        var rows=materialQuantitySummary(), totalCft=0,totalTon=0,totalPc=0,totalOther=0;
+        rows.forEach(function(x){totalCft+=Number(x.cft)||0;totalTon+=Number(x.ton)||0;totalPc+=Number(x.pc)||0;totalOther+=Number(x.other)||0;});
+        var h='<div class="report-section"><h2>'+T('মালের হিসাব','Material Details')+'</h2><table><thead><tr><th>'+T('মাল','Material')+'</th><th>CFT</th><th>'+T('টন','Metric Ton')+'</th><th>'+T('পিচ','Pieces')+'</th><th>'+T('অন্যান্য','Other')+'</th></tr></thead><tbody>';
+        rows.forEach(function(x){h+='<tr><td>'+esc(x.item)+'</td><td>'+Number(x.cft||0).toFixed(2)+'</td><td>'+Number(x.ton||0).toFixed(2)+'</td><td>'+Number(x.pc||0).toFixed(2)+'</td><td>'+Number(x.other||0).toFixed(2)+'</td></tr>';});
+        h+='</tbody><tfoot><tr><th class="col-total-label">'+T('মোট:','Total:')+'</th><th class="col-total">'+totalCft.toFixed(2)+'</th><th class="col-total">'+totalTon.toFixed(2)+'</th><th class="col-total">'+totalPc.toFixed(2)+'</th><th class="col-total">'+totalOther.toFixed(2)+'</th></tr></tfoot></table></div>';return h;
+      });
+
+      var sections=[];
+      sections.push(materialHtml);
+      sections.push(safeBuild('কেনার খাতা',function(){return printTableFromArray(T('কেনার খাতা','Purchase Ledger'),purchase,['date','challan','supplier','phone','item','qty','unit','total','paid','due']);}));
+      sections.push(safeBuild('বেচার খাতা',function(){return printTableFromArray(T('বেচার খাতা','Sales Ledger'),sales,['date','memo','customer','phone','site','item','qty','unit','total','paid','due']);}));
+      sections.push(safeBuild('খরচের খাতা',function(){return printTableFromArray(T('খরচের খাতা','Expense Ledger'),expenses,['date','category','title','method','amount','note']);}));
+      sections.push(safeBuild('পেমেন্ট ইতিহাস',function(){return printTableFromArray(T('পেমেন্ট ইতিহাস','Payment History'),payment,['date','name','type','typeBn','amount','note']);}));
+      sections.push(safeBuild('ক্যাশ খাতা',function(){return printTableFromArray(T('ক্যাশ খাতা','Cash Ledger'),cash,['date','type','title','amount']);}));
+      sections.push(safeBuild('ব্যাংক ও ওয়ালেট',function(){return printTableFromArray(T('ব্যাংক ও ওয়ালেট','Bank & Wallet'),bank,['name','type','balance']);}));
+      sections.push(safeBuild('মালপত্র ট্র্যাকিং',function(){return printTableFromArray(T('মালপত্র ট্র্যাকিং','Shipment Tracking'),shipment,['trackingNo','date','status','item','qty','unit','customer','supplier','transportName','transportPhone','from','to','expectedDate']);}));
+      sections.push(safeBuild('যোগাযোগ',function(){return printTableFromArray(T('যোগাযোগ','Contacts'),contacts,['name','phone','type','address','note']);}));
+      sections.push(safeBuild('প্রোডাক্ট লিস্ট',function(){return printTableFromArray(T('প্রোডাক্ট লিস্ট','Product List'),products,['name','sku','unit','buy','sell','min']);}));
+      sections.push(safeBuild('কর্মচারী হিসাব',function(){return printTableFromArray(T('কর্মচারী হিসাব','Employee Management'),employees,['name','phone','role','salary','advance']);}));
+      sections.push(safeBuild('তাগাদা রিমাইন্ডার',function(){return printTableFromArray(T('তাগাদা রিমাইন্ডার','Due Reminders'),reminders,['name','phone','date','amount','note','done']);}));
+      sections.push(safeBuild('নোটপ্যাড',function(){return printTableFromArray(T('নোটপ্যাড','Notepad'),notes,['title','body','date','pinned']);}));
+      sections.push(safeBuild('চালান',function(){return printTableFromArray(T('চালান','Invoices'),invoices,['no','date','customer','phone','site','item','qty','rate','total','note']);}));
+      sections.push(safeBuild('ইনভেস্টরস',function(){return printTableFromArray(T('ইনভেস্টরস','Investors'),investors,['date','investorName','amount','method','account','note']);}));
+      sections.push(safeBuild('নৌকা ও গাড়ির হিসাব',function(){return buildVehicleBoatReportHtml(allPrintSettings);}));
+
+      var signature=allPrintSettings.signature?esc(allPrintSettings.signature):T('স্বাক্ষর','Signature');
       var html='<div class="print-report-page" style="padding:10px;background:#fff;color:#111">'+
         '<h1>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</h1>'+
         '<p style="text-align:center">'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(allPrintSettings.generated)+'</p>'+
-        materialHtml+
-        printTableFromArray(T('কেনার খাতা','Purchase Ledger'),purchase,['date','challan','supplier','phone','item','qty','unit','total','paid','due'])+
-        printTableFromArray(T('বেচার খাতা','Sales Ledger'),sales,['date','memo','customer','phone','site','item','qty','unit','total','paid','due'])+
-        printTableFromArray(T('খরচের খাতা','Expense Ledger'),expenses,['date','category','title','method','amount','note'])+
-        printTableFromArray(T('পেমেন্ট ইতিহাস','Payment History'),paymentHistory||[],['date','name','type','typeBn','amount','note'])+
-        printTableFromArray(T('ক্যাশ খাতা','Cash Ledger'),cashList||[],['date','type','title','amount'])+
-        printTableFromArray(T('ব্যাংক ও ওয়ালেট','Bank & Wallet'),bankAccounts||[],['name','type','balance'])+
-        printTableFromArray(T('মালপত্র ট্র্যাকিং','Shipment Tracking'),shipmentList||[],['trackingNo','date','status','item','qty','unit','customer','supplier','transportName','transportPhone','from','to','expectedDate'])+
-        printTableFromArray(T('যোগাযোগ','Contacts'),contactList||[],['name','phone','type','address','note'])+
-        printTableFromArray(T('প্রোডাক্ট লিস্ট','Product List'),productList||[],['name','sku','unit','buy','sell','min'])+
-        printTableFromArray(T('কর্মচারী হিসাব','Employee Management'),employeeList||[],['name','phone','role','salary','advance'])+
-        printTableFromArray(T('তাগাদা রিমাইন্ডার','Due Reminders'),reminderList||[],['name','phone','date','amount','note','done'])+
-        printTableFromArray(T('নোটপ্যাড','Notepad'),noteList||[],['title','body','date','pinned'])+
-        printTableFromArray(T('চালান','Invoices'),invoiceList||[],['no','date','customer','phone','site','item','qty','rate','total','note'])+
-        printTableFromArray(T('ইনভেস্টরস','Investors'),investorList||[],['date','investorName','amount','method','account','note'])+
-        buildVehicleBoatReportHtml(allPrintSettings)+
-        '<div class="signature-block"><div class="sig-line">'+(allPrintSettings.signature?esc(allPrintSettings.signature):'স্বাক্ষর')+'</div></div>'+
-        '</div>';
-      var w=window.open('','_blank');
-      if(!w){alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));return;}
-      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</title><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#f1f5f9}.report-section{margin-bottom:20px;break-inside:auto}.report-section table tfoot th{background:#fff;font-weight:800;border-top:2px solid #222}.col-total-label,.col-total{text-align:right;font-weight:800}.report-section table tfoot{display:table-footer-group}.report-section table tfoot th{background:#fff;font-weight:700;border-top:2px solid #222}.col-total-label,.col-total{text-align:right;font-weight:700}.report-section table tfoot .col-total-label{text-align:left}h1{text-align:center}h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px}@page{size:A4 '+allPrintSettings.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
+        sections.join('')+
+        '<div class="signature-block"><div class="sig-line">'+signature+'</div></div></div>';
+
+      var css='body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;background:#fff;margin:0}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px;text-align:left;vertical-align:top}th{background:#f1f5f9}.report-section{margin-bottom:20px;break-inside:auto}.report-section table{page-break-inside:auto}.report-section tr{page-break-inside:avoid}.report-section table tfoot{display:table-footer-group}.report-section table tfoot th{background:#fff;font-weight:800;border-top:2px solid #222}.col-total-label,.col-total{text-align:right;font-weight:800}.report-section table tfoot .col-total-label{text-align:left}h1{text-align:center}h2{font-size:15px;border-bottom:1px solid #bbb;padding-bottom:4px;page-break-after:avoid}.signature-block{text-align:right;margin-top:30px}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center;page-break-inside:avoid}@page{size:A4 '+(allPrintSettings.orientation==='landscape'?'landscape':'portrait')+';margin:8mm}';
+      w.document.open();
+      w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+T('সমস্ত ব্যবসায়িক হিসাব','Complete Business Records')+'</title><style>'+css+'</style></head><body>'+html+'</body></html>');
+      w.document.close();
+      /* Both buttons intentionally use the browser print dialog. Choosing
+         "Save as PDF" there creates the PDF without needing a fragile
+         client-side PDF library. */
+      setTimeout(function(){try{w.focus();w.print();}catch(e){alert(T('প্রিন্ট উইন্ডো খোলা যায়নি।','Could not open print dialog.'));}},350);
     }
+
     initFirebaseAuth();
 
     /* ---------------- Android / Mobile Back Button Guard ---------------- */
@@ -4452,7 +4477,7 @@ window.finalTheme=function(v){
 window.saveBusinessSettings=function(){set(K.biz,{name:fc_bname.value.trim(),owner:fc_owner.value.trim(),phone:fc_phone.value.trim(),address:fc_address.value.trim()});audit('SETTINGS','Business','Updated');saveCore();alert('ব্যবসার তথ্য সংরক্ষণ হয়েছে।')};
 window.saveAccountingSettings=function(){set(K.acc,{currency:fc_currency.value||'৳',decimal:Math.max(0,Math.min(6,+fc_decimal.value||0))});audit('SETTINGS','Accounting','Updated');saveCore();alert('Accounting settings সংরক্ষণ হয়েছে।')};
 window.finalBackup=function(){
- const names=['purchaseList','salesList','paymentHistory','expenseList','cashList','bankTransactions','investorList','investors','generalDuePayments','deletedRecords'];
+ const names=['purchaseList','salesList','paymentHistory','generalDuePayments','expenseList','cashList','bankTransactions','bankAccounts','investorList','investors','invoiceList','shipmentList','contactList','productList','employeeList','reminderList','noteList','deletedRecords'];
  const data={version:7,createdAt:new Date().toISOString(),arrays:{},settings:{business:get(K.biz,{}),accounting:get(K.acc,{}),history:get(K.hist,[])}};
  names.forEach(n=>data.arrays[n]=dataArr(n));
  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -4471,11 +4496,38 @@ window.finalRestore=function(file){
 };
 window.renderHistory=function(){const x=document.getElementById('fc-history-list');if(!x)return;const h=get(K.hist,[]).slice().reverse();x.innerHTML=h.length?h.map(v=>'<div class="fc-list-item"><b>'+esc(v.action)+'</b> · '+esc(v.section)+'<br>'+esc(v.time)+'<br>'+esc(JSON.stringify(v.details))+'</div>').join(''):'কোনো History নেই।'};
 window.renderTrash=function(){const x=document.getElementById('fc-trash-list');if(!x)return;const t=get(K.trash,[]).slice().reverse();x.innerHTML=t.length?t.map((v,i)=>'<div class="fc-list-item"><b>#'+(i+1)+'</b> '+esc(v.type||'Record')+' — '+esc(v.record&&((v.record.name||v.record.customer||v.record.supplier||v.record.title||v.record.date)||''))+'<br>'+esc(v.time||'')+'<br><button onclick="v17RestoreTrash('+i+')">↩️ Restore</button></div>').join(''):'Recycle Bin খালি।'};
-window.finalRestoreTrash=function(displayIndex){let t=get(K.trash,[]),ordered=t.slice().reverse(),v=ordered[displayIndex];if(!v)return;if(!confirm('এই রেকর্ডটি আবার মূল হিসাবে Restore করবেন?'))return;
-  var exists=v.list&&Array.isArray(window[v.list])&&window[v.list].some(function(x){return String(x.id)===String(v.record&&v.record.id);});
-  if(!exists&&v.list&&Array.isArray(window[v.list]))window[v.list].push(v.record);
-  (v.related||[]).forEach(function(r){if(r&&r.list&&Array.isArray(window[r.list])){var dup=window[r.list].some(function(x){return String(x.id)===String(r.record&&r.record.id);});if(!dup)window[r.list].push(r.record);}});
-  var realIndex=t.indexOf(v);if(realIndex>=0)t.splice(realIndex,1);set(K.trash,t);audit('RESTORE','Recycle Bin',{type:v.type,recordId:v.originalId||''});saveCore();try{scheduleCloudSave();}catch(e){}try{rebuildAllOneTimeAllocations();refreshAllDependentViews();}catch(e){}renderTrash();alert('রেকর্ডটি মূল হিসাবে Restore হয়েছে।');
+window.finalRestoreTrash=function(displayIndex){
+  let t=get(K.trash,[]),ordered=t.slice().reverse(),v=ordered[displayIndex];
+  if(!v)return;
+  if(!confirm('এই রেকর্ডটি আবার মূল হিসাবে Restore করবেন?'))return;
+  /* Delete Center stores the logical type (purchase/sale/expense...).
+     Map that type back to the REAL global array. The old code used
+     window[v.list], e.g. window['purchase'], which does not exist because
+     the actual array is purchaseList. */
+  var listMap={purchase:'purchaseList',sale:'salesList',expense:'expenseList',payment:'paymentHistory',generalDue:'generalDuePayments',cash:'cashList',bank:'bankTransactions',invoice:'invoiceList',shipment:'shipmentList',contact:'contactList',product:'productList',employee:'employeeList',reminder:'reminderList',note:'noteList',investor:'investorList'};
+  var mainName=listMap[v.list]||v.list,main=mainName&&Array.isArray(window[mainName])?window[mainName]:null;
+  if(!main){alert('এই রেকর্ডের মূল খাতা পাওয়া যায়নি। Restore করা সম্ভব হয়নি।');return;}
+  var rid=v.record&&v.record.id!=null?String(v.record.id):String(v.originalId||'');
+  var exists=main.some(function(x){return rid!==''&&x&&x.id!=null&&String(x.id)===rid;});
+  if(!exists)main.push(v.record);
+  (v.related||[]).forEach(function(r){
+    if(!r||!r.record)return;
+    var rn=r.list,ra=Array.isArray(window[rn])?window[rn]:null;
+    if(!ra)return;
+    var rrid=r.record.id!=null?String(r.record.id):'';
+    var dup=rrid!==''&&ra.some(function(x){return x&&x.id!=null&&String(x.id)===rrid;});
+    if(!dup)ra.push(r.record);
+  });
+  var realIndex=t.indexOf(v);if(realIndex>=0)t.splice(realIndex,1);
+  set(K.trash,t);
+  audit('RESTORE','Recycle Bin',{type:v.type,recordId:v.originalId||rid||''});
+  saveCore();
+  try{if(typeof saveAllExtra==='function')saveAllExtra();}catch(e){}
+  try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}
+  try{rebuildAllOneTimeAllocations();refreshAllDependentViews();}catch(e){}
+  try{if(typeof updateDashboard==='function')updateDashboard();}catch(e){}
+  renderTrash();
+  alert(exists?'রেকর্ডটি আগে থেকেই মূল হিসাবে ছিল। Recycle Bin থেকে সরানো হয়েছে।':'রেকর্ডটি সফলভাবে মূল হিসাবে Restore হয়েছে।');
 };
 window.printFinalHistory=function(){const h=get(K.hist,[]),w=window.open('','_blank');if(!w)return;w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>History</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px;font-size:10px}th{background:#eee}</style></head><body><h2>সম্পূর্ণ হিস্ট্রি</h2><table><tr><th>সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr>'+h.map(v=>'<tr><td>'+esc(v.time)+'</td><td>'+esc(v.action)+'</td><td>'+esc(v.section)+'</td><td>'+esc(JSON.stringify(v.details))+'</td></tr>').join('')+'</table></body></html>');w.document.close();w.focus();w.print()};
 window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>dataArr(k).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1));}));alert(bad.length?'Mismatch পাওয়া গেছে: '+bad.length+' record':'মৌলিক Total/Paid/Due mismatch পাওয়া যায়নি।');audit('HEALTH_CHECK','Data',bad.length||'OK')};
