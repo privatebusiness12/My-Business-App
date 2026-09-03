@@ -1011,7 +1011,8 @@ body{font-size:13px}
         purchaseList: purchaseList, salesList: salesList, paymentHistory: paymentHistory, generalDuePayments: generalDuePayments, expenseList: expenseList,
         cashList: cashList, bankAccounts: bankAccounts, bankTransactions: bankTransactions, shipmentList: shipmentList,
         contactList: contactList, productList: productList, employeeList: employeeList, reminderList: reminderList,
-        noteList: noteList, invoiceList: invoiceList, stockConversionRules: stockConversionRules, investorList: investorList, auditLog: auditLog
+        noteList: noteList, invoiceList: invoiceList, stockConversionRules: stockConversionRules, investorList: investorList, auditLog: auditLog,
+        recycleBin: (function(){try{return JSON.parse(localStorage.getItem('pb_final_trash')||'[]')}catch(e){return []}})()
       };
     }
 
@@ -1034,6 +1035,7 @@ body{font-size:13px}
       if(Array.isArray(data.invoiceList))invoiceList=data.invoiceList;
       if(Array.isArray(data.investorList))investorList=data.investorList;
       if(Array.isArray(data.auditLog))auditLog=data.auditLog;
+      if(Array.isArray(data.recycleBin)){try{localStorage.setItem('pb_final_trash',JSON.stringify(data.recycleBin));}catch(e){}}
       if(data.stockConversionRules && typeof data.stockConversionRules==='object') stockConversionRules=Object.assign(stockConversionRules,data.stockConversionRules);
     }
 
@@ -2909,12 +2911,12 @@ body{font-size:13px}
     function openContacts(){pageShell(['যোগাযোগ','Contacts'],['কাস্টমার, সাপ্লায়ার, পরিবহন ও অন্যান্য যোগাযোগ এক জায়গায় পরিচালনা করুন।','Manage customers, suppliers, transporters and other contacts in one place.'],`<div class="section-card"><div class="module-grid"><input id="ct-name" placeholder="${T('নাম','Name')}"><input id="ct-phone" placeholder="${T('মোবাইল','Phone')}"><select id="ct-type"><option value="customer">${T('কাস্টমার','Customer')}</option><option value="supplier">${T('সাপ্লায়ার','Supplier')}</option><option value="transporter">${T('পরিবহন','Transporter')}</option><option value="other">${T('অন্যান্য','Other')}</option></select><input id="ct-address" placeholder="${T('ঠিকানা','Address')}"><input id="ct-note" placeholder="${T('নোট','Note')}"><button class="btn-submit" onclick="addContact()">${T('যোগ করুন','Add Contact')}</button></div></div><div class="section-card"><input id="ct-search" oninput="renderContacts()" placeholder="${T('নাম/মোবাইল খুঁজুন','Search name/phone')}"><div class="table-responsive"><table><thead><tr><th>${T('নাম','Name')}</th><th>${T('ধরণ','Type')}</th><th>${T('মোবাইল','Phone')}</th><th>${T('ঠিকানা','Address')}</th><th>${T('অ্যাকশন','Action')}</th></tr></thead><tbody id="ct-records"></tbody></table></div></div>`);renderContacts();}
     function addContact(){var n=document.getElementById('ct-name').value.trim(),p=document.getElementById('ct-phone').value.trim();if(!n){alert(T('নাম দিন','Enter a name'));return;}contactList.push({id:uid(),name:n,phone:p,type:document.getElementById('ct-type').value,address:document.getElementById('ct-address').value,note:document.getElementById('ct-note').value});saveAllExtra();renderContacts();}
     function renderContacts(){var tb=document.getElementById('ct-records');if(!tb)return;var q=(document.getElementById('ct-search').value||'').toLowerCase();tb.innerHTML=contactList.filter(x=>(x.name+' '+x.phone+' '+x.address).toLowerCase().includes(q)).slice().reverse().map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(T({customer:'কাস্টমার',supplier:'সাপ্লায়ার',transporter:'পরিবহন',other:'অন্যান্য'}[x.type]||x.type,{customer:'Customer',supplier:'Supplier',transporter:'Transporter',other:'Other'}[x.type]||x.type))+'</td><td>'+esc(x.phone)+'</td><td>'+esc(x.address)+'</td><td><a href="tel:'+esc(x.phone)+'"><button class="btn-action">☎</button></a> <button class="btn-action" onclick="deleteContact('+x.id+')">🗑</button></td></tr>').join('')||'<tr><td colspan="5">'+T('কোনো তথ্য নেই','No contacts found')+'</td></tr>';}
-    function deleteContact(id){contactList=contactList.filter(x=>x.id!==id);saveAllExtra();renderContacts();}
+    function deleteContact(id){safeDeleteRecord('contact',id);renderContacts();}
 
     function openProducts(){pageShell(['প্রোডাক্ট লিস্ট','Product List'],['পণ্যের নাম, কোড, একক, ক্রয়/বিক্রয় দর ও ন্যূনতম স্টক পরিচালনা করুন।','Manage product name, SKU, units, purchase/selling prices and reorder level.'],`<div class="section-card"><div class="module-grid"><input id="pr-name" placeholder="${T('পণ্যের নাম','Product name')}"><input id="pr-sku" placeholder="SKU / Code"><select id="pr-unit"><option>CFT</option><option>Ton</option><option>Thousand</option><option>Piece</option></select><input id="pr-buy" type="number" placeholder="${T('ক্রয় দর','Buy price')}"><input id="pr-sell" type="number" placeholder="${T('বিক্রয় দর','Sell price')}"><input id="pr-min" type="number" placeholder="${T('ন্যূনতম স্টক','Reorder level')}"><button class="btn-submit" onclick="addProduct()">${T('পণ্য যোগ করুন','Add Product')}</button></div></div><div class="section-card"><div class="table-responsive"><table><thead><tr><th>${T('পণ্য','Product')}</th><th>SKU</th><th>${T('একক','Unit')}</th><th>${T('ক্রয়','Buy')}</th><th>${T('বিক্রয়','Sell')}</th><th>${T('ন্যূনতম স্টক','Min Stock')}</th><th>${T('অ্যাকশন','Action')}</th></tr></thead><tbody id="pr-records"></tbody></table></div></div>`);renderProducts();}
     function addProduct(){var n=document.getElementById('pr-name').value.trim();if(!n)return alert(T('পণ্যের নাম দিন','Enter product name'));productList.push({id:uid(),name:n,sku:document.getElementById('pr-sku').value,unit:document.getElementById('pr-unit').value,buy:+document.getElementById('pr-buy').value||0,sell:+document.getElementById('pr-sell').value||0,min:+document.getElementById('pr-min').value||0});saveAllExtra();renderProducts();}
     function renderProducts(){var tb=document.getElementById('pr-records');if(!tb)return;tb.innerHTML=productList.slice().reverse().map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.sku)+'</td><td>'+esc(x.unit)+'</td><td>'+x.buy.toFixed(2)+' ৳</td><td>'+x.sell.toFixed(2)+' ৳</td><td>'+x.min+'</td><td><button class="btn-action" onclick="deleteProduct('+x.id+')">🗑</button></td></tr>').join('')||'<tr><td colspan="7">'+T('কোনো পণ্য নেই','No products')+'</td></tr>';}
-    function deleteProduct(id){productList=productList.filter(x=>x.id!==id);saveAllExtra();renderProducts();}
+    function deleteProduct(id){safeDeleteRecord('product',id);renderProducts();}
 
     function getStockConversionRate(item){
       var n=String(item||'').toLowerCase();
@@ -3401,9 +3403,15 @@ body{font-size:13px}
     /* ---------------- ডাটা ম্যানেজমেন্ট / নিরাপদ Delete Center ---------------- */
     function deleteArrayMap(type){return {purchase:purchaseList,sale:salesList,expense:expenseList,payment:paymentHistory,generalDue:generalDuePayments,cash:cashList,bank:bankTransactions,invoice:invoiceList,shipment:shipmentList,contact:contactList,product:productList,employee:employeeList,reminder:reminderList,note:noteList,investor:investorList};}
     function deleteTypeLabel(type){return correctionLabel(type);}
-    function safeDeleteRecord(type,id){
+    function safeDeleteRecord(type,id,fallbackIndex){
       var map=deleteArrayMap(type),arr=map[type];if(!Array.isArray(arr))return;
-      var idx=arr.findIndex(function(x){return String(x.id)===String(id);});if(idx<0)return;
+      /* Some legacy records do not have an id. Data Management must still be able to delete them. */
+      var idx=-1;
+      if(id!==undefined && id!==null && String(id)!=='') idx=arr.findIndex(function(x){return x && x.id!==undefined && String(x.id)===String(id);});
+      if(idx<0 && Number.isInteger(Number(fallbackIndex))){
+        var fi=Number(fallbackIndex); if(fi>=0 && fi<arr.length) idx=fi;
+      }
+      if(idx<0)return alert('এই রেকর্ডটি পাওয়া যায়নি। তালিকাটি Refresh করে আবার চেষ্টা করুন।');
       var old=auditClone(arr[idx]);
       var related=[];
       /* Keep the primary record AND any dependent payment/cash records in Recycle Bin.
@@ -3427,6 +3435,7 @@ body{font-size:13px}
       });
       /* newest deleted item first; keep all items unless user explicitly empties the bin */
       set(K.trash,trash);
+      try{scheduleCloudSave();}catch(e){}
       if(type==='purchase'||type==='sale'){
         var sid2=String(id);
         paymentHistory=paymentHistory.filter(function(p){return String(p.sourceId||'')!==sid2;});
@@ -3447,7 +3456,7 @@ body{font-size:13px}
       var d=document.getElementById('delete-manager-list');if(!d)return;
       var type=(document.getElementById('del-type')||{}).value||'purchase',q=((document.getElementById('del-search')||{}).value||'').toLowerCase().trim(),arr=deleteArrayMap(type)[type]||[];
       var rows=arr.map(function(x,i){var text=JSON.stringify(x).toLowerCase();return {x:x,i:i,ok:!q||text.includes(q)};}).filter(function(r){return r.ok;}).slice().reverse();
-      d.innerHTML=rows.map(function(r){var x=r.x;return '<div class="list-row"><b>'+esc(x.date||x.name||x.title||x.no||x.id)+'</b> — '+esc(x.supplier||x.customer||x.investorName||x.name||x.title||x.item||'রেকর্ড')+' '+(x.amount!=null?('— '+esc(x.amount)+' ৳'):(x.total!=null?('— '+esc(x.total)+' ৳'):''))+' <button class="delete-record-btn" onclick="safeDeleteRecord(\''+type+'\',\''+String(x.id).replace(/'/g,"\\'")+'\')">🗑️ মুছুন</button></div>';}).join('')||'<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';
+      d.innerHTML=rows.map(function(r){var x=r.x;var key=(x.id!==undefined&&x.id!==null&&String(x.id)!=='')?String(x.id):'';return '<div class="list-row"><b>'+esc(x.date||x.name||x.title||x.no||x.id||('রেকর্ড '+(r.i+1)))+'</b> — '+esc(x.supplier||x.customer||x.investorName||x.name||x.title||x.item||'রেকর্ড')+' '+(x.amount!=null?('— '+esc(x.amount)+' ৳'):(x.total!=null?('— '+esc(x.total)+' ৳'):''))+' <button class="delete-record-btn" onclick="safeDeleteRecord(\''+type+'\',\''+key.replace(/'/g,"\\'")+'\','+r.i+')">🗑️ মুছুন</button></div>';}).join('')||'<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';
     }
     function openDeleteManager(){
       pageShell(['ডাটা ম্যানেজমেন্ট','Data Management'],['প্রয়োজনে নির্দিষ্ট রেকর্ড মুছুন। ভুল করে অন্য ডাটা মুছে যাওয়ার ঝুঁকি কমাতে একবারে একটি রেকর্ডই মুছতে পারবেন।','Safely delete a specific record. Only one record can be deleted at a time to reduce accidental deletion.'],
@@ -3803,7 +3812,7 @@ body{font-size:13px}
       document.getElementById('inv-edit-id').value=x.id;document.getElementById('inv-name').value=x.investorName||'';document.getElementById('inv-date').value=x.date||getTodayDate();document.getElementById('inv-amount').value=x.amount||0;document.getElementById('inv-method').value=x.method||'cash';document.getElementById('inv-account').value=x.account||'';document.getElementById('inv-note').value=x.note||'';document.getElementById('inv-cancel-edit').style.display='inline-flex';window.scrollTo({top:0,behavior:'smooth'});
     }
     function cancelInvestorEdit(){var e=document.getElementById('inv-edit-id');if(!e)return;e.value='';document.getElementById('inv-name').value='';document.getElementById('inv-date').value=getTodayDate();document.getElementById('inv-amount').value='';document.getElementById('inv-account').value='';document.getElementById('inv-note').value='';document.getElementById('inv-cancel-edit').style.display='none';}
-    function deleteInvestor(id){if(!confirm(T('এই বিনিয়োগ রেকর্ডটি মুছে ফেলবেন?','Delete this investment record?')))return;investorList=investorList.filter(function(x){return String(x.id)!==String(id)});saveAllExtra();renderInvestors();}
+    function deleteInvestor(id){safeDeleteRecord('investor',id);renderInvestors();}
     function printInvestorReport(){
       var st=getReportCenterSettings(), s=investorSummary(), profit=parseFloat((document.getElementById('inv-profit-pool')||{}).value)||0, pr=investorProfitRows(profit);
       var history=printTableFromArray(T('বিনিয়োগের ইতিহাস','Investment History'),investorList||[],['date','investorName','amount','method','account','note']);
@@ -3813,18 +3822,18 @@ body{font-size:13px}
     function openEmployeeManagement(){pageShell(['কর্মচারী হিসাব','Employee Management'],['কর্মচারী, বেতন, অগ্রিম, বোনাস ও বকেয়া হিসাব রাখুন।','Manage employees, salary, advances, bonuses and dues.'],`<div class="section-card"><div class="module-grid"><input id="em-name" placeholder="${T('নাম','Name')}"><input id="em-phone" placeholder="${T('মোবাইল','Phone')}"><input id="em-role" placeholder="${T('পদবি','Role')}"><input id="em-salary" type="number" placeholder="${T('মাসিক বেতন','Monthly Salary')}"><input id="em-advance" type="number" placeholder="${T('অগ্রিম','Advance')}"><button class="btn-submit" onclick="addEmployee()">${T('কর্মচারী যোগ করুন','Add Employee')}</button></div></div><div class="section-card"><div class="table-responsive"><table><thead><tr><th>${T('নাম','Name')}</th><th>${T('পদবি','Role')}</th><th>${T('মোবাইল','Phone')}</th><th>${T('বেতন','Salary')}</th><th>${T('অগ্রিম','Advance')}</th><th>${T('অ্যাকশন','Action')}</th></tr></thead><tbody id="em-records"></tbody></table></div></div>`);renderEmployees();}
     function addEmployee(){var n=document.getElementById('em-name').value.trim();if(!n)return;employeeList.push({id:uid(),name:n,phone:document.getElementById('em-phone').value,role:document.getElementById('em-role').value,salary:+document.getElementById('em-salary').value||0,advance:+document.getElementById('em-advance').value||0});saveAllExtra();renderEmployees();}
     function renderEmployees(){var tb=document.getElementById('em-records');if(!tb)return;tb.innerHTML=employeeList.slice().reverse().map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.role)+'</td><td>'+esc(x.phone)+'</td><td>'+x.salary.toFixed(2)+' ৳</td><td>'+x.advance.toFixed(2)+' ৳</td><td><button class="btn-action" onclick="deleteEmployee('+x.id+')">🗑</button></td></tr>').join('')||'<tr><td colspan="6">'+T('কোনো কর্মচারী নেই','No employees')+'</td></tr>';}
-    function deleteEmployee(id){employeeList=employeeList.filter(x=>x.id!==id);saveAllExtra();renderEmployees();}
+    function deleteEmployee(id){safeDeleteRecord('employee',id);renderEmployees();}
 
     function openDueReminder(){pageShell(['তাগাদা রিমাইন্ডার','Due Reminder'],['কাস্টমার ও সাপ্লায়ারের বাকি থেকে তাগাদার তালিকা তৈরি করুন এবং নিজের রিমাইন্ডারও রাখুন।','Create follow-up lists from customer/supplier dues and add personal reminders.'],`<div class="section-card"><div class="module-grid"><input id="rm-name" placeholder="${T('নাম','Name')}"><input id="rm-phone" placeholder="${T('মোবাইল','Phone')}"><input id="rm-date" type="date" value="${getTodayDate()}"><input id="rm-amount" type="number" placeholder="${T('বাকি টাকা','Due amount')}"><input id="rm-note" placeholder="${T('তাগাদার নোট','Reminder note')}"><button class="btn-submit" onclick="addReminder()">${T('রিমাইন্ডার যোগ করুন','Add Reminder')}</button></div></div><div class="section-card"><h3>${T('অটো বাকি তালিকা','Automatic Due List')}</h3><div id="rm-auto"></div></div><div class="section-card"><h3>${T('আমার রিমাইন্ডার','My Reminders')}</h3><div id="rm-list"></div></div>`);renderReminders();}
     function addReminder(){var n=document.getElementById('rm-name').value.trim();if(!n)return;reminderList.push({id:uid(),name:n,phone:document.getElementById('rm-phone').value,date:document.getElementById('rm-date').value,amount:+document.getElementById('rm-amount').value||0,note:document.getElementById('rm-note').value,done:false});saveAllExtra();renderReminders();}
     function renderReminders(){var a=document.getElementById('rm-auto'),d=document.getElementById('rm-list');if(!a)return;var auto=salesList.filter(x=>+x.due>0).map(x=>'<div class="list-row"><b>'+esc(x.customer)+'</b> — '+(+x.due).toFixed(2)+' ৳ '+(x.phone?'<a href="tel:'+esc(x.phone)+'">☎</a>':'')+'</div>').join('')||T('কোনো কাস্টমার বাকি নেই','No customer due');a.innerHTML=auto;d.innerHTML=reminderList.slice().reverse().map(x=>'<div class="list-row"><b>'+esc(x.name)+'</b> — '+x.date+' — '+x.amount.toFixed(2)+' ৳ — '+esc(x.note)+' <button class="btn-action" onclick="deleteReminder('+x.id+')">🗑</button></div>').join('')||T('কোনো রিমাইন্ডার নেই','No reminders');}
-    function deleteReminder(id){reminderList=reminderList.filter(x=>x.id!==id);saveAllExtra();renderReminders();}
+    function deleteReminder(id){safeDeleteRecord('reminder',id);renderReminders();}
 
     function openNotepad(){pageShell(['নোটপ্যাড','Notepad'],['দ্রুত নোট লিখুন, গুরুত্বপূর্ণ নোট পিন করুন এবং পরে খুঁজে নিন।','Write quick notes, pin important notes and search them later.'],`<div class="section-card"><input id="nt-title" placeholder="${T('নোটের শিরোনাম','Note title')}"><textarea id="nt-body" rows="6" placeholder="${T('আপনার নোট লিখুন...','Write your note...')}"></textarea><button class="btn-submit" onclick="addNote()">${T('নোট সেভ করুন','Save Note')}</button></div><div class="section-card"><input id="nt-search" oninput="renderNotes()" placeholder="${T('নোট খুঁজুন','Search notes')}"><div id="nt-list"></div></div>`);renderNotes();}
     function addNote(){var b=document.getElementById('nt-body').value.trim();if(!b)return;noteList.push({id:uid(),title:document.getElementById('nt-title').value||T('নতুন নোট','New Note'),body:b,date:getTodayDate(),pinned:false});saveAllExtra();renderNotes();}
     function renderNotes(){var d=document.getElementById('nt-list');if(!d)return;var q=(document.getElementById('nt-search').value||'').toLowerCase();d.innerHTML=noteList.filter(x=>(x.title+' '+x.body).toLowerCase().includes(q)).slice().sort((a,b)=>(b.pinned-a.pinned)||b.id-a.id).map(x=>'<div class="note-card"><h3>'+esc(x.title)+' '+(x.pinned?'📌':'')+'</h3><small>'+x.date+'</small><p>'+esc(x.body).replace(/\n/g,'<br>')+'</p><button class="btn-action" onclick="toggleNotePin('+x.id+')">📌</button> <button class="btn-action" onclick="deleteNote('+x.id+')">🗑</button></div>').join('')||T('কোনো নোট নেই','No notes');}
     function toggleNotePin(id){var x=noteList.find(x=>x.id===id);if(x)x.pinned=!x.pinned;saveAllExtra();renderNotes();}
-    function deleteNote(id){noteList=noteList.filter(x=>x.id!==id);saveAllExtra();renderNotes();}
+    function deleteNote(id){safeDeleteRecord('note',id);renderNotes();}
 
     /* ---------------- মালপত্র ট্র্যাকিং (Shipment Tracking) ---------------- */
     function saveShipmentTracking(){ localStorage.setItem('shipmentTrackingList', JSON.stringify(shipmentList)); }
@@ -3888,7 +3897,7 @@ body{font-size:13px}
       saveShipmentTracking(); renderShipmentTracking(); alert(currentLang==='en'?'Shipment saved successfully.':'মালপত্র ট্র্যাকিং সফলভাবে সেভ হয়েছে।');
     }
     function updateShipmentStatus(id,status){ var x=shipmentList.find(function(a){return a.id===id;}); if(!x)return; var note=prompt(currentLang==='en'?'Optional status note:':'স্ট্যাটাসের নোট লিখুন (ঐচ্ছিক):',''); x.status=status; x.events=x.events||[]; x.events.push({status:status,time:new Date().toLocaleString(),note:note||''}); saveShipmentTracking(); renderShipmentTracking(); }
-    function deleteShipment(id){ if(!confirm(currentLang==='en'?'Delete this shipment?':'এই চালানটি মুছে ফেলবেন?'))return; shipmentList=shipmentList.filter(function(x){return x.id!==id}); saveShipmentTracking(); renderShipmentTracking(); }
+    function deleteShipment(id){ safeDeleteRecord('shipment',id); renderShipmentTracking(); }
     function showShipmentDetail(id){ var x=shipmentList.find(function(a){return a.id===id}); if(!x)return; document.getElementById('st-detail-title').innerText=(currentLang==='en'?'Shipment ':'চালান ')+x.id; var html='<p><b>'+(currentLang==='en'?'Goods: ':'মাল: ')+escST(x.item)+' '+escST(x.qty)+' '+escST(x.unit)+'</b></p><p>'+escST(x.party)+' | '+escST(x.phone)+'</p><p>'+escST(x.origin)+' → '+escST(x.destination)+'</p><p>'+escST(x.vehicle)+' | '+escST(x.driver)+' | '+escST(x.driverPhone)+'</p><p>'+(currentLang==='en'?'Fare: ':'ভাড়া: ')+Number(x.fare||0).toFixed(2)+' ৳ | '+(currentLang==='en'?'Due: ':'বাকি: ')+Number(x.fareDue||0).toFixed(2)+' ৳</p><p><b>'+(currentLang==='en'?'Status History':'স্ট্যাটাস ইতিহাস')+'</b></p><div class="st-timeline">'; (x.events||[]).slice().reverse().forEach(function(e){html+='<div class="st-event"><b>'+escST(stStatusLabel(e.status))+'</b><span class="st-muted">'+escST(e.time)+'</span><div>'+escST(e.note||'')+'</div></div>'}); html+='</div><p>'+escST(x.notes||'')+'</p>'; document.getElementById('st-detail-body').innerHTML=html; document.getElementById('st-detail-modal').style.display='flex'; }
     function closeShipmentDetail(){var m=document.getElementById('st-detail-modal');if(m)m.style.display='none';}
     function renderShipmentTracking(){
@@ -4411,7 +4420,7 @@ window.finalRestoreTrash=function(displayIndex){let t=get(K.trash,[]),ordered=t.
   var exists=v.list&&Array.isArray(window[v.list])&&window[v.list].some(function(x){return String(x.id)===String(v.record&&v.record.id);});
   if(!exists&&v.list&&Array.isArray(window[v.list]))window[v.list].push(v.record);
   (v.related||[]).forEach(function(r){if(r&&r.list&&Array.isArray(window[r.list])){var dup=window[r.list].some(function(x){return String(x.id)===String(r.record&&r.record.id);});if(!dup)window[r.list].push(r.record);}});
-  var realIndex=t.indexOf(v);if(realIndex>=0)t.splice(realIndex,1);set(K.trash,t);audit('RESTORE','Recycle Bin',{type:v.type,recordId:v.originalId||''});saveCore();try{rebuildAllOneTimeAllocations();refreshAllDependentViews();}catch(e){}renderTrash();alert('রেকর্ডটি মূল হিসাবে Restore হয়েছে।');
+  var realIndex=t.indexOf(v);if(realIndex>=0)t.splice(realIndex,1);set(K.trash,t);audit('RESTORE','Recycle Bin',{type:v.type,recordId:v.originalId||''});saveCore();try{scheduleCloudSave();}catch(e){}try{rebuildAllOneTimeAllocations();refreshAllDependentViews();}catch(e){}renderTrash();alert('রেকর্ডটি মূল হিসাবে Restore হয়েছে।');
 };
 window.printFinalHistory=function(){const h=get(K.hist,[]),w=window.open('','_blank');if(!w)return;w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>History</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px;font-size:10px}th{background:#eee}</style></head><body><h2>সম্পূর্ণ হিস্ট্রি</h2><table><tr><th>সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr>'+h.map(v=>'<tr><td>'+esc(v.time)+'</td><td>'+esc(v.action)+'</td><td>'+esc(v.section)+'</td><td>'+esc(JSON.stringify(v.details))+'</td></tr>').join('')+'</table></body></html>');w.document.close();w.focus();w.print()};
 window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>dataArr(k).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1));}));alert(bad.length?'Mismatch পাওয়া গেছে: '+bad.length+' record':'মৌলিক Total/Paid/Due mismatch পাওয়া যায়নি।');audit('HEALTH_CHECK','Data',bad.length||'OK')};
