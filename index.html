@@ -3404,52 +3404,63 @@ body{font-size:13px}
     function deleteArrayMap(type){return {purchase:purchaseList,sale:salesList,expense:expenseList,payment:paymentHistory,generalDue:generalDuePayments,cash:cashList,bank:bankTransactions,invoice:invoiceList,shipment:shipmentList,contact:contactList,product:productList,employee:employeeList,reminder:reminderList,note:noteList,investor:investorList};}
     function deleteTypeLabel(type){return correctionLabel(type);}
     function safeDeleteRecord(type,id,fallbackIndex){
-      var map=deleteArrayMap(type),arr=map[type];if(!Array.isArray(arr))return;
-      /* Some legacy records do not have an id. Data Management must still be able to delete them. */
+      var map=deleteArrayMap(type),arr=map[type];
+      if(!Array.isArray(arr)) return alert('এই ধরনের ডাটা পাওয়া যায়নি।');
+
+      /* IMPORTANT: Data Management passes the visible array index. Prefer that
+         index first, because many legacy records have no id or have duplicate ids. */
       var idx=-1;
-      if(id!==undefined && id!==null && String(id)!=='') idx=arr.findIndex(function(x){return x && x.id!==undefined && String(x.id)===String(id);});
-      if(idx<0 && Number.isInteger(Number(fallbackIndex))){
-        var fi=Number(fallbackIndex); if(fi>=0 && fi<arr.length) idx=fi;
+      if(Number.isInteger(Number(fallbackIndex))){
+        var fi=Number(fallbackIndex);
+        if(fi>=0 && fi<arr.length) idx=fi;
       }
-      if(idx<0)return alert('এই রেকর্ডটি পাওয়া যায়নি। তালিকাটি Refresh করে আবার চেষ্টা করুন।');
+      if(idx<0 && id!==undefined && id!==null && String(id)!==''){
+        idx=arr.findIndex(function(x){return x && x.id!==undefined && String(x.id)===String(id);});
+      }
+      if(idx<0) return alert('এই রেকর্ডটি পাওয়া যায়নি। তালিকাটি Refresh করে আবার চেষ্টা করুন।');
+
       var old=auditClone(arr[idx]);
+      var recordId=(old&&old.id!=null)?String(old.id):String(id||'');
       var related=[];
-      /* Keep the primary record AND any dependent payment/cash records in Recycle Bin.
-         This makes Restore actually reversible instead of restoring only the header record. */
+
+      /* Preserve linked payment/cash entries in the same trash item. */
       if(type==='purchase'||type==='sale'){
-        var sid=String(id);
-        paymentHistory.filter(function(p){return String(p.sourceId||'')===sid;}).forEach(function(p){related.push({list:'paymentHistory',record:auditClone(p)});});
-        cashList.filter(function(c){return String(c.sourceId||'')===sid;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
+        paymentHistory.filter(function(p){return String(p.sourceId||'')===recordId;}).forEach(function(p){related.push({list:'paymentHistory',record:auditClone(p)});});
+        cashList.filter(function(c){return String(c.sourceId||'')===recordId;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
       }
       if(type==='generalDue'){
-        var gid=String(id);
-        paymentHistory.filter(function(p){return String(p.generalDueId||'')===gid;}).forEach(function(p){related.push({list:'paymentHistory',record:auditClone(p)});});
-        cashList.filter(function(c){return String(c.generalDueId||'')===gid;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
+        paymentHistory.filter(function(p){return String(p.generalDueId||'')===recordId;}).forEach(function(p){related.push({list:'paymentHistory',record:auditClone(p)});});
+        cashList.filter(function(c){return String(c.generalDueId||'')===recordId;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
       }
+
       var trash=get(K.trash,[]);
+      if(!Array.isArray(trash)) trash=[];
       trash.push({
         trashId:'TR-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
         time:new Date().toLocaleString('bn-BD'),
-        type:deleteTypeLabel(type), list:type, record:old, related:related,
-        originalId:String(id)
+        type:deleteTypeLabel(type),list:type,record:old,related:related,originalId:recordId
       });
-      /* newest deleted item first; keep all items unless user explicitly empties the bin */
-      set(K.trash,trash);
-      try{scheduleCloudSave();}catch(e){}
+
+      /* FIRST remove from the live array. THEN persist the new state. */
+      arr.splice(idx,1);
       if(type==='purchase'||type==='sale'){
-        var sid2=String(id);
-        paymentHistory=paymentHistory.filter(function(p){return String(p.sourceId||'')!==sid2;});
-        cashList=cashList.filter(function(c){return String(c.sourceId||'')!==sid2;});
+        paymentHistory=paymentHistory.filter(function(p){return String(p.sourceId||'')!==recordId;});
+        cashList=cashList.filter(function(c){return String(c.sourceId||'')!==recordId;});
       }
       if(type==='generalDue'){
-        var gid2=String(id);
-        paymentHistory=paymentHistory.filter(function(p){return String(p.generalDueId||'')!==gid2;});
-        cashList=cashList.filter(function(c){return String(c.generalDueId||'')!==gid2;});
+        paymentHistory=paymentHistory.filter(function(p){return String(p.generalDueId||'')!==recordId;});
+        cashList=cashList.filter(function(c){return String(c.generalDueId||'')!==recordId;});
       }
-      arr.splice(idx,1);
-      auditAction('মুছে ফেলা',deleteTypeLabel(type),'রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে; স্থায়ীভাবে মুছে ফেলা হয়নি',old,null);
-      saveAllExtra(); scheduleCloudSave(); rebuildAllOneTimeAllocations(); refreshAllDependentViews();
+
+      /* Save the trash immediately and save the already-mutated live arrays. */
+      set(K.trash,trash);
+      try{saveAllExtra();}catch(e){console.error('saveAllExtra after delete failed',e);}
+      try{rebuildAllOneTimeAllocations();}catch(e){console.error('allocation rebuild after delete failed',e);}
+      try{auditAction('মুছে ফেলা',deleteTypeLabel(type),'রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে; স্থায়ীভাবে মুছে ফেলা হয়নি',old,null);}catch(e){console.error('audit after delete failed',e);}
+      try{scheduleCloudSave();}catch(e){console.error('cloud schedule after delete failed',e);}
+
       renderDeleteManager();
+      try{if(typeof updateDashboard==='function')updateDashboard();}catch(e){}
       alert('রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে। মূল হিসাব থেকে সরানো হয়েছে, কিন্তু স্থায়ীভাবে মুছে ফেলা হয়নি।');
     }
     function renderDeleteManager(){
