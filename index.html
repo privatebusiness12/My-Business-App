@@ -3392,27 +3392,24 @@ body{font-size:13px}
     /* ---------------- ডাটা ম্যানেজমেন্ট / নিরাপদ Delete Center ---------------- */
     function deleteArrayMap(type){return {purchase:purchaseList,sale:salesList,expense:expenseList,payment:paymentHistory,generalDue:generalDuePayments,cash:cashList,bank:bankTransactions,invoice:invoiceList,shipment:shipmentList,contact:contactList,product:productList,employee:employeeList,reminder:reminderList,note:noteList,investor:investorList};}
     function deleteTypeLabel(type){return correctionLabel(type);}
-    function safeDeleteRecord(type,id,fallbackIndex){
+    async function safeDeleteRecord(type,id,fallbackIndex){
       var map=deleteArrayMap(type),arr=map[type];
-      if(!Array.isArray(arr)) return alert('এই ধরনের ডাটা পাওয়া যায়নি।');
+      if(!Array.isArray(arr)){ alert('এই ধরনের ডাটা পাওয়া যায়নি।'); return false; }
 
-      /* IMPORTANT: Data Management passes the visible array index. Prefer that
-         index first, because many legacy records have no id or have duplicate ids. */
-      var idx=-1;
-      if(Number.isInteger(Number(fallbackIndex))){
-        var fi=Number(fallbackIndex);
-        if(fi>=0 && fi<arr.length) idx=fi;
-      }
+      /* Data Management shows the array in reverse order. The renderer passes the
+         ORIGINAL array index, so use it first. This also works for legacy records
+         that have no id or duplicate ids. */
+      var idx=-1, fi=Number(fallbackIndex);
+      if(Number.isInteger(fi) && fi>=0 && fi<arr.length) idx=fi;
       if(idx<0 && id!==undefined && id!==null && String(id)!==''){
         idx=arr.findIndex(function(x){return x && x.id!==undefined && String(x.id)===String(id);});
       }
-      if(idx<0) return alert('এই রেকর্ডটি পাওয়া যায়নি। তালিকাটি Refresh করে আবার চেষ্টা করুন।');
+      if(idx<0){ alert('এই রেকর্ডটি পাওয়া যায়নি। তালিকাটি Refresh করে আবার চেষ্টা করুন।'); return false; }
 
       var old=auditClone(arr[idx]);
       var recordId=(old&&old.id!=null)?String(old.id):String(id||'');
       var related=[];
 
-      /* Preserve linked payment/cash entries in the same trash item. */
       if(type==='purchase'||type==='sale'){
         paymentHistory.filter(function(p){return String(p.sourceId||'')===recordId;}).forEach(function(p){related.push({list:'paymentHistory',record:auditClone(p)});});
         cashList.filter(function(c){return String(c.sourceId||'')===recordId;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
@@ -3422,15 +3419,14 @@ body{font-size:13px}
         cashList.filter(function(c){return String(c.generalDueId||'')===recordId;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
       }
 
-      var trash=get(K.trash,[]);
-      if(!Array.isArray(trash)) trash=[];
+      var trash=get(K.trash,[]); if(!Array.isArray(trash)) trash=[];
       trash.push({
         trashId:'TR-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
         time:new Date().toLocaleString('bn-BD'),
         type:deleteTypeLabel(type),list:type,record:old,related:related,originalId:recordId
       });
 
-      /* FIRST remove from the live array. THEN persist the new state. */
+      /* Mutate live arrays FIRST. */
       arr.splice(idx,1);
       if(type==='purchase'||type==='sale'){
         paymentHistory=paymentHistory.filter(function(p){return String(p.sourceId||'')!==recordId;});
@@ -3441,16 +3437,30 @@ body{font-size:13px}
         cashList=cashList.filter(function(c){return String(c.generalDueId||'')!==recordId;});
       }
 
-      /* Save the trash immediately and save the already-mutated live arrays. */
+      /* Persist the trash locally immediately. Core ledgers are cloud-authoritative
+         in this V17, so force one cloud write instead of relying only on debounce. */
       set(K.trash,trash);
       try{saveAllExtra();}catch(e){console.error('saveAllExtra after delete failed',e);}
       try{rebuildAllOneTimeAllocations();}catch(e){console.error('allocation rebuild after delete failed',e);}
       try{auditAction('মুছে ফেলা',deleteTypeLabel(type),'রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে; স্থায়ীভাবে মুছে ফেলা হয়নি',old,null);}catch(e){console.error('audit after delete failed',e);}
-      try{scheduleCloudSave();}catch(e){console.error('cloud schedule after delete failed',e);}
 
-      renderDeleteManager();
+      /* Cancel a pending stale autosave, then write the CURRENT arrays to Firestore. */
+      try{clearTimeout(cloudSaveTimer);}catch(e){}
+      var cloudOk=false;
+      try{
+        if(firebaseUser && firebaseDb && cloudLoaded && typeof saveCloudData==='function'){
+          await saveCloudData();
+          cloudOk=true;
+        }
+      }catch(e){ console.error('forced cloud delete-save failed',e); }
+
+      try{refreshAllDependentViews();}catch(e){}
       try{if(typeof updateDashboard==='function')updateDashboard();}catch(e){}
-      alert('রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে। মূল হিসাব থেকে সরানো হয়েছে, কিন্তু স্থায়ীভাবে মুছে ফেলা হয়নি।');
+      renderDeleteManager();
+      alert(cloudOk
+        ? 'রেকর্ডটি সফলভাবে ডিলিট করে Recycle Bin-এ পাঠানো হয়েছে।'
+        : 'রেকর্ডটি এই ডিভাইসে সরানো হয়েছে, কিন্তু Cloud Save সম্পন্ন হয়নি। ইন্টারনেট/Firebase সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
+      return true;
     }
     function renderDeleteManager(){
       var d=document.getElementById('delete-manager-list');if(!d)return;
