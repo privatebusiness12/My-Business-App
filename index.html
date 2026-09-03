@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V17-FIX-2026-09-03 -->
+<!-- V17-PRINT-FIX-2026-08-31 -->
 
 <html lang="bn">
 <head>
@@ -3471,24 +3471,7 @@ body{font-size:13px}
       var d=document.getElementById('delete-manager-list');if(!d)return;
       var type=(document.getElementById('del-type')||{}).value||'purchase',q=((document.getElementById('del-search')||{}).value||'').toLowerCase().trim(),arr=deleteArrayMap(type)[type]||[];
       var rows=arr.map(function(x,i){var text=JSON.stringify(x).toLowerCase();return {x:x,i:i,ok:!q||text.includes(q)};}).filter(function(r){return r.ok;}).slice().reverse();
-      d.innerHTML=rows.map(function(r){var x=r.x;var key=(x.id!==undefined&&x.id!==null&&String(x.id)!=='')?String(x.id):'';return '<div class="list-row"><b>'+esc(x.date||x.name||x.title||x.no||x.id||('রেকর্ড '+(r.i+1)))+'</b> — '+esc(x.supplier||x.customer||x.investorName||x.name||x.title||x.item||'রেকর্ড')+' '+(x.amount!=null?('— '+esc(x.amount)+' ৳'):(x.total!=null?('— '+esc(x.total)+' ৳'):''))+' <button type="button" class="delete-record-btn" data-delete-type="'+esc(type)+'" data-delete-index="'+r.i+'" data-delete-id="'+esc(key)+'">🗑️ মুছুন</button></div>';}).join('')||'<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';
-    }
-    /* Delegated Delete handler: survives innerHTML re-renders and does not depend on
-       inline onclick/global-scope quirks. */
-    if(!window.__pbDeleteManagerHandlerInstalled){
-      document.addEventListener('click',function(e){
-        var btn=e.target && e.target.closest ? e.target.closest('.delete-record-btn') : null;
-        if(!btn) return;
-        e.preventDefault(); e.stopPropagation();
-        var type=btn.getAttribute('data-delete-type')||'';
-        var idx=btn.getAttribute('data-delete-index');
-        var id=btn.getAttribute('data-delete-id')||'';
-        try{
-          var n=(idx===''||idx===null)?undefined:Number(idx);
-          safeDeleteRecord(type,id,n);
-        }catch(err){ console.error('Delete handler error',err); alert('ডিলিট করা যায়নি। Error: '+(err&&err.message?err.message:err)); }
-      },true);
-      window.__pbDeleteManagerHandlerInstalled=true;
+      d.innerHTML=rows.map(function(r){var x=r.x;var key=(x.id!==undefined&&x.id!==null&&String(x.id)!=='')?String(x.id):'';return '<div class="list-row"><b>'+esc(x.date||x.name||x.title||x.no||x.id||('রেকর্ড '+(r.i+1)))+'</b> — '+esc(x.supplier||x.customer||x.investorName||x.name||x.title||x.item||'রেকর্ড')+' '+(x.amount!=null?('— '+esc(x.amount)+' ৳'):(x.total!=null?('— '+esc(x.total)+' ৳'):''))+' <button type="button" class="delete-record-btn" onclick="v17DeleteFromManager(this)" data-delete-type="'+esc(type)+'" data-delete-index="'+r.i+'" data-delete-id="'+esc(key)+'">🗑️ মুছুন</button></div>';}).join('')||'<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';
     }
     function openDeleteManager(){
       pageShell(['ডাটা ম্যানেজমেন্ট','Data Management'],['প্রয়োজনে নির্দিষ্ট রেকর্ড মুছুন। ভুল করে অন্য ডাটা মুছে যাওয়ার ঝুঁকি কমাতে একবারে একটি রেকর্ডই মুছতে পারবেন।','Safely delete a specific record. Only one record can be deleted at a time to reduce accidental deletion.'],
@@ -4339,6 +4322,46 @@ body{font-size:13px}
           try{history.back();}catch(err){}
         }
       }, false);
+      /* V17 FINAL global bridges: UI IIFEs must mutate the main data arrays. */
+      window.v17DeleteFromManager = async function(btn){
+        try{
+          var type=btn.getAttribute('data-delete-type')||'';
+          var idx=btn.getAttribute('data-delete-index');
+          var id=btn.getAttribute('data-delete-id')||'';
+          await safeDeleteRecord(type,id,(idx===''||idx===null)?undefined:Number(idx));
+        }catch(err){console.error('delete bridge',err);alert('ডিলিট করা যায়নি। Error: '+(err&&err.message?err.message:err));}
+      };
+      window.v17RestoreTrash = async function(displayIndex){
+        try{
+          var trash=[];try{trash=JSON.parse(localStorage.getItem('pb_final_trash')||'[]');}catch(e){}
+          if(!Array.isArray(trash))trash=[];
+          var v=trash.slice().reverse()[Number(displayIndex)];
+          if(!v){alert('এই Recycle Bin রেকর্ডটি পাওয়া যায়নি।');return false;}
+          if(!confirm('এই রেকর্ডটি আবার মূল হিসাবে Restore করবেন?'))return false;
+          var target=null;
+          switch(v.list){case'purchase':target=purchaseList;break;case'sale':target=salesList;break;case'expense':target=expenseList;break;case'payment':target=paymentHistory;break;case'generalDue':target=generalDuePayments;break;case'cash':target=cashList;break;case'bank':target=bankTransactions;break;case'invoice':target=invoiceList;break;case'shipment':target=shipmentList;break;case'contact':target=contactList;break;case'product':target=productList;break;case'employee':target=employeeList;break;case'reminder':target=reminderList;break;case'note':target=noteList;break;case'investor':target=investorList;break;}
+          if(!Array.isArray(target)){alert('Restore করার মূল খাতা পাওয়া যায়নি।');return false;}
+          var rid=v.record&&v.record.id!=null?String(v.record.id):String(v.originalId||'');
+          if(!target.some(function(x){return rid!==''&&x&&x.id!=null&&String(x.id)===rid;}))target.push(auditClone(v.record));
+          (v.related||[]).forEach(function(r){
+            var a=r&&r.list==='paymentHistory'?paymentHistory:(r&&r.list==='cashList'?cashList:null);
+            if(!a||!r.record)return;
+            var id2=r.record.id!=null?String(r.record.id):'';
+            if(!a.some(function(x){return id2!==''&&x&&x.id!=null&&String(x.id)===id2;}))a.push(auditClone(r.record));
+          });
+          var real=trash.indexOf(v);if(real>=0)trash.splice(real,1);
+          localStorage.setItem('pb_final_trash',JSON.stringify(trash));
+          try{saveAllExtra();}catch(e){} try{rebuildAllOneTimeAllocations();}catch(e){}
+          try{auditAction('পুনরুদ্ধার',deleteTypeLabel(v.list),'Recycle Bin থেকে রেকর্ড Restore করা হয়েছে',null,v.record||null);}catch(e){}
+          try{clearTimeout(cloudSaveTimer);}catch(e){}
+          var ok=false;
+          try{if(firebaseUser&&firebaseDb&&cloudLoaded&&typeof saveCloudData==='function'){await saveCloudData();ok=true;}}catch(e){console.error('restore cloud',e);}
+          try{refreshAllDependentViews();}catch(e){} try{updateDashboardQuickStats();}catch(e){}
+          if(typeof window.renderTrash==='function')window.renderTrash();
+          alert(ok?'রেকর্ডটি সফলভাবে Restore হয়েছে।':'রেকর্ডটি Restore হয়েছে, কিন্তু Cloud Save সম্পন্ন হয়নি.');
+          return true;
+        }catch(err){console.error('restore bridge',err);alert('Restore করা যায়নি। Error: '+(err&&err.message?err.message:err));return false;}
+      };
     })();
 
 </script>
@@ -4447,7 +4470,7 @@ window.finalRestore=function(file){
  r.readAsText(file);
 };
 window.renderHistory=function(){const x=document.getElementById('fc-history-list');if(!x)return;const h=get(K.hist,[]).slice().reverse();x.innerHTML=h.length?h.map(v=>'<div class="fc-list-item"><b>'+esc(v.action)+'</b> · '+esc(v.section)+'<br>'+esc(v.time)+'<br>'+esc(JSON.stringify(v.details))+'</div>').join(''):'কোনো History নেই।'};
-window.renderTrash=function(){const x=document.getElementById('fc-trash-list');if(!x)return;const t=get(K.trash,[]).slice().reverse();x.innerHTML=t.length?t.map((v,i)=>'<div class="fc-list-item"><b>#'+(i+1)+'</b> '+esc(v.type||'Record')+' — '+esc(v.record&&((v.record.name||v.record.customer||v.record.supplier||v.record.title||v.record.date)||''))+'<br>'+esc(v.time||'')+'<br><button onclick="finalRestoreTrash('+i+')">↩️ Restore</button></div>').join(''):'Recycle Bin খালি।'};
+window.renderTrash=function(){const x=document.getElementById('fc-trash-list');if(!x)return;const t=get(K.trash,[]).slice().reverse();x.innerHTML=t.length?t.map((v,i)=>'<div class="fc-list-item"><b>#'+(i+1)+'</b> '+esc(v.type||'Record')+' — '+esc(v.record&&((v.record.name||v.record.customer||v.record.supplier||v.record.title||v.record.date)||''))+'<br>'+esc(v.time||'')+'<br><button onclick="v17RestoreTrash('+i+')">↩️ Restore</button></div>').join(''):'Recycle Bin খালি।'};
 window.finalRestoreTrash=function(displayIndex){let t=get(K.trash,[]),ordered=t.slice().reverse(),v=ordered[displayIndex];if(!v)return;if(!confirm('এই রেকর্ডটি আবার মূল হিসাবে Restore করবেন?'))return;
   var exists=v.list&&Array.isArray(window[v.list])&&window[v.list].some(function(x){return String(x.id)===String(v.record&&v.record.id);});
   if(!exists&&v.list&&Array.isArray(window[v.list]))window[v.list].push(v.record);
