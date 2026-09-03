@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V17-PRINT-FIX-2026-08-31 -->
+<!-- V17-FIX-2026-09-03 -->
 
 <html lang="bn">
 <head>
@@ -3419,7 +3419,12 @@ body{font-size:13px}
         cashList.filter(function(c){return String(c.generalDueId||'')===recordId;}).forEach(function(c){related.push({list:'cashList',record:auditClone(c)});});
       }
 
-      var trash=get(K.trash,[]); if(!Array.isArray(trash)) trash=[];
+      /* IMPORTANT: final-control-js keeps K/get/set private inside its IIFE.
+         Data Management runs in the main script, so it must not reference K/get/set
+         from that private scope. Read/write the shared Recycle Bin key directly. */
+      var trash=[];
+      try{ trash=JSON.parse(localStorage.getItem('pb_final_trash')||'[]'); }catch(e){ trash=[]; }
+      if(!Array.isArray(trash)) trash=[];
       trash.push({
         trashId:'TR-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
         time:new Date().toLocaleString('bn-BD'),
@@ -3439,7 +3444,7 @@ body{font-size:13px}
 
       /* Persist the trash locally immediately. Core ledgers are cloud-authoritative
          in this V17, so force one cloud write instead of relying only on debounce. */
-      set(K.trash,trash);
+      try{ localStorage.setItem('pb_final_trash',JSON.stringify(trash)); }catch(e){ console.error('Recycle Bin save failed',e); }
       try{saveAllExtra();}catch(e){console.error('saveAllExtra after delete failed',e);}
       try{rebuildAllOneTimeAllocations();}catch(e){console.error('allocation rebuild after delete failed',e);}
       try{auditAction('মুছে ফেলা',deleteTypeLabel(type),'রেকর্ডটি Recycle Bin-এ পাঠানো হয়েছে; স্থায়ীভাবে মুছে ফেলা হয়নি',old,null);}catch(e){console.error('audit after delete failed',e);}
@@ -3466,7 +3471,24 @@ body{font-size:13px}
       var d=document.getElementById('delete-manager-list');if(!d)return;
       var type=(document.getElementById('del-type')||{}).value||'purchase',q=((document.getElementById('del-search')||{}).value||'').toLowerCase().trim(),arr=deleteArrayMap(type)[type]||[];
       var rows=arr.map(function(x,i){var text=JSON.stringify(x).toLowerCase();return {x:x,i:i,ok:!q||text.includes(q)};}).filter(function(r){return r.ok;}).slice().reverse();
-      d.innerHTML=rows.map(function(r){var x=r.x;var key=(x.id!==undefined&&x.id!==null&&String(x.id)!=='')?String(x.id):'';return '<div class="list-row"><b>'+esc(x.date||x.name||x.title||x.no||x.id||('রেকর্ড '+(r.i+1)))+'</b> — '+esc(x.supplier||x.customer||x.investorName||x.name||x.title||x.item||'রেকর্ড')+' '+(x.amount!=null?('— '+esc(x.amount)+' ৳'):(x.total!=null?('— '+esc(x.total)+' ৳'):''))+' <button class="delete-record-btn" onclick="safeDeleteRecord(\''+type+'\',\''+key.replace(/'/g,"\\'")+'\','+r.i+')">🗑️ মুছুন</button></div>';}).join('')||'<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';
+      d.innerHTML=rows.map(function(r){var x=r.x;var key=(x.id!==undefined&&x.id!==null&&String(x.id)!=='')?String(x.id):'';return '<div class="list-row"><b>'+esc(x.date||x.name||x.title||x.no||x.id||('রেকর্ড '+(r.i+1)))+'</b> — '+esc(x.supplier||x.customer||x.investorName||x.name||x.title||x.item||'রেকর্ড')+' '+(x.amount!=null?('— '+esc(x.amount)+' ৳'):(x.total!=null?('— '+esc(x.total)+' ৳'):''))+' <button type="button" class="delete-record-btn" data-delete-type="'+esc(type)+'" data-delete-index="'+r.i+'" data-delete-id="'+esc(key)+'">🗑️ মুছুন</button></div>';}).join('')||'<div class="pl-empty">কোনো রেকর্ড পাওয়া যায়নি।</div>';
+    }
+    /* Delegated Delete handler: survives innerHTML re-renders and does not depend on
+       inline onclick/global-scope quirks. */
+    if(!window.__pbDeleteManagerHandlerInstalled){
+      document.addEventListener('click',function(e){
+        var btn=e.target && e.target.closest ? e.target.closest('.delete-record-btn') : null;
+        if(!btn) return;
+        e.preventDefault(); e.stopPropagation();
+        var type=btn.getAttribute('data-delete-type')||'';
+        var idx=btn.getAttribute('data-delete-index');
+        var id=btn.getAttribute('data-delete-id')||'';
+        try{
+          var n=(idx===''||idx===null)?undefined:Number(idx);
+          safeDeleteRecord(type,id,n);
+        }catch(err){ console.error('Delete handler error',err); alert('ডিলিট করা যায়নি। Error: '+(err&&err.message?err.message:err)); }
+      },true);
+      window.__pbDeleteManagerHandlerInstalled=true;
     }
     function openDeleteManager(){
       pageShell(['ডাটা ম্যানেজমেন্ট','Data Management'],['প্রয়োজনে নির্দিষ্ট রেকর্ড মুছুন। ভুল করে অন্য ডাটা মুছে যাওয়ার ঝুঁকি কমাতে একবারে একটি রেকর্ডই মুছতে পারবেন।','Safely delete a specific record. Only one record can be deleted at a time to reduce accidental deletion.'],
