@@ -1032,7 +1032,7 @@ body{font-size:13px}
       if(Array.isArray(data.invoiceList))invoiceList=data.invoiceList;
       if(Array.isArray(data.investorList))investorList=data.investorList;
       if(Array.isArray(data.auditLog))auditLog=data.auditLog;
-      if(data.stockConversionRules && typeof data.stockConversionRules==='object') stockConversionRules=Object.assign(stockConversionRules,data.stockConversionRules);
+      if(data.stockConversionRules && typeof data.stockConversionRules==='object') stockConversionRules=JSON.parse(JSON.stringify(data.stockConversionRules));
     }
 
     async function loadCloudData(){
@@ -1045,6 +1045,9 @@ body{font-size:13px}
           applyCloudCollections(snap.data());
           localStorage.setItem('biz_cloud_loaded','1');
         } else {
+          /* First-login initialization: mark cloud as loaded before the first save,
+             otherwise saveCloudData() intentionally refuses to write while loading. */
+          cloudLoaded=true;
           await saveCloudData();
         }
         cloudLoaded=true;
@@ -1140,7 +1143,10 @@ body{font-size:13px}
       cloudSaveTimer=setTimeout(saveCloudData,700);
     }
 
+    var cloudAutoSaveStarted=false;
     function startCloudAutoSave(){
+      if(cloudAutoSaveStarted)return;
+      cloudAutoSaveStarted=true;
       setInterval(function(){ if(firebaseUser&&cloudLoaded) saveCloudData(); },5000);
     }
 
@@ -1678,47 +1684,30 @@ body{font-size:13px}
         return;
       }
 
-      var account = bankAccounts.find(function(x) { return x.id === accId; });
-      if (!account) return;
+      var account = bankAccounts.find(function(x) { return String(x.id) === String(accId); });
+      if (!account) { alert(currentLang === 'en' ? 'Account not found.' : 'অ্যাকাউন্ট পাওয়া যায়নি।'); return; }
 
       if (type === 'deposit') {
         account.balance += amount;
-        bankTransactions.push({
-          date: date, accName: account.name, type: 'Deposit (+)', amount: amount, note: note
-        });
-        cashList.push({ id: Date.now(), date: date, type: 'out', title: 'ব্যাংক জমা: ' + account.name, amount: amount });
+        bankTransactions.push({id:Date.now()+'-'+Math.random(),date:date,accountId:account.id,accName:account.name,type:'Deposit (+)',amount:amount,note:note});
+        cashList.push({id:Date.now()+'-cash',date:date,type:'out',title:'ব্যাংক জমা: '+account.name,amount:amount,sourceType:'bank',accountId:account.id});
 
       } else if (type === 'withdraw') {
-        if (account.balance < amount) {
-          alert(currentLang === 'en' ? "Insufficient Bank Balance!" : "ব্যাংকে পর্যাপ্ত ব্যালেন্স নেই!");
-          return;
-        }
+        if (account.balance < amount) { alert(currentLang === 'en' ? "Insufficient Bank Balance!" : "ব্যাংকে পর্যাপ্ত ব্যালেন্স নেই!"); return; }
         account.balance -= amount;
-        bankTransactions.push({
-          date: date, accName: account.name, type: 'Withdraw (-)', amount: amount, note: note
-        });
-        cashList.push({ id: Date.now(), date: date, type: 'in', title: 'ব্যাংক উত্তোলন: ' + account.name, amount: amount });
+        bankTransactions.push({id:Date.now()+'-'+Math.random(),date:date,accountId:account.id,accName:account.name,type:'Withdraw (-)',amount:amount,note:note});
+        cashList.push({id:Date.now()+'-cash',date:date,type:'in',title:'ব্যাংক উত্তোলন: '+account.name,amount:amount,sourceType:'bank',accountId:account.id});
 
       } else if (type === 'transfer') {
         var toAccId = parseInt(document.getElementById('to-bank-acc-id').value);
-        if (accId === toAccId) {
-          alert(currentLang === 'en' ? "Sender and Receiver accounts cannot be the same!" : "একই অ্যাকাউন্টে ফান্ড ট্রান্সফার সম্ভব নয়!");
-          return;
-        }
-        var toAccount = bankAccounts.find(function(x) { return x.id === toAccId; });
-        if (account.balance < amount) {
-          alert(currentLang === 'en' ? "Insufficient Balance for Transfer!" : "ট্রান্সফার করার জন্য পর্যাপ্ত ব্যালেন্স নেই!");
-          return;
-        }
-        account.balance -= amount;
-        toAccount.balance += amount;
-
-        bankTransactions.push({
-          date: date, accName: account.name, type: 'Transfer Out (-)', amount: amount, note: 'Transferred to ' + toAccount.name + ' (' + note + ')'
-        });
-        bankTransactions.push({
-          date: date, accName: toAccount.name, type: 'Transfer In (+)', amount: amount, note: 'Received from ' + account.name + ' (' + note + ')'
-        });
+        if (accId === toAccId) { alert(currentLang === 'en' ? "Sender and Receiver accounts cannot be the same!" : "একই অ্যাকাউন্টে ফান্ড ট্রান্সফার সম্ভব নয়!"); return; }
+        var toAccount = bankAccounts.find(function(x) { return String(x.id) === String(toAccId); });
+        if (!toAccount) { alert(currentLang === 'en' ? 'Receiver account not found.' : 'প্রাপক অ্যাকাউন্ট পাওয়া যায়নি।'); return; }
+        if (account.balance < amount) { alert(currentLang === 'en' ? "Insufficient Balance for Transfer!" : "ট্রান্সফার করার জন্য পর্যাপ্ত ব্যালেন্স নেই!"); return; }
+        account.balance -= amount; toAccount.balance += amount;
+        var txid=Date.now()+'-'+Math.floor(Math.random()*100000);
+        bankTransactions.push({id:txid+'-out',date:date,accountId:account.id,toAccountId:toAccount.id,accName:account.name,type:'Transfer Out (-)',amount:amount,note:'Transferred to '+toAccount.name+' ('+note+')'});
+        bankTransactions.push({id:txid+'-in',date:date,accountId:toAccount.id,fromAccountId:account.id,accName:toAccount.name,type:'Transfer In (+)',amount:amount,note:'Received from '+account.name+' ('+note+')'});
       }
 
       scheduleCloudSave();
@@ -4300,7 +4289,6 @@ new MutationObserver(wrapTables).observe(document.documentElement,{childList:tru
 const P='pb_final_', K={biz:'business',acc:'accounting',hist:'history',trash:'trash'};
 function get(k,d){try{const v=localStorage.getItem(P+k);return v===null?d:JSON.parse(v)}catch(e){return d}}
 function set(k,v){localStorage.setItem(P+k,JSON.stringify(v))}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function audit(action,section,details){
  let h=get(K.hist,[]); h.push({time:new Date().toLocaleString('bn-BD'),action,section,details});
  set(K.hist,h.slice(-5000));
@@ -4343,39 +4331,12 @@ window.finalPanel=function(t){
  if(t==='history')renderHistory(); if(t==='trash')renderTrash();
 };
 window.finalGo=function(key){
- const map={purchase:'openPurchaseLedger',sale:'openSalesLedger',vehicleBoat:'openVehicleBoatLedger',bank:'openBankWalletLedger',report:'openBusinessReport',reminder:'openDueReminderLedger'};
+ const map={purchase:'openPurchaseLedger',sale:'openSalesLedger',vehicleBoat:'openVehicleBoatLedger',bank:'openBankLedger',report:'openBusinessReport',reminder:'openDueReminder'};
  const fn=window[map[key]]; if(typeof fn==='function'){fn();return}
  alert('এই ট্যাবের open function বর্তমান ফাইলে নেই।');
 };
-window.finalTheme=function(v){
- if(v==='dark')document.body.classList.add('dark-theme'); else document.body.classList.remove('dark-theme');
- localStorage.setItem('final_theme',v); audit('SETTINGS','Display','Theme: '+v);
-};
 window.saveBusinessSettings=function(){set(K.biz,{name:fc_bname.value.trim(),owner:fc_owner.value.trim(),phone:fc_phone.value.trim(),address:fc_address.value.trim()});audit('SETTINGS','Business','Updated');saveCore();alert('ব্যবসার তথ্য সংরক্ষণ হয়েছে।')};
 window.saveAccountingSettings=function(){set(K.acc,{currency:fc_currency.value||'৳',decimal:Math.max(0,Math.min(6,+fc_decimal.value||0))});audit('SETTINGS','Accounting','Updated');saveCore();alert('Accounting settings সংরক্ষণ হয়েছে।')};
-window.finalBackup=function(){
- const names=['purchaseList','salesList','paymentHistory','expenseList','cashList','bankTransactions','investorList','investors','generalDuePayments','deletedRecords'];
- const data={version:7,createdAt:new Date().toISOString(),arrays:{},settings:{business:get(K.biz,{}),accounting:get(K.acc,{}),history:get(K.hist,[])}};
- names.forEach(n=>data.arrays[n]=dataArr(n));
- const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-'+Date.now()+'.json';a.click();
- audit('BACKUP','Data','Downloaded'); alert('Backup Download শুরু হয়েছে।');
-};
-window.finalRestore=function(file){
- if(!file)return;const r=new FileReader();
- r.onload=function(){let b;try{b=JSON.parse(r.result)}catch(e){alert('সঠিক JSON Backup নয়।');return}
- if(!b.arrays||!confirm('Backup Restore করবেন? বর্তমান ডাটার আগে Backup নেওয়া আছে তো?'))return;
- Object.keys(b.arrays).forEach(n=>{if(Array.isArray(window[n]))window[n]=b.arrays[n]});
- if(b.settings){if(b.settings.business)set(K.biz,b.settings.business);if(b.settings.accounting)set(K.acc,b.settings.accounting)}
- audit('RESTORE','Data','Backup restored');saveCore();alert('Restore সম্পন্ন হয়েছে।');
- };
- r.readAsText(file);
-};
-window.renderHistory=function(){const x=document.getElementById('fc-history-list');if(!x)return;const h=get(K.hist,[]).slice().reverse();x.innerHTML=h.length?h.map(v=>'<div class="fc-list-item"><b>'+esc(v.action)+'</b> · '+esc(v.section)+'<br>'+esc(v.time)+'<br>'+esc(JSON.stringify(v.details))+'</div>').join(''):'কোনো History নেই।'};
-window.renderTrash=function(){const x=document.getElementById('fc-trash-list');if(!x)return;const t=get(K.trash,[]);x.innerHTML=t.length?t.map((v,i)=>'<div class="fc-list-item"><b>#'+(i+1)+'</b> '+esc(v.type||'Record')+'<br>'+esc(v.time||'')+'<br><button onclick="finalRestoreTrash('+i+')">Restore</button></div>').join(''):'Recycle Bin খালি।'};
-window.finalRestoreTrash=function(i){let t=get(K.trash,[]),v=t[i];if(!v)return;if(v.list&&Array.isArray(window[v.list]))window[v.list].push(v.record);t.splice(i,1);set(K.trash,t);audit('RESTORE','Recycle Bin','Restored');saveCore();renderTrash();};
-window.printFinalHistory=function(){const h=get(K.hist,[]),w=window.open('','_blank');if(!w)return;w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>History</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,sans-serif}table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:5px;font-size:10px}th{background:#eee}</style></head><body><h2>সম্পূর্ণ হিস্ট্রি</h2><table><tr><th>সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr>'+h.map(v=>'<tr><td>'+esc(v.time)+'</td><td>'+esc(v.action)+'</td><td>'+esc(v.section)+'</td><td>'+esc(JSON.stringify(v.details))+'</td></tr>').join('')+'</table></body></html>');w.document.close();w.focus();w.print()};
-window.finalHealth=function(){let bad=[];['purchaseList','salesList'].forEach(k=>dataArr(k).forEach((x,i)=>{let t=+x.total||0,p=+x.paid||0,d=+x.due||0;if(Math.abs(t-p-d)>.02)bad.push(k+' #'+(i+1));}));alert(bad.length?'Mismatch পাওয়া গেছে: '+bad.length+' record':'মৌলিক Total/Paid/Due mismatch পাওয়া যায়নি।');audit('HEALTH_CHECK','Data',bad.length||'OK')};
 window.showFinalControlCenter=function(){
   var home=document.getElementById('home-view'), sub=document.getElementById('sub-page-view'), x=document.getElementById('final-control-center');
   if(home) home.classList.remove('active-view');
@@ -4787,7 +4748,7 @@ window.v17UpdateLiveDue=v17LDUpdate;
 <script id="v18-final-stability-fix">
 (function(){
   'use strict';
-  /* V18 FINAL STABILITY PATCH
+  /* V19 FINAL STABILITY PATCH
      - one canonical recycle-bin/restore path
      - full backup/restore (all business arrays + settings + history + trash)
      - consolidated party/vehicle/boat report without payment double-counting
@@ -4801,6 +4762,7 @@ window.v17UpdateLiveDue=v17LDUpdate;
     'bankAccounts','bankTransactions','shipmentList','contactList','productList','employeeList',
     'reminderList','noteList','invoiceList','stockConversionRules','investorList'
   ];
+  var V19_BACKUP_VERSION=19;
   var LIST_KEYS=DATA_KEYS.filter(function(k){return k!=='bankAccounts'&&k!=='stockConversionRules';});
   var TRASH_KEY='pb_final_trash';
   var HIST_KEY='biz_audit_log';
@@ -4876,14 +4838,14 @@ window.v17UpdateLiveDue=v17LDUpdate;
 
   /* Extra modules now use the same delete/recover mechanism. */
   ['deleteContact','deleteProduct','deleteEmployee','deleteReminder','deleteNote','deleteShipment','deleteInvestor'].forEach(function(fn){
-    if(typeof window[fn]==='function' && !window[fn].__v18wrapped){
+    if(typeof window[fn]==='function' && !window[fn].__v19wrapped){
       window[fn]=(function(old,name){
         var w=function(id){
           if(!confirm('এই রেকর্ডটি Recycle Bin-এ পাঠাবেন?'))return;
           var type={deleteContact:'contact',deleteProduct:'product',deleteEmployee:'employee',deleteReminder:'reminder',deleteNote:'note',deleteShipment:'shipment',deleteInvestor:'investor'}[name];
           if(!canonicalDelete(type,id)) old.apply(this,arguments);
           else {try{renderContacts();}catch(e){}try{renderProducts();}catch(e){}try{renderEmployees();}catch(e){}try{renderReminders();}catch(e){}try{renderNotes();}catch(e){}try{renderShipmentTracking();}catch(e){}try{renderInvestors();}catch(e){}}
-        };w.__v18wrapped=true;return w;
+        };w.__v19wrapped=true;return w;
       })(window[fn],fn);
     }
   });
@@ -4970,11 +4932,11 @@ window.v17UpdateLiveDue=v17LDUpdate;
   /* ---------- Full backup / safe restore ---------- */
   function backupObject(){
     var arrays={};DATA_KEYS.forEach(function(k){arrays[k]=clone(window[k]);});
-    return {format:'PRIVATE-BUSINESS-V18',version:18,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:getLS('pb_final_business',{}),accounting:getLS('pb_final_accounting',{currency:'৳',decimal:2}),history:clone(getLS(HIST_KEY,[])),trash:clone(trashList())}};
+    return {format:'PRIVATE-BUSINESS-V19',version:19,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:getLS('pb_final_business',{}),accounting:getLS('pb_final_accounting',{currency:'৳',decimal:2}),history:clone(getLS(HIST_KEY,[])),trash:clone(trashList())}};
   }
   window.finalBackup=function(){
     var data=backupObject();setLS('pb_last_backup',data);
-    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-v18-'+Date.now()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);auditSafe('BACKUP','Data','সম্পূর্ণ Backup Download করা হয়েছে',null,{version:18});
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-v19-'+Date.now()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);auditSafe('BACKUP','Data','সম্পূর্ণ Backup Download করা হয়েছে',null,{version:19});
   };
   window.finalRestore=function(file){
     if(!file)return;var rd=new FileReader();rd.onload=function(){var b;try{b=JSON.parse(rd.result);}catch(e){alert('সঠিক JSON Backup নয়।');return;}
@@ -4985,7 +4947,26 @@ window.v17UpdateLiveDue=v17LDUpdate;
       if(b.settings&&b.settings.business)setLS('pb_final_business',b.settings.business);
       if(b.settings&&b.settings.accounting)setLS('pb_final_accounting',b.settings.accounting);
       if(b.settings&&Array.isArray(b.settings.history)){window.auditLog=b.settings.history;setLS(HIST_KEY,b.settings.history);}
-      if(b.settings&&Array.isArray(b.settings.trash))setLS(TRASH_KEY,b.settings.trash);
+      if(b.settings&&Array.isArray(b.settings.trash))setLS(TRASH_KEY,b.settings.trash); else setLS(TRASH_KEY,[]);
+      try{localStorage.setItem('shipmentTrackingList',JSON.stringify(window.shipmentList||[]));}catch(e){}
+      try{localStorage.setItem('biz_contacts',JSON.stringify(window.contactList||[]));}catch(e){}
+      try{localStorage.setItem('biz_products',JSON.stringify(window.productList||[]));}catch(e){}
+      try{localStorage.setItem('biz_employees',JSON.stringify(window.employeeList||[]));}catch(e){}
+      try{localStorage.setItem('biz_reminders',JSON.stringify(window.reminderList||[]));}catch(e){}
+      try{localStorage.setItem('biz_notes',JSON.stringify(window.noteList||[]));}catch(e){}
+      try{localStorage.setItem('biz_invoices',JSON.stringify(window.invoiceList||[]));}catch(e){}
+      try{localStorage.setItem('biz_investors',JSON.stringify(window.investorList||[]));}catch(e){}
+      try{localStorage.setItem('biz_stock_conversion',JSON.stringify(window.stockConversionRules||{}));}catch(e){}
+      try{
+        localStorage.setItem('biz_purchase_list',JSON.stringify(window.purchaseList||[]));
+        localStorage.setItem('biz_sales_list',JSON.stringify(window.salesList||[]));
+        localStorage.setItem('biz_payment_history',JSON.stringify(window.paymentHistory||[]));
+        localStorage.setItem('biz_general_due_payments',JSON.stringify(window.generalDuePayments||[]));
+        localStorage.setItem('biz_expense_list',JSON.stringify(window.expenseList||[]));
+        localStorage.setItem('biz_cash_list',JSON.stringify(window.cashList||[]));
+        localStorage.setItem('biz_bank_accounts',JSON.stringify(window.bankAccounts||[]));
+        localStorage.setItem('biz_bank_transactions',JSON.stringify(window.bankTransactions||[]));
+      }catch(e){}
       try{if(typeof rebuildAllOneTimeAllocations==='function')rebuildAllOneTimeAllocations();}catch(e){}
       try{if(typeof initializeAuditSnapshot==='function')initializeAuditSnapshot();}catch(e){}
       auditSafe('RESTORE','Data','পূর্ণ Backup Restore সম্পন্ন হয়েছে',null,{sourceVersion:b.version||'unknown'});
@@ -5019,29 +5000,29 @@ window.v17UpdateLiveDue=v17LDUpdate;
       doc.querySelectorAll('table').forEach(function(table){
         var thead=table.querySelector('thead')||table.querySelector('tr'),tbody=table.querySelector('tbody');if(!thead||!tbody)return;
         if(!table.classList.contains('no-serial')){
-          var hr=thead.querySelector('tr')||thead;if(!hr.querySelector('.v18-serial-cell')){var th=doc.createElement('th');th.className='v18-serial-cell';th.textContent='ক্রমিক';hr.insertBefore(th,hr.firstChild);}
-          Array.prototype.forEach.call(tbody.querySelectorAll('tr'),function(tr,i){if(!tr.querySelector('.v18-serial-cell')){var td=doc.createElement('td');td.className='v18-serial-cell';td.textContent=String(i+1);tr.insertBefore(td,tr.firstChild);}});
+          var hr=thead.querySelector('tr')||thead;if(!hr.querySelector('.v19-serial-cell')){var th=doc.createElement('th');th.className='v19-serial-cell';th.textContent='ক্রমিক';hr.insertBefore(th,hr.firstChild);}
+          Array.prototype.forEach.call(tbody.querySelectorAll('tr'),function(tr,i){if(!tr.querySelector('.v19-serial-cell')){var td=doc.createElement('td');td.className='v19-serial-cell';td.textContent=String(i+1);tr.insertBefore(td,tr.firstChild);}});
         }
         var cells=(thead.querySelector('tr')||thead).querySelectorAll('th'),di=-1;Array.prototype.forEach.call(cells,function(c,i){var h=norm(c.textContent);if(di<0&&(/তারিখ|date|সময়|time/.test(h)))di=i;});
-        if(di>=0){var rows=Array.prototype.slice.call(tbody.querySelectorAll('tr'));rows.sort(function(a,b){var av=a.children[di]?dateValue(a.children[di].textContent):Number.MAX_SAFE_INTEGER,bv=b.children[di]?dateValue(b.children[di].textContent):Number.MAX_SAFE_INTEGER;return av-bv;});rows.forEach(function(r){tbody.appendChild(r);});rows.forEach(function(r,i){var c=r.querySelector('.v18-serial-cell');if(c)c.textContent=String(i+1);});}
+        if(di>=0){var rows=Array.prototype.slice.call(tbody.querySelectorAll('tr'));rows.sort(function(a,b){var av=a.children[di]?dateValue(a.children[di].textContent):Number.MAX_SAFE_INTEGER,bv=b.children[di]?dateValue(b.children[di].textContent):Number.MAX_SAFE_INTEGER;return av-bv;});rows.forEach(function(r){tbody.appendChild(r);});rows.forEach(function(r,i){var c=r.querySelector('.v19-serial-cell');if(c)c.textContent=String(i+1);});}
       });
       var wide=false;doc.querySelectorAll('table').forEach(function(t){var n=t.querySelectorAll('thead th').length;if(n>=8)wide=true;});
-      var st=doc.createElement('style');st.textContent='.v18-serial-cell{width:42px;min-width:42px;text-align:center!important;white-space:nowrap}.signature-block{break-inside:avoid}table{page-break-inside:auto;table-layout:auto;max-width:100%}tr{page-break-inside:avoid}th,td{white-space:nowrap;word-break:normal;overflow-wrap:normal;vertical-align:middle}@page{size:'+(wide?'A4 landscape':'A4 portrait')+';margin:8mm}';doc.head.appendChild(st);
-    }catch(e){console.warn('V18 print preparation failed',e);}
+      var st=doc.createElement('style');st.textContent='.v19-serial-cell{width:42px;min-width:42px;text-align:center!important;white-space:nowrap}.signature-block{break-inside:avoid}table{page-break-inside:auto;table-layout:auto;max-width:100%}tr{page-break-inside:avoid}th,td{white-space:nowrap;word-break:normal;overflow-wrap:normal;vertical-align:middle}@page{size:'+(wide?'A4 landscape':'A4 portrait')+';margin:8mm}';doc.head.appendChild(st);
+    }catch(e){console.warn('V19 print preparation failed',e);}
   }
-  if(!window.__v18OpenWrapped){
-    var origOpen=window.open;window.open=function(){var w=origOpen.apply(this,arguments);if(!w)return w;try{var origClose=w.document.close.bind(w.document);w.document.close=function(){origClose();setTimeout(function(){preparePrintDoc(w.document);},0);};var origPrint=w.print.bind(w);w.print=function(){preparePrintDoc(w.document);origPrint();};}catch(e){}return w;};window.__v18OpenWrapped=true;
+  if(!window.__v19OpenWrapped){
+    var origOpen=window.open;window.open=function(){var w=origOpen.apply(this,arguments);if(!w)return w;try{var origClose=w.document.close.bind(w.document);w.document.close=function(){origClose();setTimeout(function(){preparePrintDoc(w.document);},0);};var origPrint=w.print.bind(w);w.print=function(){preparePrintDoc(w.document);origPrint();};}catch(e){}return w;};window.__v19OpenWrapped=true;
   }
 
   /* Explicitly improve the shared table builder too. */
-  if(typeof window.printTableFromArray==='function'&&!window.printTableFromArray.__v18wrapped){
+  if(typeof window.printTableFromArray==='function'&&!window.printTableFromArray.__v19wrapped){
     var oldPT=window.printTableFromArray;window.printTableFromArray=function(title,rows,keys){
       var a=Array.isArray(rows)?rows.slice():[];var dk=keys&&keys.findIndex(function(k){return /date|time/i.test(k)||k==='তারিখ';});if(dk>=0)a.sort(function(x,y){return dateValue(x[keys[dk]])-dateValue(y[keys[dk]]);});return oldPT(title,a,keys);
-    };window.printTableFromArray.__v18wrapped=true;
+    };window.printTableFromArray.__v19wrapped=true;
   }
 
   /* ---------- Mobile overflow guard for every dashboard/table ---------- */
-  var style=document.createElement('style');style.id='v18-final-responsive';style.textContent=`
+  var style=document.createElement('style');style.id='v19-final-responsive';style.textContent=`
 html,body{max-width:100%;overflow-x:hidden}
 *,*::before,*::after{box-sizing:border-box}
 .table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.table-responsive,.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper,.br-table-wrap,.br-table-wrapper{width:100%;max-width:100%;overflow-x:auto!important;overflow-y:hidden;-webkit-overflow-scrolling:touch;display:block}
@@ -5068,9 +5049,12 @@ html,body{max-width:100%;overflow-x:hidden}
 
   /* Expose a simple health checker for the control center. */
   window.finalHealth=function(){
-    var issues=[];DATA_KEYS.forEach(function(k){var v=window[k];if(k==='bankAccounts'||k==='stockConversionRules'){if(v==null)issues.push(k+' missing');}else if(!Array.isArray(v))issues.push(k+' not array');});
-    arr('purchaseList').concat(arr('salesList')).forEach(function(r,i){var m=recordMoney(r);if(m.due<0||m.paid<0||m.total<0)issues.push('negative money row '+(i+1));});
-    alert(issues.length?'Health Check: '+issues.length+'টি সমস্যা পাওয়া গেছে।\n'+issues.join('\n'):'Health Check সম্পন্ন: মূল Data Structure ঠিক আছে।');
+    var issues=[];
+    DATA_KEYS.forEach(function(k){var v=window[k];if(k==='bankAccounts'||k==='stockConversionRules'){if(v==null)issues.push(k+' missing');}else if(!Array.isArray(v))issues.push(k+' not array');});
+    arr('purchaseList').forEach(function(r,i){var m=recordMoney(r);if(m.due<0||m.paid<0||m.total<0)issues.push('purchase negative money row #'+(i+1));if(m.paid>m.total+0.02)issues.push('purchase paid exceeds total #'+(i+1));if(Math.abs(m.total-m.paid-m.due)>0.02)issues.push('purchase Total/Paid/Due mismatch #'+(i+1));var tf=num(first(r.transportFare,r.transportFareTotal));var tp=num(first(r.transportFarePaid,r.transportPaid));var td=num(first(r.transportFareDue));if(tf<0||tp<0||td<0||tp>tf+0.02||Math.abs(tf-tp-td)>0.02)issues.push('purchase transport mismatch #'+(i+1));});
+    arr('salesList').forEach(function(r,i){var m=recordMoney(r);if(m.due<0||m.paid<0||m.total<0)issues.push('sale negative money row #'+(i+1));if(m.paid>m.total+0.02)issues.push('sale paid exceeds total #'+(i+1));if(Math.abs(m.total-m.paid-m.due)>0.02)issues.push('sale Total/Paid/Due mismatch #'+(i+1));var tf=num(first(r.transportFare,r.transportFareTotal));var tp=num(first(r.transportFarePaid,r.transportPaid));var td=num(first(r.transportFareDue));if(tf<0||tp<0||td<0||tp>tf+0.02||Math.abs(tf-tp-td)>0.02)issues.push('sale transport mismatch #'+(i+1));});
+    arr('bankTransactions').forEach(function(t,i){if(!t.id)issues.push('bank transaction missing id #'+(i+1));if(!t.accountId&&!t.accName)issues.push('bank transaction missing account #'+(i+1));});
+    alert(issues.length?'Health Check: '+issues.length+'টি সমস্যা পাওয়া গেছে।\n'+issues.slice(0,40).join('\n')+(issues.length>40?'\n...':''):'Health Check সম্পন্ন: Data Structure ও মৌলিক হিসাব ঠিক আছে।');
     auditSafe('HEALTH_CHECK','Data',issues.length?'Issues: '+issues.length:'OK',null,null);
   };
 
