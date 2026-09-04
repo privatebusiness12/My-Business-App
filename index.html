@@ -3313,7 +3313,7 @@ function renderPurchaseTable() {
       w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111;padding:10px}.report-head{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:8px;margin-bottom:12px}.report-head h1{margin:0 0 5px}.report-head p{font-size:10px;color:#555}.summary{border:1px solid #ccc;padding:9px;margin:10px 0}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #999;padding:5px}th{background:#eef2f7}.col-total-label,.col-total{font-weight:800!important;background:#fff}.report-section table tfoot th{border-top:2px solid #222;font-weight:800;background:#fff}.signature-block{text-align:right;margin-top:30px}.sig-line{display:inline-block;min-width:180px;border-top:1px solid #222;padding-top:5px;text-align:center}@page{size:A4 '+st.orientation+';margin:8mm}</style></head><body>'+html+'</body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},200);
     }
     function printProfitLossReport(st){
-      var ae=window.V20AccountingEngine&&window.V20AccountingEngine(),at=ae&&ae.totals?ae.totals:{purchase:{total:0},sales:{total:0},expenses:0},sales=Number(at.sales&&at.sales.total||0),purchase=Number(at.purchase&&at.purchase.total||0),cogs=calculateCOGSForPeriod(null,null),expense=Number(at.expenses||0),net=sales-cogs-expense;
+      var ae=window.V20AccountingEngine&&window.V20AccountingEngine(),at=ae&&ae.totals?ae:{purchase:{total:0},sales:{total:0},expenses:0,cogs:0,netProfitLoss:0},sales=Number(at.sales&&at.sales.total||0),purchase=Number(at.purchase&&at.purchase.total||0),cogs=Number(at.cogs||0),expense=Number(at.expenses||0),net=Number(at.netProfitLoss||0);
       var w=window.open('','_blank');if(!w)return alert(T('পপ-আপ অনুমতি দিন, তারপর আবার চেষ্টা করুন।','Allow pop-ups and try again.'));
       var mats=materialQuantitySummary(), mcft=mats.reduce(function(a,x){return a+x.cft},0), mton=mats.reduce(function(a,x){return a+x.ton},0), mpc=mats.reduce(function(a,x){return a+x.pc},0);
       var html='<div class="report-head"><h1>'+T('লাভ-ক্ষতির হিসাব','Profit & Loss')+'</h1><p>'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(st.generated)+'</p></div><table><thead><tr><th>'+T('বিক্রয়','Sales')+'</th><th>'+T('COGS','COGS')+'</th><th>'+T('ক্রয়','Purchase')+'</th><th>'+T('খরচ','Expense')+'</th><th>'+T('লাভ/ক্ষতি','Profit/Loss')+'</th></tr></thead><tbody><tr><td>'+sales.toFixed(2)+' ৳</td><td>'+cogs.toFixed(2)+' ৳</td><td>'+purchase.toFixed(2)+' ৳</td><td>'+expense.toFixed(2)+' ৳</td><td>'+net.toFixed(2)+' ৳</td></tr></tbody><tfoot><tr><th class="col-total-label">মোট: '+sales.toFixed(2)+' ৳</th><th class="col-total">'+cogs.toFixed(2)+' ৳</th><th class="col-total">'+purchase.toFixed(2)+' ৳</th><th class="col-total">'+expense.toFixed(2)+' ৳</th><th class="col-total">'+net.toFixed(2)+' ৳</th></tr></tfoot></table><table style="margin-top:10px"><thead><tr><th>CFT</th><th>Metric Ton</th><th>Pcs</th></tr></thead><tbody><tr><td>'+mcft.toFixed(2)+'</td><td>'+mton.toFixed(3)+'</td><td>'+mpc.toFixed(2)+'</td></tr></tbody><tfoot><tr><th class="col-total-label">মোট:</th><th class="col-total">'+mton.toFixed(3)+'</th><th class="col-total">'+mpc.toFixed(2)+'</th></tr></tfoot></table><div class="signature-block"><div class="sig-line">'+(st.signature?esc(st.signature):'স্বাক্ষর')+'</div></div>';
@@ -4649,29 +4649,10 @@ window.v20UpdateLiveDue=v20DueUpdate;
   }
   function mapFor(type){return {purchase:'purchaseList',sale:'salesList',expense:'expenseList',payment:'paymentHistory',generalDue:'generalDuePayments',cash:'cashList',bank:'bankTransactions',invoice:'invoiceList',shipment:'shipmentList',contact:'contactList',product:'productList',employee:'employeeList',reminder:'reminderList',note:'noteList',investor:'investorList'}[type]||'';}
   function canonicalDelete(type,id){
-    var listName=mapFor(type),a=arr(listName);if(!listName||!a.length)return false;
-    var idx=a.findIndex(function(x){return String(x&&x.id)===String(id);});if(idx<0)return false;
-    var record=clone(a[idx]),related={payment:[],cash:[]};
-    if(type==='purchase'||type==='sale'){
-      related.payment=arr('paymentHistory').filter(function(p){return String(p.sourceId||'')===String(id);});
-      related.cash=arr('cashList').filter(function(c){return String(c.sourceId||'')===String(id);});
-      window.paymentHistory=arr('paymentHistory').filter(function(p){return String(p.sourceId||'')!==String(id);});
-      window.cashList=arr('cashList').filter(function(c){return String(c.sourceId||'')!==String(id);});
-    }
-    if(type==='generalDue'){
-      related.payment=arr('paymentHistory').filter(function(p){return String(p.generalDueId||'')===String(id);});
-      related.cash=arr('cashList').filter(function(c){return String(c.generalDueId||'')===String(id);});
-      window.paymentHistory=arr('paymentHistory').filter(function(p){return String(p.generalDueId||'')!==String(id);});
-      window.cashList=arr('cashList').filter(function(c){return String(c.generalDueId||'')!==String(id);});
-    }
-    putTrash(type,record,idx,related);
-    a.splice(idx,1);window[listName]=a;
-    auditSafe('মুছে ফেলা',typeof correctionLabel==='function'?correctionLabel(type):type,'রেকর্ড Recycle Bin-এ পাঠানো হয়েছে',record,null);
-    afterMutation();
-    try{renderDeleteManager();}catch(e){}
-    return true;
+    /* V20.9 LOCK: every delete uses the single canonical V20 Delete/Recycle path. */
+    try{return typeof v20Delete==='function' ? v20Delete(type,id,false) : false;}catch(e){return false;}
   }
-  /* V20.9 canonical safeDeleteRecord implementation below. */
+  /* V20.10 canonical safeDeleteRecord implementation below. */
 
   /* Extra modules now use the same delete/recover mechanism. */
   ['deleteContact','deleteProduct','deleteEmployee','deleteReminder','deleteNote','deleteShipment','deleteInvestor'].forEach(function(fn){
@@ -4838,7 +4819,7 @@ try{v20NormalizeAllActiveData();v20SortAllDateArrays();}catch(e){}
 /* ---------- Full backup / safe restore ---------- */
   function backupObject(){
     var arrays={};DATA_KEYS.forEach(function(k){arrays[k]=clone(window[k]);});
-    return {format:'PRIVATE-BUSINESS-V20.9',version:20.9,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:getLS('pb_final_business',{}),accounting:getLS('pb_final_accounting',{currency:'৳',decimal:2}),history:clone(getLS(HIST_KEY,[])),trash:clone(trashList())}};
+    return {format:'PRIVATE-BUSINESS-V20.10',version:20.10,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:getLS('pb_final_business',{}),accounting:getLS('pb_final_accounting',{currency:'৳',decimal:2}),history:clone(getLS(HIST_KEY,[])),trash:clone(trashList())}};
   }
   /* V20.9 canonical finalBackup implementation below. */
   /* V20.9 canonical finalRestore implementation below. */
@@ -4979,7 +4960,7 @@ html,body{max-width:100%;overflow-x:hidden}
 (function(){
 'use strict';
 /* V20.9 TRUE CLEAN accounting hardening: one canonical ledger-total API and reconciliation helpers. */
-window.V20_ACCOUNTING_VERSION='20.9';
+window.V20_ACCOUNTING_VERSION='20.10';
 /* V20.9 single canonical accounting engine is defined in the final reconciliation layer below. */
 /* V20.9 TRUE CLEAN FINAL
    - unified active-data model (deleted records never participate in ledgers)
@@ -5057,7 +5038,7 @@ function v20relatedFor(type,record){
  return rel;
 }
 function v20removeById(list,ids){var s={};(ids||[]).forEach(function(x){s[String(x&&x.id)] = 1;});return v20arr(list).filter(function(x){return !s[String(x&&x.id)];});}
-function v20putTrash(type,record,index,related){var t=v20trash();var id=String(record&&record.id||'');if(t.some(function(x){return String(x.record&&x.record.id||'')===id&&x.type===type;}))return; t.unshift({trashId:'V20-'+Date.now()+'-'+Math.random(),time:new Date().toISOString(),type:type,list:v20map(type),record:v20clone(record),index:index,related:v20clone(related||{}),version:20.9});v20saveTrash(t);}
+function v20putTrash(type,record,index,related){var t=v20trash();var id=String(record&&record.id||'');if(t.some(function(x){return String(x.record&&x.record.id||'')===id&&x.type===type;}))return; t.unshift({trashId:'V20-'+Date.now()+'-'+Math.random(),time:new Date().toISOString(),type:type,list:v20map(type),record:v20clone(record),index:index,related:v20clone(related||{}),version:20.10});v20saveTrash(t);}
 function v20Delete(type,id,ask){var list=v20map(type),a=v20arr(list),idx=a.findIndex(function(x){return String(x&&x.id)===String(id);});if(idx<0)return false;if(ask&&!confirm('এই রেকর্ডটি Recycle Bin-এ পাঠাবেন? পরে Restore করা যাবে।'))return false;var r=v20clone(a[idx]),rel=v20relatedFor(type,r);
  if(type==='bank'){v20bankReverseGroup(rel.bank||[],true);}
  if(type==='purchase'||type==='sale'||type==='generalDue'){window.paymentHistory=v20removeById('paymentHistory',(rel.payment||[]));window.cashList=v20removeById('cashList',(rel.cash||[]));}
@@ -5125,7 +5106,7 @@ else return alert('অবৈধ ব্যাংক লেনদেন।');v20se
 /* Unified chronological render helpers */
 window.v20Chronological=function(list){return v20sort(v20active(list));};
 /* Full V20 backup/restore */
-window.finalBackup=function(){var arrays={};V20_KEYS.forEach(function(k){arrays[k]=v20clone(window[k]);});var data={format:'PRIVATE-BUSINESS-V20.9',version:20.9,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:(function(){try{return JSON.parse(localStorage.getItem('pb_final_business')||'{}')}catch(e){return{}}})(),accounting:(function(){try{return JSON.parse(localStorage.getItem('pb_final_accounting')||'{"currency":"৳","decimal":2}')}catch(e){return{currency:'৳',decimal:2}}})(),history:(function(){try{return JSON.parse(localStorage.getItem('biz_audit_log')||'[]')}catch(e){return[]}})(),trash:v20trash()}};try{localStorage.setItem('pb_last_backup',JSON.stringify(data));}catch(e){}var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-v20.9-'+Date.now()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);v20audit('BACKUP','Data','V20.9 Full Backup',null,{version:20.9});};
+window.finalBackup=function(){var arrays={};V20_KEYS.forEach(function(k){arrays[k]=v20clone(window[k]);});var data={format:'PRIVATE-BUSINESS-V20.10',version:20.10,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:(function(){try{return JSON.parse(localStorage.getItem('pb_final_business')||'{}')}catch(e){return{}}})(),accounting:(function(){try{return JSON.parse(localStorage.getItem('pb_final_accounting')||'{"currency":"৳","decimal":2}')}catch(e){return{currency:'৳',decimal:2}}})(),history:(function(){try{return JSON.parse(localStorage.getItem('biz_audit_log')||'[]')}catch(e){return[]}})(),trash:v20trash()}};try{localStorage.setItem('pb_last_backup',JSON.stringify(data));}catch(e){}var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-v20.9-'+Date.now()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);v20audit('BACKUP','Data','V20.9 Full Backup',null,{version:20.10});};
 window.finalRestore=function(file){
   if(!file)return;
   var rd=new FileReader();
@@ -5133,8 +5114,8 @@ window.finalRestore=function(file){
     var b;
     try{b=JSON.parse(rd.result);}catch(e){return alert('সঠিক JSON Backup নয়।');}
     if(!b||!b.arrays)return alert('Backup Data পাওয়া যায়নি।');
-    if(b.version!=null && Number(b.version)>20.9)return alert('এই Backup এই সংস্করণের চেয়ে নতুন। আগে অ্যাপ আপডেট করুন।');
-    /* V20.9 SAFE RESTORE: validate and confirm BEFORE touching current data. */
+    if(b.version!=null && Number(b.version)>20.10)return alert('এই Backup এই সংস্করণের চেয়ে নতুন। আগে অ্যাপ আপডেট করুন।');
+    /* V20.10 SAFE RESTORE: validate and confirm BEFORE touching current data. */
     var invalid=[];
     V20_KEYS.forEach(function(k){
       if(k==='bankAccounts'||k==='stockConversionRules'){
@@ -5150,7 +5131,7 @@ window.finalRestore=function(file){
     restoreWarning+='\n\nRestore-এর আগে বর্তমান ডাটার নিরাপদ Backup রাখা হবে।\n\nচালিয়ে যাবেন?';
     if(!confirm(restoreWarning))return;
     /* Build the safety backup BEFORE replacing anything. Abort if it cannot be stored. */
-    var current={format:'PRIVATE-BUSINESS-V20.9-PRE-RESTORE',version:20.9,createdAt:new Date().toISOString(),arrays:{},settings:{}};
+    var current={format:'PRIVATE-BUSINESS-V20.10-PRE-RESTORE',version:20.10,createdAt:new Date().toISOString(),arrays:{},settings:{}};
     V20_KEYS.forEach(function(k){current.arrays[k]=v20clone(window[k]);});
     try{
       current.settings.business=JSON.parse(localStorage.getItem('pb_final_business')||'{}');
@@ -5211,11 +5192,14 @@ var key=function(r){return String(r&&r.id!=null?r.id:'');};
 var dir=function(r){var d=String(r&&r.direction||'').toLowerCase();if(d==='in'||d==='out')return d;return '';};
 var legacyDir=function(r){var t=String(r&&r.type||'').toLowerCase();return /deposit|transfer in|\+/.test(t)?'in':/withdraw|transfer out|\-/.test(t)?'out':'';};
 function normalizeBankDirections(){var changed=0;active(window.bankTransactions).forEach(function(r){if(!dir(r)){var d=legacyDir(r);if(d){r.direction=d;changed++;}}});if(changed){try{if(typeof v20setCache==='function')v20setCache();}catch(e){}try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}}return changed;}
+function normalizeCashDirections(){var changed=0,unknown=0;active(window.cashList).forEach(function(r){var d=dir(r);if(!d){var t=String(r&&r.type||'').toLowerCase();if(t==='in'||t==='cash in'||t==='deposit'||t==='bank withdraw'||t==='withdrawal')d='in';else if(t==='out'||t==='cash out'||t==='expense'||t==='bank deposit'||t==='payment')d='out';}if(d){if(r.direction!==d){r.direction=d;changed++;}}else unknown++;});if(changed){try{if(typeof v20setCache==='function')v20setCache();}catch(e){}try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}}return {changed:changed,unknown:unknown};}
 var date=function(r){var d=Date.parse(String(r&& (r.entryDate||r.date)||''));if(!isNaN(d))return d;var c=Date.parse(String(r&&r.createdAt||''));return isNaN(c)?Number.MAX_SAFE_INTEGER:c;};
 var created=function(r){var c=Date.parse(String(r&&r.createdAt||''));return isNaN(c)?0:c;};
 var cmp=function(a,b){var d=date(a)-date(b);if(d)return d;d=created(a)-created(b);if(d)return d;return String(a&&a.id||'').localeCompare(String(b&&b.id||''));};
 var canonStock=function(){try{if(typeof calculateStock!=='function')return [];var a=calculateStock();return Array.isArray(a)?a:[];}catch(e){return [];}};
 function totals(){
+ normalizeBankDirections();
+ normalizeCashDirections();
  var p=active(window.purchaseList),s=active(window.salesList),pay=active(window.paymentHistory),ex=active(window.expenseList),cash=active(window.cashList),bank=active(window.bankTransactions);
  var out={purchase:{total:0,paid:0,due:0},sales:{total:0,paid:0,due:0},payments:0,expenses:0,cashIn:0,cashOut:0,bankIn:0,bankOut:0,stockValue:0};
  p.forEach(function(r){out.purchase.total+=N(r.total);out.purchase.paid+=N(r.paid);out.purchase.due+=N(r.due);});
@@ -5224,10 +5208,12 @@ function totals(){
  cash.forEach(function(r){var d=dir(r);if(d==='in')out.cashIn+=N(r.amount);else if(d==='out')out.cashOut+=N(r.amount);});
  bank.forEach(function(r){var d=dir(r);if(d==='in')out.bankIn+=N(r.amount);else if(d==='out')out.bankOut+=N(r.amount);});
  out.stockValue=canonStock().reduce(function(sum,x){var v=N(x.value);return sum+(isFinite(v)&&v>0?v:0);},0);
+ try{out.cogs=N(typeof calculateCOGSForPeriod==='function'?calculateCOGSForPeriod(null,null):0);}catch(e){out.cogs=0;out.cogsError=true;}
+ out.netProfitLoss=out.sales.total-out.cogs-out.expenses;
  return out;
 }
 function reconcile(){
- var issues=[],warnings=[],migrationCount=normalizeBankDirections(),p=active(window.purchaseList),s=active(window.salesList),parents=p.concat(s),pay=active(window.paymentHistory),cash=active(window.cashList),bank=active(window.bankTransactions),accounts=Array.isArray(window.bankAccounts)?window.bankAccounts:[];if(migrationCount)warnings.push({type:'bank-direction-migrated',count:migrationCount});
+ var issues=[],warnings=[],migrationCount=0,cashMigration=normalizeCashDirections(),p=active(window.purchaseList),s=active(window.salesList),parents=p.concat(s),pay=active(window.paymentHistory),cash=active(window.cashList),bank=active(window.bankTransactions),accounts=Array.isArray(window.bankAccounts)?window.bankAccounts:[];if(cashMigration&&cashMigration.changed)warnings.push({type:'cash-direction-migrated',count:cashMigration.changed});if(cashMigration&&cashMigration.unknown)issues.push({type:'cash-direction-missing',count:cashMigration.unknown});
  var parentIds={};parents.forEach(function(r){parentIds[key(r)]=r;});
  var paymentByParent={};
  pay.forEach(function(r){
@@ -5255,20 +5241,19 @@ function reconcile(){
  var inv=active(window.invoiceList);var saleById={};s.forEach(function(r){saleById[key(r)]=r;});inv.forEach(function(i){var sid=String(i.saleId||i.sourceId||i.transactionId||'');if(sid&&!saleById[sid])warnings.push({type:'invoice-sales-link-missing',id:key(i),saleId:sid});if(i.primary===true)issues.push({type:'invoice-marked-primary',id:key(i)});});
  return {ok:issues.length===0,issues:issues,warnings:warnings,checked:{purchase:p.length,sales:s.length,payments:pay.length,cash:cash.length,bank:bank.length,stock:stock.length,cogs:cogs}};
 }
-function engine(){var t=totals();t.reconciliation=reconcile();return t;}
-engine.totals=totals;engine.reconcile=reconcile;engine.version='20.9';
-window.V20_ACCOUNTING_VERSION='20.9';
+function engine(){normalizeBankDirections();var cm=normalizeCashDirections();var t=totals();if(cm&&cm.unknown)t.reconciliation={ok:false,issues:[{type:'cash-direction-missing',count:cm.unknown}],warnings:[]};else t.reconciliation=reconcile();return t;}
+engine.totals=totals;engine.reconcile=reconcile;engine.version='20.10';
+window.V20_ACCOUNTING_VERSION='20.10';
 window.V20AccountingEngine=engine;
-window.V20AccountingEngine.version='20.9';
-window.finalHealth=function(){var issues=[],warnings=[];var r=reconcile();r.issues.forEach(function(x){issues.push((x.type||'issue')+': '+String(x.id||x.item||x.linkId||x.accountId||''));});r.warnings.forEach(function(x){warnings.push((x.type||'warning')+': '+String(x.id||x.item||x.linkId||x.accountId||''));});alert((issues.length?'❌ সমস্যা: '+issues.length:'✅ Structural/accounting errors নেই')+'\n'+(warnings.length?'⚠️ সতর্কতা: '+warnings.length:'✅ Accounting warnings নেই'));return {issues:issues,warnings:warnings};};
+window.V20AccountingEngine.version='20.10';
 })();
 </script>
 
-<!-- V20.9 AUDIT MANIFEST: single AccountingEngine; canonical COGS/stock valuation; full reconciliation; explicit bank direction; safe restore warnings. -->
+<!-- V20.10 AUDIT/LOCK MANIFEST: single AccountingEngine; canonical COGS/stock valuation; full reconciliation; explicit bank direction; safe restore warnings. -->
 
 <script>
 (function(){
-  window.V20AccountingLock={version:20.9,sourceOfTruth:'V20AccountingEngine',reconciliation:'V20AccountingEngine.reconcile'};
+  window.V20AccountingLock={version:20.10,sourceOfTruth:'V20AccountingEngine',reconciliation:'V20AccountingEngine.reconcile',status:'LOCKED'};
 })();
 </script>
 </body>
