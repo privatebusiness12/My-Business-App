@@ -5002,6 +5002,15 @@ window.v17UpdateLiveDue=v17LDUpdate;
         if(!table.classList.contains('no-serial')){
           var hr=thead.querySelector('tr')||thead;if(!hr.querySelector('.v19-serial-cell')){var th=doc.createElement('th');th.className='v19-serial-cell';th.textContent='ক্রমিক';hr.insertBefore(th,hr.firstChild);}
           Array.prototype.forEach.call(tbody.querySelectorAll('tr'),function(tr,i){if(!tr.querySelector('.v19-serial-cell')){var td=doc.createElement('td');td.className='v19-serial-cell';td.textContent=String(i+1);tr.insertBefore(td,tr.firstChild);}});
+          /* Keep footer totals aligned after inserting the serial column. */
+          table.querySelectorAll('tfoot tr').forEach(function(tr){
+            if(!tr.querySelector('.v19-serial-cell')){
+              var td=doc.createElement('th');
+              td.className='v19-serial-cell';
+              td.textContent='';
+              tr.insertBefore(td,tr.firstChild);
+            }
+          });
         }
         var cells=(thead.querySelector('tr')||thead).querySelectorAll('th'),di=-1;Array.prototype.forEach.call(cells,function(c,i){var h=norm(c.textContent);if(di<0&&(/তারিখ|date|সময়|time/.test(h)))di=i;});
         if(di>=0){var rows=Array.prototype.slice.call(tbody.querySelectorAll('tr'));rows.sort(function(a,b){var av=a.children[di]?dateValue(a.children[di].textContent):Number.MAX_SAFE_INTEGER,bv=b.children[di]?dateValue(b.children[di].textContent):Number.MAX_SAFE_INTEGER;return av-bv;});rows.forEach(function(r){tbody.appendChild(r);});rows.forEach(function(r,i){var c=r.querySelector('.v19-serial-cell');if(c)c.textContent=String(i+1);});}
