@@ -450,6 +450,7 @@ body{font-size:13px}
 .fc-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .fc-row>*{min-width:0}.fc-actions{display:flex;gap:8px;flex-wrap:wrap}.fc-actions button{flex:1 1 150px}
 .fc-list{max-height:360px;overflow:auto;border:1px solid #ddd;border-radius:10px;padding:8px}
+.fc-permanent-delete{background:#dc3545!important;color:#fff!important;border:0;border-radius:7px;padding:7px 10px;cursor:pointer;font-weight:700}.fc-permanent-delete:hover{filter:brightness(.92)}
 .fc-list-item{padding:9px;border-bottom:1px solid #eee}
 @media(max-width:700px){#final-control-center .control-grid{grid-template-columns:1fr 1fr}.fc-row{grid-template-columns:1fr}}
 @media(max-width:420px){#final-control-center .control-grid{grid-template-columns:1fr}}
@@ -1725,8 +1726,9 @@ body{font-size:13px}
         return;
       }
 
-      for (var i = bankTransactions.length - 1; i >= 0; i--) {
-        var item = bankTransactions[i];
+      var orderedBank = v19Chrono(bankTransactions).filter(function(x){return x&&!x.deleted&&!x.isDeleted;});
+      for (var i = 0; i < orderedBank.length; i++) {
+        var item = orderedBank[i];
         var isPlus = item.type.includes('+');
         tbody.innerHTML += '<tr>' +
           '<td><b>' + item.date + '</b></td>' +
@@ -1860,8 +1862,9 @@ body{font-size:13px}
         return;
       }
 
-      for (var i = cashList.length - 1; i >= 0; i--) {
-        var item = cashList[i];
+      var orderedCash = v19Chrono(cashList).filter(function(x){return x&&!x.deleted&&!x.isDeleted;});
+      for (var i = 0; i < orderedCash.length; i++) {
+        var item = orderedCash[i];
         var isIn = item.type === 'in';
         tbody.innerHTML += '<tr>' +
           '<td><b>' + item.date + '</b></td>' +
@@ -2135,7 +2138,7 @@ body{font-size:13px}
       var catFilter = document.getElementById('filter-exp-cat') ? document.getElementById('filter-exp-cat').value : 'all';
       var dateFilter = document.getElementById('filter-exp-date') ? document.getElementById('filter-exp-date').value : '';
 
-      var filtered = expenseList.filter(function(item) {
+      var filtered = v19Chrono(expenseList).filter(function(item) {
         var matchesCat = (catFilter === 'all') || (item.category === catFilter);
         var matchesDate = (!dateFilter) || (item.date === dateFilter);
         return matchesCat && matchesDate;
@@ -2156,7 +2159,7 @@ body{font-size:13px}
         other: 'অন্যান্য'
       };
 
-      for(var i = filtered.length - 1; i >= 0; i--) {
+      for(var i = 0; i < filtered.length; i++) {
         var exp = filtered[i];
         tbody.innerHTML += '<tr>' +
           '<td><b>' + exp.date + '</b></td>' +
@@ -2238,11 +2241,11 @@ body{font-size:13px}
       if(type === 'general') return;
 
       if(type === 'customer') {
-        var custDueItems = salesList.filter(function(item) { return parseFloat(item.due) > 0; });
+        var custDueItems = v19Chrono(salesList).filter(function(item) { return item&&!item.deleted&&!item.isDeleted&&parseFloat(item.due) > 0; });
         if(custDueItems.length === 0) select.innerHTML = '<option value="">কোনো পন্যের বাকি কাস্টমার নেই</option>';
         else for(var i = 0; i < custDueItems.length; i++) select.innerHTML += '<option value="' + custDueItems[i].id + '">' + custDueItems[i].customer + ' (বাকী: ' + custDueItems[i].due + ' ৳)</option>';
       } else if(type === 'supplier') {
-        var suppDueItems = purchaseList.filter(function(item) { return parseFloat(item.due) > 0; });
+        var suppDueItems = v19Chrono(purchaseList).filter(function(item) { return item&&!item.deleted&&!item.isDeleted&&parseFloat(item.due) > 0; });
         if(suppDueItems.length === 0) select.innerHTML = '<option value="">কোনো পন্যের বাকি সাপ্লায়ার নেই</option>';
         else for(var j = 0; j < suppDueItems.length; j++) select.innerHTML += '<option value="' + suppDueItems[j].id + '">' + suppDueItems[j].supplier + ' (বাকী: ' + suppDueItems[j].due + ' ৳)</option>';
       } else if(type === 'transport') {
@@ -2388,8 +2391,9 @@ body{font-size:13px}
       if(transTbody) {
         transTbody.innerHTML = '';
         var transDueItems = [];
-        salesList.forEach(function(x) { if(x.transportFareDue > 0) transDueItems.push(x); });
-        purchaseList.forEach(function(x) { if(x.transportFareDue > 0) transDueItems.push(x); });
+        v19Chrono(salesList).forEach(function(x) { if(x&&!x.deleted&&!x.isDeleted&&parseFloat(x.transportFareDue)>0) transDueItems.push(x); });
+        v19Chrono(purchaseList).forEach(function(x) { if(x&&!x.deleted&&!x.isDeleted&&parseFloat(x.transportFareDue)>0) transDueItems.push(x); });
+        transDueItems=v19Chrono(transDueItems);
 
         if(transDueItems.length === 0) transTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">কোনো গাড়ি ভাড়া বাকি নেই</td></tr>';
         else for(var k = 0; k < transDueItems.length; k++) transTbody.innerHTML += '<tr><td>' + transDueItems[k].date + '</td><td><b>' + transDueItems[k].transportName + '</b></td><td>' + (transDueItems[k].transportPhone || 'N/A') + '</td><td style="color: red; font-weight: bold;">' + transDueItems[k].transportFareDue + ' ৳</td><td>' + (transDueItems[k].transportPhone ? '<a href="tel:' + transDueItems[k].transportPhone + '"><button class="btn-action btn-call"><i class="fa-solid fa-phone"></i></button></a>' : 'N/A') + '</td></tr>';
@@ -2404,7 +2408,7 @@ body{font-size:13px}
         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">' + (currentLang === 'en' ? 'No transaction information found' : 'কোনো লেনদেনের তথ্য পাওয়া যায়নি') + '</td></tr>';
         return;
       }
-      var revList = paymentHistory.slice().reverse();
+      var revList = v19Chrono(paymentHistory).filter(function(x){return x&&!x.deleted&&!x.isDeleted;});
       for(var i = 0; i < revList.length; i++) {
         var item = revList[i];
         tbody.innerHTML += '<tr><td><b>' + item.date + '</b></td><td>' + item.name + '</td><td>' + (currentLang === 'en' ? item.type : item.typeBn) + '</td><td style="font-weight: bold; color: green;">' + item.amount.toFixed(2) + ' ৳</td><td>' + item.note + '</td></tr>';
@@ -2842,12 +2846,63 @@ body{font-size:13px}
       document.getElementById('s-due').value = '';
     }
 
-    function renderPurchaseTable() {
+    /* ===== V19.2 Universal Data Visibility + Chronological Ordering =====
+   Restored records are always normalized back to active state, and all
+   date-bearing views use one stable ascending chronological comparator. */
+function v19DateKey(v){
+  var x=v||{};
+  var raw=x.date||x.entryDate||x.purchaseDate||x.saleDate||x.paymentDate||x.time||x.at||x.createdAt||x.updatedAt||'';
+  if(raw instanceof Date) return raw.getTime();
+  var str=String(raw||'').trim();
+  if(!str) return Number.POSITIVE_INFINITY;
+  var m=str.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[ T](\d{1,2}):?(\d{2})?(?::?(\d{2}))?)?/);
+  if(m){
+    var d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0));
+    if(!isNaN(d.getTime())) return d.getTime();
+  }
+  var t=Date.parse(str); return isNaN(t)?Number.POSITIVE_INFINITY:t;
+}
+function v19IdKey(v){
+  var id=v&&v.id!=null?String(v.id):'';
+  var n=Number(id); return isFinite(n)?n:0;
+}
+function v19DateAsc(a,b){
+  var da=v19DateKey(a), db=v19DateKey(b);
+  if(da!==db) return da-db;
+  var ia=v19IdKey(a), ib=v19IdKey(b);
+  if(ia!==ib) return ia-ib;
+  return 0;
+}
+function v19Chrono(list){ return (Array.isArray(list)?list:[]).slice().sort(v19DateAsc); }
+function v19ActivateRecord(rec){
+  var r=clone(rec||{});
+  /* A record restored from old delete/audit data may still carry a deletion
+     flag. Those flags must never survive a successful Restore. */
+  delete r.deleted; delete r.isDeleted; delete r._deleted; delete r.__deleted;
+  r.deleted=false; r.isDeleted=false;
+  return r;
+}
+function v19NormalizeAllActiveData(){
+  ['purchaseList','salesList','paymentHistory','generalDuePayments','expenseList','cashList','bankTransactions','shipmentList','contactList','productList','employeeList','reminderList','noteList','invoiceList','investorList'].forEach(function(k){
+    if(Array.isArray(window[k])) window[k]=window[k].map(function(x){
+      if(x&&typeof x==='object' && (x.deleted===true || x.isDeleted===true)) return x;
+      return x;
+    });
+  });
+}
+function v19SortAllDateArrays(){
+  ['purchaseList','salesList','paymentHistory','generalDuePayments','expenseList','cashList','bankTransactions','shipmentList','reminderList','invoiceList','investorList'].forEach(function(k){
+    if(Array.isArray(window[k])) window[k]=v19Chrono(window[k]);
+  });
+}
+
+function renderPurchaseTable() {
       var tbody = document.getElementById('purchase-records');
       if(!tbody) return;
       tbody.innerHTML = '';
-      for(var i = 0; i < purchaseList.length; i++) {
-        var data = purchaseList[i];
+      var orderedPurchase = v19Chrono(purchaseList).filter(function(x){return x&&!x.deleted&&!x.isDeleted;});
+      for(var i = 0; i < orderedPurchase.length; i++) {
+        var data = orderedPurchase[i];
         tbody.innerHTML += '<tr>' +
           '<td>' + data.date + '</td>' +
           '<td>' + data.challan + '</td>' +
@@ -2866,8 +2921,9 @@ body{font-size:13px}
       var tbody = document.getElementById('sales-records');
       if(!tbody) return;
       tbody.innerHTML = '';
-      for(var i = 0; i < salesList.length; i++) {
-        var data = salesList[i];
+      var orderedSales = v19Chrono(salesList).filter(function(x){return x&&!x.deleted&&!x.isDeleted;});
+      for(var i = 0; i < orderedSales.length; i++) {
+        var data = orderedSales[i];
         tbody.innerHTML += '<tr>' +
           '<td>' + data.date + '</td>' +
           '<td>' + data.memo + '</td>' +
@@ -2996,21 +3052,22 @@ body{font-size:13px}
     function brVal(x){return x===undefined||x===null?'':String(x);}
     function buildBusinessReportRows(){
       var rows=[];
-      purchaseList.forEach(function(x){rows.push({type:'purchase',typeBn:'ক্রয়',date:x.date||'',ref:x.challan||'',party:x.supplier||'',vehicle:x.transportName||'',site:'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||'',primary:true});});
-      salesList.forEach(function(x){rows.push({type:'sale',typeBn:'বিক্রয়',date:x.date||'',ref:x.memo||'',party:x.customer||'',vehicle:x.transportName||'',site:x.site||'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.pricingMode==='vehicle'?((x.vehicleCount||0)+' গাড়ি × '+(x.qtyPerVehicle||0)+' '+(x.unit||'')+' = '+(x.qty||0)+' '+(x.unit||'')):(x.qty||''),unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||'',primary:true});});
-      expenseList.forEach(function(x){rows.push({type:'expense',typeBn:'খরচ',date:x.date||'',ref:'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.category||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',primary:true});});
+      purchaseList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'purchase',typeBn:'ক্রয়',date:x.date||'',ref:x.challan||'',party:x.supplier||'',vehicle:x.transportName||'',site:'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||'',primary:true});});
+      salesList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'sale',typeBn:'বিক্রয়',date:x.date||'',ref:x.memo||'',party:x.customer||'',vehicle:x.transportName||'',site:x.site||'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.pricingMode==='vehicle'?((x.vehicleCount||0)+' গাড়ি × '+(x.qtyPerVehicle||0)+' '+(x.unit||'')+' = '+(x.qty||0)+' '+(x.unit||'')):(x.qty||''),unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,note:x.transportDetails||'',primary:true});});
+      expenseList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'expense',typeBn:'খরচ',date:x.date||'',ref:'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.category||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',primary:true});});
       (Array.isArray(generalDuePayments)?generalDuePayments:[]).forEach(function(x){
+        if(!x||x.deleted===true||x.isDeleted===true)return;
         rows.push({type:'generalDue',typeBn:x.direction==='receivable'?'এককালীন কাস্টমার/সাইট জমা':'এককালীন সাপ্লায়ার/ড্রাইভার পরিশোধ',
           date:x.date||'',ref:x.id||'',party:x.name||'',vehicle:'',site:'',boat:'',item:x.matchType||'general',
           qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',primary:false});
       });
       // Auto-generated payment/cash rows are retained for their own filters, but are NOT included in the default "সব" view.
-      paymentHistory.forEach(function(x){rows.push({type:'payment',typeBn:'পেমেন্ট',date:x.date||'',ref:x.sourceId||'',party:x.name||'',vehicle:'',site:'',boat:'',item:x.typeBn||x.type||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',autoSource:x.autoSource||'',primary:false});});
-      cashList.forEach(function(x){rows.push({type:'cash',typeBn:'ক্যাশ',date:x.date||'',ref:x.sourceId||x.id||'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.type||'',qty:'',unit:'',amount:x.amount||0,paid:x.type==='in'?x.amount:0,due:0,note:'',autoSource:x.autoSource||'',primary:false});});
-      bankTransactions.forEach(function(x){rows.push({type:'bank',typeBn:'ব্যাংক',date:x.date||'',ref:x.id||'',party:x.title||x.name||'',vehicle:'',site:'',boat:'',item:x.type||'',qty:'',unit:'',amount:x.amount||0,paid:0,due:0,note:x.note||'',primary:false});});
-      invoiceList.forEach(function(x){rows.push({type:'invoice',typeBn:'চালান',date:x.date||'',ref:x.no||'',party:x.customer||'',vehicle:'',site:x.site||'',boat:'',item:x.item||'',qty:x.qty||'',unit:'',amount:x.total||0,paid:0,due:0,note:x.note||'',primary:true});});
-      shipmentList.forEach(function(x){rows.push({type:'shipment',typeBn:'মালপত্র',date:x.date||'',ref:x.trackingNo||x.id||'',party:x.party||x.customer||'',vehicle:x.vehicle||x.transportName||'',site:x.destination||x.to||'',boat:(x.vehicle||'').toLowerCase().includes('boat')?x.vehicle:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:0,paid:0,due:0,note:(x.origin||x.from||'')+' → '+(x.destination||x.to||''),primary:false});});
-      return rows.sort(function(a,b){return String(b.date).localeCompare(String(a.date));});
+      paymentHistory.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'payment',typeBn:'পেমেন্ট',date:x.date||'',ref:x.sourceId||'',party:x.name||'',vehicle:'',site:'',boat:'',item:x.typeBn||x.type||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',autoSource:x.autoSource||'',primary:false});});
+      cashList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'cash',typeBn:'ক্যাশ',date:x.date||'',ref:x.sourceId||x.id||'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.type||'',qty:'',unit:'',amount:x.amount||0,paid:x.type==='in'?x.amount:0,due:0,note:'',autoSource:x.autoSource||'',primary:false});});
+      bankTransactions.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'bank',typeBn:'ব্যাংক',date:x.date||'',ref:x.id||'',party:x.title||x.name||'',vehicle:'',site:'',boat:'',item:x.type||'',qty:'',unit:'',amount:x.amount||0,paid:0,due:0,note:x.note||'',primary:false});});
+      invoiceList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'invoice',typeBn:'চালান',date:x.date||'',ref:x.no||'',party:x.customer||'',vehicle:'',site:x.site||'',boat:'',item:x.item||'',qty:x.qty||'',unit:'',amount:x.total||0,paid:0,due:0,note:x.note||'',primary:true});});
+      shipmentList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'shipment',typeBn:'মালপত্র',date:x.date||'',ref:x.trackingNo||x.id||'',party:x.party||x.customer||'',vehicle:x.vehicle||x.transportName||'',site:x.destination||x.to||'',boat:(x.vehicle||'').toLowerCase().includes('boat')?x.vehicle:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:0,paid:0,due:0,note:(x.origin||x.from||'')+' → '+(x.destination||x.to||''),primary:false});});
+      return rows.sort(v19DateAsc);
     }
     function openBusinessReport(){
       renderMaterialQuantitySummary();
@@ -3621,7 +3678,7 @@ body{font-size:13px}
     function invoiceData(){var q=+document.getElementById('iv-qty').value||0,r=+document.getElementById('iv-rate').value||0;return{id:uid(),no:document.getElementById('iv-no').value||('INV-'+Date.now()),date:document.getElementById('iv-date').value,customer:document.getElementById('iv-customer').value,phone:document.getElementById('iv-phone').value,site:document.getElementById('iv-site').value,item:document.getElementById('iv-item').value,qty:q,rate:r,total:q*r,note:document.getElementById('iv-note').value};}
     function saveInvoice(){var x=invoiceData();if(!x.customer||!x.item)return alert(T('কাস্টমার ও পণ্য দিন','Enter customer and product'));invoiceList.push(x);saveAllExtra();showInvoice(x);renderInvoiceList();}
     function showInvoice(x){document.getElementById('invoice-preview').innerHTML='<div id="print-invoice"><h2>'+T('চালান','Invoice')+' #'+esc(x.no)+'</h2><p>'+esc(x.date)+' | '+esc(x.customer)+' | '+esc(x.phone)+'</p><p>'+esc(x.site)+'</p><table><tr><th>'+T('পণ্য','Product')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('দর','Rate')+'</th><th>'+T('মোট','Total')+'</th></tr><tr><td>'+esc(x.item)+'</td><td>'+x.qty+'</td><td>'+x.rate.toFixed(2)+'</td><td>'+x.total.toFixed(2)+'</td></tr></table><h3 style="text-align:right">'+T('সর্বমোট','Grand Total')+': '+x.total.toFixed(2)+' ৳</h3><p>'+esc(x.note)+'</p></div>';}
-    function renderInvoiceList(){var d=document.getElementById('iv-list');if(!d)return;d.innerHTML=invoiceList.slice().reverse().map(x=>'<div class="list-row"><b>'+esc(x.no)+'</b> — '+esc(x.customer)+' — '+x.total.toFixed(2)+' ৳ <button class="btn-action" onclick="showInvoice('+JSON.stringify(x).replace(/"/g,'&quot;')+')">'+T('দেখুন','View')+'</button></div>').join('')||T('কোনো চালান নেই','No invoices');}
+    function renderInvoiceList(){var d=document.getElementById('iv-list');if(!d)return;d.innerHTML=v19Chrono(invoiceList).filter(function(x){return x&&!x.deleted&&!x.isDeleted;}).map(x=>'<div class="list-row"><b>'+esc(x.no)+'</b> — '+esc(x.customer)+' — '+x.total.toFixed(2)+' ৳ <button class="btn-action" onclick="showInvoice('+JSON.stringify(x).replace(/"/g,'&quot;')+')">'+T('দেখুন','View')+'</button></div>').join('')||T('কোনো চালান নেই','No invoices');}
     function printInvoicePreview(){var x=document.getElementById('print-invoice');if(!x)return alert(T('আগে চালান তৈরি করুন','Create an invoice first'));var w=window.open('','_blank');if(!w)return;w.document.write('<html><head><meta charset="utf-8"><title>Invoice</title><style>@page{size:A4 portrait;margin:10mm}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:7px}th{background:#eef2f7}.col-total-label,.col-total{font-weight:800}</style></head><body>'+x.outerHTML+'</body></html>');w.document.close();addAutomaticPrintTotals(w.document);setTimeout(function(){w.focus();w.print();},150);}
 
     function investorSummary(){
@@ -3691,7 +3748,7 @@ body{font-size:13px}
     function vbTableHtml(rows,title){
       var total=function(k){return rows.reduce(function(a,x){return a+(parseFloat(x[k])||0)},0)};
       var h='<div class="report-section"><h2>'+esc(title)+'</h2><table><thead><tr><th>'+T('নাম','Name')+'</th><th>'+T('তারিখসমূহ','Dates')+'</th><th>'+T('ড্রাইভার/সুকানী','Driver/Sukani')+'</th><th>'+T('মোট বার','Times')+'</th><th>'+T('ক্রয়/এনেছে','Brought')+'</th><th>'+T('বিক্রয়/নিয়েছে','Taken')+'</th><th>CFT</th><th>Ton</th><th>Pcs</th><th>'+T('মোট টাকা','Total Amount')+'</th><th>'+T('পরিশোধ','Paid')+'</th><th>'+T('বাকি','Due')+'</th><th>'+T('ভাড়া বাকি','Fare Due')+'</th></tr></thead><tbody>';
-      rows.forEach(function(x){h+='<tr><td>'+esc(x.name)+'</td><td>'+esc(Array.from(new Set(x.dates||[])).sort().join(', ')||'—')+'</td><td>'+esc(x.person||'—')+'</td><td>'+x.count+'</td><td>'+x.purchaseCount+'</td><td>'+x.saleCount+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(3)+'</td><td>'+x.pcs.toFixed(2)+'</td><td>'+x.amount.toFixed(2)+'</td><td>'+x.paid.toFixed(2)+'</td><td>'+x.due.toFixed(2)+'</td><td>'+x.transportDue.toFixed(2)+'</td></tr>';});
+      rows.forEach(function(x){h+='<tr><td>'+esc(x.name)+'</td><td>'+esc(Array.from(new Set(x.dates||[])).sort(function(a,b){return String(a).localeCompare(String(b));}).join(', ')||'—')+'</td><td>'+esc(x.person||'—')+'</td><td>'+x.count+'</td><td>'+x.purchaseCount+'</td><td>'+x.saleCount+'</td><td>'+x.cft.toFixed(2)+'</td><td>'+x.ton.toFixed(3)+'</td><td>'+x.pcs.toFixed(2)+'</td><td>'+x.amount.toFixed(2)+'</td><td>'+x.paid.toFixed(2)+'</td><td>'+x.due.toFixed(2)+'</td><td>'+x.transportDue.toFixed(2)+'</td></tr>';});
       h+='</tbody><tfoot><tr><th class="col-total-label">'+T('মোট:','Total:')+'</th><th>—</th><th>—</th><th class="col-total">'+total('count').toFixed(0)+'</th><th class="col-total">'+total('purchaseCount').toFixed(0)+'</th><th class="col-total">'+total('saleCount').toFixed(0)+'</th><th class="col-total">'+total('cft').toFixed(2)+'</th><th class="col-total">'+total('ton').toFixed(3)+'</th><th class="col-total">'+total('pcs').toFixed(2)+'</th><th class="col-total">'+total('amount').toFixed(2)+'</th><th class="col-total">'+total('paid').toFixed(2)+'</th><th class="col-total">'+total('due').toFixed(2)+'</th><th class="col-total">'+total('transportDue').toFixed(2)+'</th></tr></tfoot></table></div>';
       return '<div class="br-table-wrap">'+h+'</div>';
     }
@@ -3746,7 +3803,7 @@ body{font-size:13px}
     function renderInvestors(){
       var s=investorSummary(), g=document.getElementById('inv-grand-total'),c=document.getElementById('inv-count'),ec=document.getElementById('inv-entry-count'),tb=document.getElementById('inv-history'),tf=document.getElementById('inv-history-total');
       if(g)g.innerText='৳'+s.total.toFixed(2); if(c)c.innerText=s.rows.length; if(ec)ec.innerText=investorList.length;
-      if(tb)tb.innerHTML=(investorList||[]).slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date))}).map(function(x){return '<tr><td>'+esc(x.date)+'</td><td><b>'+esc(x.investorName)+'</b></td><td>'+Number(x.amount||0).toFixed(2)+' ৳</td><td>'+esc(investorMethodLabel(x.method))+'</td><td>'+esc(x.account||'')+'</td><td>'+esc(x.note||'')+'</td><td><button class="btn-action" onclick="editInvestor('+JSON.stringify(x).replace(/"/g,'&quot;')+')">✏️</button> <button class="btn-action" onclick="deleteInvestor(\''+String(x.id).replace(/'/g,"\\'")+'\')">🗑</button></td></tr>';}).join('')||'<tr><td colspan="7">'+T('কোনো বিনিয়োগ নেই','No investments')+'</td></tr>';
+      if(tb)tb.innerHTML=v19Chrono(investorList).filter(function(x){return x&&!x.deleted&&!x.isDeleted;}).map(function(x){return '<tr><td>'+esc(x.date)+'</td><td><b>'+esc(x.investorName)+'</b></td><td>'+Number(x.amount||0).toFixed(2)+' ৳</td><td>'+esc(investorMethodLabel(x.method))+'</td><td>'+esc(x.account||'')+'</td><td>'+esc(x.note||'')+'</td><td><button class="btn-action" onclick="editInvestor('+JSON.stringify(x).replace(/"/g,'&quot;')+')">✏️</button> <button class="btn-action" onclick="deleteInvestor(\''+String(x.id).replace(/'/g,"\\'")+'\')">🗑</button></td></tr>';}).join('')||'<tr><td colspan="7">'+T('কোনো বিনিয়োগ নেই','No investments')+'</td></tr>';
       if(tf)tf.innerHTML='<tr><th colspan="2" style="text-align:left;font-weight:900">'+T('মোট:','Total:')+'</th><th style="font-weight:900">'+s.total.toFixed(2)+' ৳</th><th colspan="4"></th></tr>';
       renderInvestorProfit();
     }
@@ -3772,7 +3829,7 @@ body{font-size:13px}
 
     function openDueReminder(){pageShell(['তাগাদা রিমাইন্ডার','Due Reminder'],['কাস্টমার ও সাপ্লায়ারের বাকি থেকে তাগাদার তালিকা তৈরি করুন এবং নিজের রিমাইন্ডারও রাখুন।','Create follow-up lists from customer/supplier dues and add personal reminders.'],`<div class="section-card"><div class="module-grid"><input id="rm-name" placeholder="${T('নাম','Name')}"><input id="rm-phone" placeholder="${T('মোবাইল','Phone')}"><input id="rm-date" type="date" value="${getTodayDate()}"><input id="rm-amount" type="number" placeholder="${T('বাকি টাকা','Due amount')}"><input id="rm-note" placeholder="${T('তাগাদার নোট','Reminder note')}"><button class="btn-submit" onclick="addReminder()">${T('রিমাইন্ডার যোগ করুন','Add Reminder')}</button></div></div><div class="section-card"><h3>${T('অটো বাকি তালিকা','Automatic Due List')}</h3><div id="rm-auto"></div></div><div class="section-card"><h3>${T('আমার রিমাইন্ডার','My Reminders')}</h3><div id="rm-list"></div></div>`);renderReminders();}
     function addReminder(){var n=document.getElementById('rm-name').value.trim();if(!n)return;reminderList.push({id:uid(),name:n,phone:document.getElementById('rm-phone').value,date:document.getElementById('rm-date').value,amount:+document.getElementById('rm-amount').value||0,note:document.getElementById('rm-note').value,done:false});saveAllExtra();renderReminders();}
-    function renderReminders(){var a=document.getElementById('rm-auto'),d=document.getElementById('rm-list');if(!a)return;var auto=salesList.filter(x=>+x.due>0).map(x=>'<div class="list-row"><b>'+esc(x.customer)+'</b> — '+(+x.due).toFixed(2)+' ৳ '+(x.phone?'<a href="tel:'+esc(x.phone)+'">☎</a>':'')+'</div>').join('')||T('কোনো কাস্টমার বাকি নেই','No customer due');a.innerHTML=auto;d.innerHTML=reminderList.slice().reverse().map(x=>'<div class="list-row"><b>'+esc(x.name)+'</b> — '+x.date+' — '+x.amount.toFixed(2)+' ৳ — '+esc(x.note)+' <button class="btn-action" onclick="deleteReminder('+x.id+')">🗑</button></div>').join('')||T('কোনো রিমাইন্ডার নেই','No reminders');}
+    function renderReminders(){var a=document.getElementById('rm-auto'),d=document.getElementById('rm-list');if(!a)return;var auto=salesList.filter(x=>+x.due>0).map(x=>'<div class="list-row"><b>'+esc(x.customer)+'</b> — '+(+x.due).toFixed(2)+' ৳ '+(x.phone?'<a href="tel:'+esc(x.phone)+'">☎</a>':'')+'</div>').join('')||T('কোনো কাস্টমার বাকি নেই','No customer due');a.innerHTML=auto;d.innerHTML=v19Chrono(reminderList).filter(function(x){return x&&!x.deleted&&!x.isDeleted;}).map(x=>'<div class="list-row"><b>'+esc(x.name)+'</b> — '+x.date+' — '+x.amount.toFixed(2)+' ৳ — '+esc(x.note)+' <button class="btn-action" onclick="deleteReminder('+x.id+')">🗑</button></div>').join('')||T('কোনো রিমাইন্ডার নেই','No reminders');}
     function deleteReminder(id){reminderList=reminderList.filter(x=>x.id!==id);saveAllExtra();renderReminders();}
 
     function openNotepad(){pageShell(['নোটপ্যাড','Notepad'],['দ্রুত নোট লিখুন, গুরুত্বপূর্ণ নোট পিন করুন এবং পরে খুঁজে নিন।','Write quick notes, pin important notes and search them later.'],`<div class="section-card"><input id="nt-title" placeholder="${T('নোটের শিরোনাম','Note title')}"><textarea id="nt-body" rows="6" placeholder="${T('আপনার নোট লিখুন...','Write your note...')}"></textarea><button class="btn-submit" onclick="addNote()">${T('নোট সেভ করুন','Save Note')}</button></div><div class="section-card"><input id="nt-search" oninput="renderNotes()" placeholder="${T('নোট খুঁজুন','Search notes')}"><div id="nt-list"></div></div>`);renderNotes();}
@@ -3850,7 +3907,7 @@ body{font-size:13px}
       var tbody=document.getElementById('st-records'), k=document.getElementById('st-kpis'); if(!tbody||!k)return;
       var counts={planned:0,loading:0,transit:0,site:0,delivered:0,cancelled:0}; shipmentList.forEach(function(x){counts[x.status]=(counts[x.status]||0)+1});
       k.innerHTML='<div class="st-kpi"><i class="fa-solid fa-box"></i><b>'+shipmentList.length+'</b><span>'+(currentLang==='en'?'Total Shipments':'মোট চালান')+'</span></div><div class="st-kpi"><i class="fa-solid fa-road"></i><b>'+counts.transit+'</b><span>'+(currentLang==='en'?'In Transit':'রাস্তায়')+'</span></div><div class="st-kpi"><i class="fa-solid fa-location-dot"></i><b>'+counts.site+'</b><span>'+(currentLang==='en'?'At Site':'সাইটে')+'</span></div><div class="st-kpi"><i class="fa-solid fa-circle-check"></i><b>'+counts.delivered+'</b><span>'+(currentLang==='en'?'Delivered':'ডেলিভারি')+'</span></div><div class="st-kpi"><i class="fa-solid fa-triangle-exclamation"></i><b>'+shipmentList.filter(function(x){return x.eta&&x.eta<getTodayDate()&&x.status!=='delivered'&&x.status!=='cancelled'}).length+'</b><span>'+(currentLang==='en'?'Overdue':'সময় পেরিয়েছে')+'</span></div>';
-      var q=(document.getElementById('st-search')||{}).value||'', filter=(document.getElementById('st-filter')||{}).value||'all'; q=q.toLowerCase(); tbody.innerHTML=''; var list=shipmentList.slice().reverse().filter(function(x){var text=[x.id,x.item,x.party,x.phone,x.vehicle,x.driver,x.origin,x.destination].join(' ').toLowerCase();return (!q||text.indexOf(q)>=0)&&(filter==='all'||x.status===filter)});
+      var q=(document.getElementById('st-search')||{}).value||'', filter=(document.getElementById('st-filter')||{}).value||'all'; q=q.toLowerCase(); tbody.innerHTML=''; var list=v19Chrono(shipmentList).filter(function(x){return x&&!x.deleted&&!x.isDeleted;}).filter(function(x){var text=[x.id,x.item,x.party,x.phone,x.vehicle,x.driver,x.origin,x.destination].join(' ').toLowerCase();return (!q||text.indexOf(q)>=0)&&(filter==='all'||x.status===filter)});
       if(!list.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:25px">'+(currentLang==='en'?'No shipment found.':'কোনো মালপত্রের তথ্য পাওয়া যায়নি।')+'</td></tr>';return;}
       list.forEach(function(x){var overdue=x.eta&&x.eta<getTodayDate()&&x.status!=='delivered'&&x.status!=='cancelled'; tbody.innerHTML+='<tr><td><b>'+escST(x.id)+'</b><br><small>'+escST(x.date)+'</small></td><td>'+escST(x.item)+'<br>'+escST(x.qty)+' '+escST(x.unit)+'</td><td>'+escST(x.party)+'<br>'+escST(x.phone)+'</td><td>'+escST(x.origin)+' → '+escST(x.destination)+'</td><td>'+escST(x.vehicle)+'<br>'+escST(x.driver)+'</td><td class="'+(overdue?'st-overdue':'')+'">'+escST(x.eta||'—')+(overdue?'<br>'+(currentLang==='en'?'OVERDUE':'সময় পেরিয়েছে'):'')+'</td><td><span class="st-status '+x.status+'">'+escST(stStatusLabel(x.status))+'</span></td><td><div class="st-actions"><button class="st-btn blue" onclick="showShipmentDetail(\''+escST(x.id)+'\')">'+(currentLang==='en'?'View':'দেখুন')+'</button><button class="st-btn green" onclick="updateShipmentStatus(\''+escST(x.id)+'\',\'delivered\')">'+(currentLang==='en'?'Delivered':'ডেলিভারি')+'</button><button class="st-btn red" onclick="deleteShipment(\''+escST(x.id)+'\')">'+(currentLang==='en'?'Delete':'মুছুন')+'</button></div></td></tr>';});
     }
@@ -3921,8 +3978,16 @@ body{font-size:13px}
     function addAutomaticPrintTotals(doc){
       if(!doc || !doc.querySelectorAll) return;
       doc.querySelectorAll('table').forEach(function(table){
-        if(table.querySelector('tfoot')) return;
+        var existingFoot=table.querySelector('tfoot');
         var head=table.querySelector('thead');
+        if(existingFoot && head){
+          var hc=head.querySelectorAll('th').length;
+          existingFoot.querySelectorAll('tr').forEach(function(fr){
+            var cells=fr.children.length;
+            while(cells<hc){var blank=doc.createElement('th');blank.textContent='';fr.insertBefore(blank,fr.firstChild);cells++;}
+          });
+          return;
+        }
         var body=table.querySelector('tbody');
         if(!head || !body) return;
         var headers=Array.from(head.querySelectorAll('th')).map(function(x){return (x.textContent||'').trim().toLowerCase();});
@@ -3985,9 +4050,7 @@ body{font-size:13px}
       var pcs = mats.reduce(function(a,x){return a+x.pc},0);
       var today = new Date().toLocaleString();
 
-      var rows = (Array.isArray(salesList)?salesList:[]).slice().sort(function(a,b){
-        return String(b.date||'').localeCompare(String(a.date||''));
-      }).slice(0,12);
+      var rows = (Array.isArray(salesList)?salesList:[]).slice().sort(v19DateAsc).filter(function(x){return x&&!x.deleted&&!x.isDeleted;}).slice(0,12);
 
       var html = '<!doctype html><html><head><meta charset="utf-8"><title>PRIVATE BUSINESS - Dashboard Report</title>'+
         '<style>'+
@@ -4322,7 +4385,7 @@ window.finalPanel=function(t){
  backup:`<h3>💾 Backup & Restore</h3><div class="fc-actions"><button onclick="finalBackup()">⬇️ Backup Download</button><label style="padding:10px;border:1px solid #ccc;border-radius:8px;cursor:pointer">⬆️ Restore JSON<input hidden type="file" accept=".json,application/json" onchange="finalRestore(this.files[0])"></label></div><p>Restore করার আগে অবশ্যই বর্তমান Backup নিন।</p>`,
  security:`<h3>🔐 Security</h3><p>Login নিরাপত্তা Firebase Authentication-এর মাধ্যমে রাখুন। Password HTML/LocalStorage-এ সংরক্ষণ করা হবে না।</p>`,
  notify:`<h3>🔔 Notification</h3><p>তাগাদা রিমাইন্ডার খাতার মাধ্যমে Due Reminder পরিচালনা করুন।</p><button onclick="finalGo('reminder')">🔔 Reminder খুলুন</button>`,
- trash:`<h3>🗑️ Recycle Bin</h3><p>ডিলিট করা রেকর্ড থাকলে এখানে রাখা হবে। স্থায়ীভাবে মুছে ফেলার আগে সতর্ক থাকুন।</p><div id="fc-trash-list" class="fc-list"></div><button onclick="renderTrash()">🔄 Refresh</button>`,
+ trash:`<h3>🗑️ Recycle Bin</h3><p>ডিলিট করা রেকর্ড এখানে থাকবে। Restore করলে আবার সক্রিয় হবে; “স্থায়ীভাবে ডিলিট” করলে আর Restore করা যাবে না।</p><div id="fc-trash-list" class="fc-list"></div><button onclick="renderTrash()">🔄 Refresh</button>`,
  history:`<h3>🕘 Complete History</h3><div id="fc-history-list" class="fc-list"></div><div class="fc-actions"><button onclick="renderHistory()">🔄 Refresh</button><button onclick="printFinalHistory()">🖨️ Print / PDF</button></div>`,
  };
  p.innerHTML=views[t]||'<p>অপশন পাওয়া যায়নি।</p>';
@@ -4789,6 +4852,7 @@ window.v17UpdateLiveDue=v17LDUpdate;
     }catch(e){}
   }
   function afterMutation(){
+    try{v19NormalizeAllActiveData();v19SortAllDateArrays();}catch(e){}
     try{if(typeof rebuildAllOneTimeAllocations==='function')rebuildAllOneTimeAllocations();}catch(e){}
     try{if(typeof saveAllExtra==='function')saveAllExtra();}catch(e){}
     try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}
@@ -4853,20 +4917,94 @@ window.v17UpdateLiveDue=v17LDUpdate;
   function restoreTrashIndex(i){
     var t=trashList(),v=t[i];if(!v)return false;
     var listName=v.list||mapFor(v.type);if(!listName)return false;
-    var a=arr(listName),rec=clone(v.record);
+    var a=arr(listName),rec=v19ActivateRecord(v.record);
     var existing=a.findIndex(function(x){return String(x&&x.id)===String(rec&&rec.id);});
     if(existing>=0){a[existing]=rec;}else{var pos=Math.max(0,Math.min(Number(v.index)||a.length,a.length));a.splice(pos,0,rec);}
     window[listName]=a;
-    (v.related&&v.related.payment||[]).forEach(function(p){if(!arr('paymentHistory').some(function(x){return String(x.id)===String(p.id)}))arr('paymentHistory').push(clone(p));});
-    (v.related&&v.related.cash||[]).forEach(function(c){if(!arr('cashList').some(function(x){return String(x.id)===String(c.id)}))arr('cashList').push(clone(c));});
+    (v.related&&v.related.payment||[]).forEach(function(p){p=v19ActivateRecord(p);if(!arr('paymentHistory').some(function(x){return String(x.id)===String(p.id)})){arr('paymentHistory').push(p);}});
+    (v.related&&v.related.cash||[]).forEach(function(c){c=v19ActivateRecord(c);if(!arr('cashList').some(function(x){return String(x.id)===String(c.id)})){arr('cashList').push(c);}});
+    v19SortAllDateArrays();
     t.splice(i,1);setLS(TRASH_KEY,t);
     auditSafe('পুনরুদ্ধার','Recycle Bin','রেকর্ড মূল অবস্থানে Restore করা হয়েছে',null,rec);
-    afterMutation();return true;
+    afterMutation();
+    try{if(typeof saveAllExtra==='function')saveAllExtra();}catch(e){}
+    try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}
+    try{if(typeof refreshAllDependentViews==='function')refreshAllDependentViews();}catch(e){}
+    return true;
   }
   window.finalRestoreTrash=function(i){if(restoreTrashIndex(i)){try{renderTrash();}catch(e){}alert('Restore সফল হয়েছে।');}};
+
+  /* ---------- Permanent delete from Recycle Bin ----------
+     Removes the business record from every active dataset and also removes
+     any dependent payment/cash records that were archived with the parent
+     Purchase/Sale/General-Due record. Audit history is intentionally kept
+     as an audit trail, but the deleted business record is no longer restorable. */
+  function permanentDeleteTrashIndex(i){
+    var t=trashList(),v=t[i];if(!v)return false;
+    var r=v.record||{},type=v.type||'',id=String(r.id==null?'':r.id);
+    if(!confirm('⚠️ স্থায়ীভাবে মুছে ফেলবেন?\n\nএই রেকর্ড আর Restore করা যাবে না এবং ব্যবসার হিসাব থেকেও সম্পূর্ণভাবে সরিয়ে দেওয়া হবে।\n\nচালিয়ে যেতে OK চাপুন।'))return false;
+
+    /* Remove any active copies defensively (normally none exist in Recycle Bin). */
+    var listName=v.list||mapFor(type);
+    if(listName && Array.isArray(window[listName])){
+      window[listName]=window[listName].filter(function(x){return String(x&&x.id)!==id;});
+    }
+
+    /* Cascade-delete linked transaction records from active lists. */
+    if(type==='purchase'||type==='sale'){
+      window.paymentHistory=arr('paymentHistory').filter(function(x){return String(x&&x.sourceId||'')!==id;});
+      window.cashList=arr('cashList').filter(function(x){return String(x&&x.sourceId||'')!==id;});
+    }
+    if(type==='generalDue'){
+      window.paymentHistory=arr('paymentHistory').filter(function(x){return String(x&&x.generalDueId||'')!==id;});
+      window.cashList=arr('cashList').filter(function(x){return String(x&&x.generalDueId||'')!==id;});
+    }
+
+    /* Also remove archived dependent records from the Recycle Bin. */
+    t=t.filter(function(item,idx){
+      if(idx===i)return false;
+      var ir=item.record||{},iid=String(ir.id==null?'':ir.id);
+      if((type==='purchase'||type==='sale') && (item.type==='payment'||item.type==='cash')){
+        if(String(ir.sourceId||'')===id)return false;
+      }
+      if(type==='generalDue' && (item.type==='payment'||item.type==='cash')){
+        if(String(ir.generalDueId||'')===id)return false;
+      }
+      return true;
+    });
+    setLS(TRASH_KEY,t);
+
+    /* Keep all local caches consistent. */
+    try{
+      localStorage.setItem('biz_purchase_list',JSON.stringify(window.purchaseList||[]));
+      localStorage.setItem('biz_sales_list',JSON.stringify(window.salesList||[]));
+      localStorage.setItem('biz_payment_history',JSON.stringify(window.paymentHistory||[]));
+      localStorage.setItem('biz_general_due_payments',JSON.stringify(window.generalDuePayments||[]));
+      localStorage.setItem('biz_expense_list',JSON.stringify(window.expenseList||[]));
+      localStorage.setItem('biz_cash_list',JSON.stringify(window.cashList||[]));
+      localStorage.setItem('biz_bank_transactions',JSON.stringify(window.bankTransactions||[]));
+      localStorage.setItem('shipmentTrackingList',JSON.stringify(window.shipmentList||[]));
+      localStorage.setItem('biz_contacts',JSON.stringify(window.contactList||[]));
+      localStorage.setItem('biz_products',JSON.stringify(window.productList||[]));
+      localStorage.setItem('biz_employees',JSON.stringify(window.employeeList||[]));
+      localStorage.setItem('biz_reminders',JSON.stringify(window.reminderList||[]));
+      localStorage.setItem('biz_notes',JSON.stringify(window.noteList||[]));
+      localStorage.setItem('biz_invoices',JSON.stringify(window.invoiceList||[]));
+      localStorage.setItem('biz_investors',JSON.stringify(window.investorList||[]));
+    }catch(e){}
+
+    auditSafe('স্থায়ীভাবে মুছে ফেলা','Recycle Bin','রেকর্ডটি স্থায়ীভাবে মুছে ফেলা হয়েছে; Restore আর সম্ভব নয়',r,null);
+    afterMutation();
+    try{renderDeleteManager();}catch(e){}
+    try{renderTrash();}catch(e){}
+    return true;
+  }
+  window.finalPermanentDeleteTrash=function(i){
+    if(permanentDeleteTrashIndex(i))alert('রেকর্ডটি স্থায়ীভাবে মুছে ফেলা হয়েছে।');
+  };
   window.renderTrash=function(){
     var x=document.getElementById('fc-trash-list');if(!x)return;var t=trashList();
-    x.innerHTML=t.length?t.map(function(v,i){var r=v.record||{};return '<div class="fc-list-item"><b>#'+(i+1)+' · '+esc2(v.type||'Record')+'</b><br>'+esc2(v.time||'')+'<br>'+esc2(first(r.date,r.name,r.supplier,r.customer,r.title,r.item,r.id))+' <button class="btn-action" onclick="finalRestoreTrash('+i+')">♻️ Restore</button></div>';}).join(''):'Recycle Bin খালি।';
+    x.innerHTML=t.length?t.map(function(v,i){var r=v.record||{};return '<div class="fc-list-item"><b>#'+(i+1)+' · '+esc2(v.type||'Record')+'</b><br>'+esc2(v.time||'')+'<br>'+esc2(first(r.date,r.name,r.supplier,r.customer,r.title,r.item,r.id))+' <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><button class="btn-action" onclick="finalRestoreTrash('+i+')">♻️ Restore</button><button class="fc-permanent-delete" onclick="finalPermanentDeleteTrash('+i+')">🗑️ স্থায়ীভাবে ডিলিট</button></div></div>';}).join(''):'Recycle Bin খালি।';
   };
 
   /* Migrate old delete events into the recycle bin when the oldData is available. */
@@ -4894,7 +5032,7 @@ window.v17UpdateLiveDue=v17LDUpdate;
     g.netPaid=g.paid;g.netDue=Math.max(0,g.due);return g;
   }
   function fixedSearch(q,side){
-    var all=(side==='purchase'?arr('purchaseList'):side==='sale'?arr('salesList'):arr('purchaseList').concat(arr('salesList'))).filter(function(r){return r&&!r.deleted&&!r.isDeleted;});
+    var all=v19Chrono(side==='purchase'?arr('purchaseList'):side==='sale'?arr('salesList'):arr('purchaseList').concat(arr('salesList'))).filter(function(r){return r&&!r.deleted&&!r.isDeleted;});
     q=norm(q);
     if(!q){
       var map=new Map();all.forEach(function(r){var id=identity(r,side||((r.customer||r.customerName)?'sale':'purchase')),key=norm(id.party)||norm(id.vehicle)||norm(id.boat)||('record-'+Math.random());if(!map.has(key))map.set(key,{records:[],label:id.party||id.vehicle||id.boat||'—'});map.get(key).records.push(r);});
@@ -4929,7 +5067,11 @@ window.v17UpdateLiveDue=v17LDUpdate;
   };
   try{applyTheme(localStorage.getItem('final_theme')||'light');}catch(e){applyTheme('light');}
 
-  /* ---------- Full backup / safe restore ---------- */
+  /* Normalize ordering once on V19 startup so records loaded from older versions
+   immediately appear in chronological order without requiring a new entry. */
+try{v19NormalizeAllActiveData();v19SortAllDateArrays();}catch(e){}
+
+/* ---------- Full backup / safe restore ---------- */
   function backupObject(){
     var arrays={};DATA_KEYS.forEach(function(k){arrays[k]=clone(window[k]);});
     return {format:'PRIVATE-BUSINESS-V19',version:19,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:getLS('pb_final_business',{}),accounting:getLS('pb_final_accounting',{currency:'৳',decimal:2}),history:clone(getLS(HIST_KEY,[])),trash:clone(trashList())}};
@@ -4943,7 +5085,7 @@ window.v17UpdateLiveDue=v17LDUpdate;
       if(!b||!b.arrays){alert('এই Backup ফাইলে প্রয়োজনীয় Data পাওয়া যায়নি।');return;}
       if(!confirm('Restore করলে বর্তমান ডাটার জায়গায় Backup-এর ডাটা বসবে। Restore-এর আগে বর্তমান ডাটার একটি নিরাপদ Backup স্বয়ংক্রিয়ভাবে রাখা হবে। চালিয়ে যাবেন?'))return;
       var current=backupObject();setLS('pb_pre_restore_backup_'+Date.now(),current);
-      DATA_KEYS.forEach(function(k){if(Object.prototype.hasOwnProperty.call(b.arrays,k)){var v=clone(b.arrays[k]);if(k==='bankAccounts'||k==='stockConversionRules')window[k]=v;else if(Array.isArray(v))window[k]=v;}});
+      DATA_KEYS.forEach(function(k){if(Object.prototype.hasOwnProperty.call(b.arrays,k)){var v=clone(b.arrays[k]);if(k==='bankAccounts'||k==='stockConversionRules')window[k]=v;else if(Array.isArray(v))window[k]=v.map(function(rec){return rec&&typeof rec==='object'?v19ActivateRecord(rec):rec;});}});
       if(b.settings&&b.settings.business)setLS('pb_final_business',b.settings.business);
       if(b.settings&&b.settings.accounting)setLS('pb_final_accounting',b.settings.accounting);
       if(b.settings&&Array.isArray(b.settings.history)){window.auditLog=b.settings.history;setLS(HIST_KEY,b.settings.history);}
@@ -4983,7 +5125,7 @@ window.v17UpdateLiveDue=v17LDUpdate;
   };
   window.printFinalHistory=function(){
     var h=Array.isArray(window.auditLog)?window.auditLog:getLS(HIST_KEY,[]),w=window.open('','_blank');if(!w)return alert('পপ-আপ অনুমতি দিন।');
-    var rows=h.slice().reverse().map(function(v,i){return '<tr><td>'+(i+1)+'</td><td>'+esc2(v.at||v.time||'')+'</td><td>'+esc2(v.action||'')+'</td><td>'+esc2(v.type||v.section||'')+'</td><td>'+esc2(v.details||'')+'</td></tr>';}).join('');
+    var rows=v19Chrono(h).map(function(v,i){return '<tr><td>'+(i+1)+'</td><td>'+esc2(v.at||v.time||'')+'</td><td>'+esc2(v.action||'')+'</td><td>'+esc2(v.type||v.section||'')+'</td><td>'+esc2(v.details||'')+'</td></tr>';}).join('');
     w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Complete History</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,"Noto Sans Bengali",sans-serif;color:#111}h1{text-align:center}table{width:100%;border-collapse:collapse}th,td{border:1px solid #777;padding:5px;font-size:9px;vertical-align:top}th{background:#eef2f7}</style></head><body><h1>সম্পূর্ণ হিস্ট্রি</h1><table class="no-serial"><thead><tr><th>ক্রমিক</th><th>তারিখ/সময়</th><th>কাজ</th><th>খাতা</th><th>বিবরণ</th></tr></thead><tbody>'+rows+'</tbody></table></body></html>');w.document.close();setTimeout(function(){w.focus();w.print();},100);
   };
 
@@ -5070,3 +5212,151 @@ html,body{max-width:100%;overflow-x:hidden}
 })();
 </script></body>
 </html>
+
+<script id="v20-final-stable-integrity-fix">
+(function(){
+'use strict';
+/* V20 FINAL STABLE
+   - unified active-data model (deleted records never participate in ledgers)
+   - transaction timestamps + deterministic chronology
+   - bank transaction/cash linkage + transfer groups
+   - reversible bank balance handling for Recycle Bin restore/delete
+   - full cascade recycle/permanent delete for linked records
+   - restore deduplication
+   - full backup/restore version 20
+*/
+var V20_KEYS=['purchaseList','salesList','paymentHistory','generalDuePayments','expenseList','cashList','bankAccounts','bankTransactions','shipmentList','contactList','productList','employeeList','reminderList','noteList','invoiceList','stockConversionRules','investorList'];
+function v20clone(v){try{return JSON.parse(JSON.stringify(v));}catch(e){return v;}}
+function v20arr(k){return Array.isArray(window[k])?window[k]:[];}
+function v20num(v){var n=parseFloat(String(v==null?'':v).replace(/[৳,\s]/g,''));return isFinite(n)?n:0;}
+function v20date(v){var s=String(v&&v.entryDate||v&&v.date||'');var t=String(v&&v.createdAt||'');var d=Date.parse(s);if(!isNaN(d))return d;var d2=Date.parse(t);return isNaN(d2)?Number.MAX_SAFE_INTEGER:d2;}
+function v20created(v){var t=Date.parse(String(v&&v.createdAt||''));return isNaN(t)?0:t;}
+function v20id(v){var n=Number(v&&v.id);return isFinite(n)?n:String(v&&v.id||'');}
+function v20cmp(a,b){var d=v20date(a)-v20date(b);if(d)return d;var c=v20created(a)-v20created(b);if(c)return c;var ia=v20id(a),ib=v20id(b);if(typeof ia==='number'&&typeof ib==='number')return ia-ib;return String(ia).localeCompare(String(ib));}
+function v20sort(a){return (Array.isArray(a)?a:[]).slice().sort(v20cmp);}
+function v20active(a){return (Array.isArray(a)?a:[]).filter(function(x){return x&&x.deleted!==true&&x.isDeleted!==true&&x._deleted!==true&&x.__deleted!==true;});}
+function v20stamp(r){if(!r||typeof r!=='object')return r;if(!r.createdAt)r.createdAt=new Date().toISOString();if(!r.entryDate)r.entryDate=r.date||new Date(r.createdAt).toISOString().slice(0,10);return r;}
+function v20setCache(){
+ try{
+  var m={purchaseList:'biz_purchase_list',salesList:'biz_sales_list',paymentHistory:'biz_payment_history',generalDuePayments:'biz_general_due_payments',expenseList:'biz_expense_list',cashList:'biz_cash_list',bankAccounts:'biz_bank_accounts',bankTransactions:'biz_bank_transactions',shipmentList:'shipmentTrackingList',contactList:'biz_contacts',productList:'biz_products',employeeList:'biz_employees',reminderList:'biz_reminders',noteList:'biz_notes',invoiceList:'biz_invoices',stockConversionRules:'biz_stock_conversion',investorList:'biz_investors'};
+  Object.keys(m).forEach(function(k){localStorage.setItem(m[k],JSON.stringify(window[k]));});
+ }catch(e){}
+}
+function v20audit(a,t,d,o,n){try{if(typeof window.auditRecord==='function')window.auditRecord(a,t,d,o,n);}catch(e){}}
+function v20trash(){try{var x=JSON.parse(localStorage.getItem('pb_final_trash')||'[]');return Array.isArray(x)?x:[];}catch(e){return[];}}
+function v20saveTrash(t){try{localStorage.setItem('pb_final_trash',JSON.stringify(t.slice(0,5000)));}catch(e){}}
+function v20map(type){return {purchase:'purchaseList',sale:'salesList',expense:'expenseList',payment:'paymentHistory',generalDue:'generalDuePayments',cash:'cashList',bank:'bankTransactions',invoice:'invoiceList',shipment:'shipmentList',contact:'contactList',product:'productList',employee:'employeeList',reminder:'reminderList',note:'noteList',investor:'investorList'}[type]||'';}
+function v20link(type,r){return String(r&&r.linkId||r&&r.transactionId||r&&r.sourceId||'');}
+function v20bankReverse(tx,undo){
+ if(!tx||!Array.isArray(window.bankAccounts))return;
+ var amt=v20num(tx.amount), id=String(tx.accountId||'');
+ var a=bankAccounts.find(function(x){return String(x.id)===id;});
+ var to=bankAccounts.find(function(x){return String(x.id)===String(tx.toAccountId||'');});
+ var from=bankAccounts.find(function(x){return String(x.id)===String(tx.fromAccountId||'');});
+ var typ=String(tx.type||'');
+ if(/Deposit/.test(typ)&&a){ a.balance=v20num(a.balance)+(undo?-amt:amt); return; }
+ if(/Withdraw/.test(typ)&&a){ a.balance=v20num(a.balance)+(undo?amt:-amt); return; }
+ if(/Transfer Out/.test(typ)&&a&&to){ a.balance=v20num(a.balance)+(undo?amt:-amt); to.balance=v20num(to.balance)+(undo?-amt:amt); return; }
+ if(/Transfer In/.test(typ)&&a&&from){ a.balance=v20num(a.balance)+(undo?-amt:amt); from.balance=v20num(from.balance)+(undo?amt:-amt); return; }
+}
+
+function v20bankReverseGroup(txs,undo){
+ var groups={};(Array.isArray(txs)?txs:[]).forEach(function(tx){
+   if(!tx)return;
+   var link=String(tx.linkId||tx.transactionId||'');
+   var key=link||String(tx.id||'');
+   if(!groups[key])groups[key]=[];groups[key].push(tx);
+ });
+ Object.keys(groups).forEach(function(key){
+   var group=groups[key], canonical=group.find(function(x){return /Transfer Out/.test(String(x.type||''));})||group.find(function(x){return !/Transfer In/.test(String(x.type||''));})||group[0];
+   v20bankReverse(canonical,undo);
+ });
+}
+
+function v20relatedFor(type,record){
+ var id=String(record&&record.id||''),rel={payment:[],cash:[],bank:[]};
+ if(type==='purchase'||type==='sale'){
+  rel.payment=v20arr('paymentHistory').filter(function(x){return String(x.sourceId||'')===id;});
+  rel.cash=v20arr('cashList').filter(function(x){return String(x.sourceId||'')===id;});
+ }
+ if(type==='generalDue'){
+  rel.payment=v20arr('paymentHistory').filter(function(x){return String(x.generalDueId||'')===id;});
+  rel.cash=v20arr('cashList').filter(function(x){return String(x.generalDueId||'')===id;});
+ }
+ if(type==='bank'){
+  var lid=v20link(type,record)||String(record.id||'');
+  rel.cash=v20arr('cashList').filter(function(x){return String(x.linkId||'')===lid;});
+  rel.bank=v20arr('bankTransactions').filter(function(x){return String(x.linkId||'')===lid;});
+  if(/Transfer (Out|In)/.test(String(record.type||''))){rel.bank=v20arr('bankTransactions').filter(function(x){return String(x.linkId||'')===lid || String(x.id||'')===String(record.id||'');});}
+ }
+ return rel;
+}
+function v20removeById(list,ids){var s={};(ids||[]).forEach(function(x){s[String(x&&x.id)] = 1;});return v20arr(list).filter(function(x){return !s[String(x&&x.id)];});}
+function v20putTrash(type,record,index,related){var t=v20trash();var id=String(record&&record.id||'');if(t.some(function(x){return String(x.record&&x.record.id||'')===id&&x.type===type;}))return; t.unshift({trashId:'V20-'+Date.now()+'-'+Math.random(),time:new Date().toISOString(),type:type,list:v20map(type),record:v20clone(record),index:index,related:v20clone(related||{}),version:20});v20saveTrash(t);}
+function v20Delete(type,id,ask){var list=v20map(type),a=v20arr(list),idx=a.findIndex(function(x){return String(x&&x.id)===String(id);});if(idx<0)return false;if(ask&&!confirm('এই রেকর্ডটি Recycle Bin-এ পাঠাবেন? পরে Restore করা যাবে।'))return false;var r=v20clone(a[idx]),rel=v20relatedFor(type,r);
+ if(type==='bank'){v20bankReverseGroup(rel.bank||[],true);}
+ if(type==='purchase'||type==='sale'||type==='generalDue'){window.paymentHistory=v20removeById('paymentHistory',(rel.payment||[]));window.cashList=v20removeById('cashList',(rel.cash||[]));}
+ if(type==='bank'){window.cashList=v20removeById('cashList',(rel.cash||[]));window.bankTransactions=v20removeById('bankTransactions',(rel.bank||[]));}
+ window[list]=a.filter(function(x){return String(x&&x.id)!==String(id);});
+ v20putTrash(type,r,idx,rel);v20setCache();v20audit('মুছে ফেলা',type,'V20 Recycle Bin-এ পাঠানো হয়েছে',r,null);
+ try{if(typeof rebuildAllOneTimeAllocations==='function')rebuildAllOneTimeAllocations();}catch(e){}
+ try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}
+ return true;}
+window.safeDeleteRecord=function(type,id){if(v20Delete(type,id,true)){try{if(typeof renderDeleteManager==='function')renderDeleteManager();}catch(e){}try{if(typeof renderTrash==='function')renderTrash();}catch(e){}}};
+function v20Restore(i){var t=v20trash(),v=t[i];if(!v)return false;var type=v.type,list=v.list||v20map(type),r=v20clone(v.record||{});r.deleted=false;r.isDeleted=false;delete r._deleted;delete r.__deleted;v20stamp(r);var a=v20arr(list);var old=a.findIndex(function(x){return String(x&&x.id)===String(r.id);});if(old>=0)a[old]=r;else a.splice(Math.max(0,Math.min(Number(v.index)||a.length,a.length)),0,r);window[list]=a;
+ if(type==='bank'){var rel=v.related&&v.related.bank||[r];var seen={};rel.forEach(function(tx){if(!tx||seen[String(tx.id)])return;seen[String(tx.id)]=1;var existing=v20arr('bankTransactions').findIndex(function(x){return String(x.id)===String(tx.id);});if(existing<0)window.bankTransactions.push(v20clone(tx));});v20bankReverseGroup(rel||[],false);var cash=v.related&&v.related.cash||[];cash.forEach(function(c){if(!v20arr('cashList').some(function(x){return String(x.id)===String(c.id)}))window.cashList.push(v20clone(c));});}
+ if(type==='purchase'||type==='sale'||type==='generalDue'){
+  (v.related&&v.related.payment||[]).forEach(function(p){if(!v20arr('paymentHistory').some(function(x){return String(x.id)===String(p.id)}))window.paymentHistory.push(v20clone(p));});
+  (v.related&&v.related.cash||[]).forEach(function(c){if(!v20arr('cashList').some(function(x){return String(x.id)===String(c.id)}))window.cashList.push(v20clone(c));});
+ }
+ t.splice(i,1);v20saveTrash(t);V20_KEYS.forEach(function(k){if(Array.isArray(window[k]))window[k]=v20sort(window[k]);});v20setCache();v20audit('পুনরুদ্ধার','Recycle Bin','V20 Restore সম্পন্ন',null,r);try{if(typeof rebuildAllOneTimeAllocations==='function')rebuildAllOneTimeAllocations();}catch(e){}try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}try{if(typeof refreshAllDependentViews==='function')refreshAllDependentViews();}catch(e){}return true;}
+window.finalRestoreTrash=function(i){if(v20Restore(i)){try{renderTrash();}catch(e){}alert('Restore সফল হয়েছে।');}};
+function v20Permanent(i){var t=v20trash(),v=t[i];if(!v)return false;if(!confirm('⚠️ স্থায়ীভাবে ডিলিট করবেন?\n\nএই রেকর্ড আর Restore করা যাবে না।\n\nOK চাপলে স্থায়ীভাবে মুছে যাবে।'))return false;var rid=String(v.record&&v.record.id||'');
+ var activeList=v.list||v20map(v.type); if(activeList&&Array.isArray(window[activeList])) window[activeList]=window[activeList].filter(function(x){return String(x&&x.id)!==rid;});
+ if(v.type==='bank'){ var bl=v.record.linkId||v.record.transactionId||''; if(bl) window.bankTransactions=v20arr('bankTransactions').filter(function(x){return String(x.linkId||'')!==String(bl);}); }
+ t=t.filter(function(x,idx){if(idx===i)return false;var xr=x.record||{};if((v.type==='purchase'||v.type==='sale'||v.type==='generalDue')&&(x.type==='payment'||x.type==='cash')){if(String(xr.sourceId||xr.generalDueId||'')===rid)return false;}if(v.type==='bank'&&(x.type==='bank'||x.type==='cash')&&String(xr.linkId||'')===String(v.record.linkId||v.record.id||''))return false;return true;});v20saveTrash(t);v20setCache();v20audit('স্থায়ীভাবে মুছে ফেলা','Recycle Bin','V20 Permanent Delete: আর Restore করা যাবে না',v.record,null);try{if(typeof renderTrash==='function')renderTrash();}catch(e){}try{if(typeof renderDeleteManager==='function')renderDeleteManager();}catch(e){}try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}return true;}
+window.finalPermanentDeleteTrash=function(i){if(v20Permanent(i))alert('রেকর্ডটি স্থায়ীভাবে মুছে ফেলা হয়েছে।');};
+window.renderTrash=function(){var x=document.getElementById('fc-trash-list');if(!x)return;var t=v20trash();x.innerHTML=t.length?t.map(function(v,i){var r=v.record||{};var label=r.date||r.name||r.supplier||r.customer||r.title||r.item||r.id||'';return '<div class="fc-list-item"><b>#'+(i+1)+' · '+String(v.type||'Record').replace(/[&<>]/g,'')+'</b><br>'+String(v.time||'')+'<br>'+String(label).replace(/[&<>]/g,'')+'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><button class="btn-action" onclick="finalRestoreTrash('+i+')">♻️ Restore</button><button class="fc-permanent-delete" onclick="finalPermanentDeleteTrash('+i+')">🗑️ স্থায়ীভাবে ডিলিট</button></div></div>';}).join(''):'Recycle Bin খালি।';};
+/* Migrate legacy active records that still carry deletion flags.
+   Parent records also carry their linked payment/cash/bank records into trash. */
+(function(){
+ var t=v20trash(),seen={};t.forEach(function(x){seen[x.type+'|'+String(x.record&&x.record.id||'')]=1;});
+ var defs={purchase:'purchaseList',sale:'salesList',expense:'expenseList',payment:'paymentHistory',generalDue:'generalDuePayments',cash:'cashList',bank:'bankTransactions',shipment:'shipmentList',contact:'contactList',product:'productList',employee:'employeeList',reminder:'reminderList',note:'noteList',invoice:'invoiceList',investor:'investorList'};
+ Object.keys(defs).forEach(function(type){
+   var k=defs[type],a=v20arr(k),bad=a.filter(function(r){return r&&(r.deleted===true||r.isDeleted===true||r._deleted===true||r.__deleted===true);});
+   bad.forEach(function(r){
+     var key=type+'|'+String(r.id||''); if(seen[key])return;
+     var rel=v20relatedFor(type,r);
+     if(type==='bank')v20bankReverseGroup(rel.bank||[],true);
+     if(type==='purchase'||type==='sale'||type==='generalDue'){
+       window.paymentHistory=v20removeById('paymentHistory',rel.payment||[]);
+       window.cashList=v20removeById('cashList',rel.cash||[]);
+     }
+     if(type==='bank'){
+       window.cashList=v20removeById('cashList',rel.cash||[]);
+       window.bankTransactions=v20removeById('bankTransactions',rel.bank||[]);
+     }
+     v20putTrash(type,r,0,rel);seen[key]=1;
+   });
+   if(bad.length)window[k]=v20arr(k).filter(function(r){return !(r&&(r.deleted===true||r.isDeleted===true||r._deleted===true||r.__deleted===true));});
+ });
+ v20setCache();
+})();
+/* Stamp and sort all active arrays once. */
+['purchaseList','salesList','paymentHistory','generalDuePayments','expenseList','cashList','bankTransactions','shipmentList','reminderList','invoiceList','investorList'].forEach(function(k){if(Array.isArray(window[k]))window[k]=v20active(window[k]).map(v20stamp).sort(v20cmp);});
+/* New bank transaction writer with shared link IDs. */
+window.saveBankTransaction=function(){var date=document.getElementById('bank-tx-date').value||getTodayDate(),type=document.getElementById('bank-tx-type').value,accId=parseInt(document.getElementById('bank-acc-id').value),amount=parseFloat(document.getElementById('bank-tx-amount').value)||0,note=document.getElementById('bank-tx-note').value||'-';if(!amount||amount<=0)return alert(currentLang==='en'?'Please enter a valid amount!':'দয়া করে সঠিক টাকার পরিমাণ দিন!');var account=bankAccounts.find(function(x){return String(x.id)===String(accId);});if(!account)return alert('অ্যাকাউন্ট পাওয়া যায়নি।');var linkId='BANK-'+Date.now()+'-'+Math.floor(Math.random()*100000);if(type==='deposit'){account.balance=v20num(account.balance)+amount;bankTransactions.push({id:linkId+'-deposit',linkId:linkId,createdAt:new Date().toISOString(),entryDate:date,date:date,accountId:account.id,accName:account.name,type:'Deposit (+)',amount:amount,note:note});cashList.push({id:linkId+'-cash',linkId:linkId,createdAt:new Date().toISOString(),entryDate:date,date:date,type:'out',title:'ব্যাংক জমা: '+account.name,amount:amount,sourceType:'bank',accountId:account.id});}
+else if(type==='withdraw'){if(v20num(account.balance)<amount)return alert(currentLang==='en'?'Insufficient Bank Balance!':'ব্যাংকে পর্যাপ্ত ব্যালেন্স নেই!');account.balance=v20num(account.balance)-amount;bankTransactions.push({id:linkId+'-withdraw',linkId:linkId,createdAt:new Date().toISOString(),entryDate:date,date:date,accountId:account.id,accName:account.name,type:'Withdraw (-)',amount:amount,note:note});cashList.push({id:linkId+'-cash',linkId:linkId,createdAt:new Date().toISOString(),entryDate:date,date:date,type:'in',title:'ব্যাংক উত্তোলন: '+account.name,amount:amount,sourceType:'bank',accountId:account.id});}
+else if(type==='transfer'){var toAccId=parseInt(document.getElementById('to-bank-acc-id').value);if(accId===toAccId)return alert('একই অ্যাকাউন্টে ফান্ড ট্রান্সফার সম্ভব নয়!');var to=bankAccounts.find(function(x){return String(x.id)===String(toAccId);});if(!to)return alert('প্রাপক অ্যাকাউন্ট পাওয়া যায়নি।');if(v20num(account.balance)<amount)return alert('ট্রান্সফার করার জন্য পর্যাপ্ত ব্যালেন্স নেই!');account.balance=v20num(account.balance)-amount;to.balance=v20num(to.balance)+amount;var now=new Date().toISOString();bankTransactions.push({id:linkId+'-out',linkId:linkId,createdAt:now,entryDate:date,date:date,accountId:account.id,toAccountId:to.id,accName:account.name,type:'Transfer Out (-)',amount:amount,note:'Transferred to '+to.name+' ('+note+')'});bankTransactions.push({id:linkId+'-in',linkId:linkId,createdAt:now,entryDate:date,date:date,accountId:to.id,fromAccountId:account.id,accName:to.name,type:'Transfer In (+)',amount:amount,note:'Received from '+account.name+' ('+note+')'});}
+else return alert('অবৈধ ব্যাংক লেনদেন।');v20setCache();try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}openBankLedger();};
+/* Unified chronological render helpers */
+window.v20Chronological=function(list){return v20sort(v20active(list));};
+/* Full V20 backup/restore */
+window.finalBackup=function(){var arrays={};V20_KEYS.forEach(function(k){arrays[k]=v20clone(window[k]);});var data={format:'PRIVATE-BUSINESS-V20',version:20,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:(function(){try{return JSON.parse(localStorage.getItem('pb_final_business')||'{}')}catch(e){return{}}})(),accounting:(function(){try{return JSON.parse(localStorage.getItem('pb_final_accounting')||'{"currency":"৳","decimal":2}')}catch(e){return{currency:'৳',decimal:2}}})(),history:(function(){try{return JSON.parse(localStorage.getItem('biz_audit_log')||'[]')}catch(e){return[]}})(),trash:v20trash()}};try{localStorage.setItem('pb_last_backup',JSON.stringify(data));}catch(e){}var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-v20-'+Date.now()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);v20audit('BACKUP','Data','V20 Full Backup',null,{version:20});};
+window.finalRestore=function(file){if(!file)return;var rd=new FileReader();rd.onload=function(){var b;try{b=JSON.parse(rd.result);}catch(e){return alert('সঠিক JSON Backup নয়।');}if(!b||!b.arrays)return alert('Backup Data পাওয়া যায়নি।');if(!confirm('Restore করলে বর্তমান ডাটার জায়গায় Backup-এর ডাটা বসবে। Restore-এর আগে বর্তমান ডাটার নিরাপদ Backup রাখা হবে। চালিয়ে যাবেন?'))return;var current={arrays:{}};V20_KEYS.forEach(function(k){current.arrays[k]=v20clone(window[k]);});try{localStorage.setItem('pb_pre_restore_backup_'+Date.now(),JSON.stringify(current));}catch(e){}V20_KEYS.forEach(function(k){if(Object.prototype.hasOwnProperty.call(b.arrays,k)){var val=v20clone(b.arrays[k]);if(k==='bankAccounts'||k==='stockConversionRules')window[k]=val;else if(Array.isArray(val))window[k]=val.filter(Boolean).map(function(r){return v20stamp(r);}).filter(function(r){return !r.deleted&&!r.isDeleted&&!r._deleted&&!r.__deleted;}).sort(v20cmp);}});if(b.settings&&b.settings.business){try{localStorage.setItem('pb_final_business',JSON.stringify(b.settings.business));}catch(e){}}if(b.settings&&b.settings.accounting){try{localStorage.setItem('pb_final_accounting',JSON.stringify(b.settings.accounting));}catch(e){}}if(b.settings&&Array.isArray(b.settings.history)){window.auditLog=b.settings.history;try{localStorage.setItem('biz_audit_log',JSON.stringify(b.settings.history));}catch(e){}}if(b.settings&&Array.isArray(b.settings.trash))v20saveTrash(b.settings.trash);else v20saveTrash([]);v20setCache();try{if(typeof rebuildAllOneTimeAllocations==='function')rebuildAllOneTimeAllocations();}catch(e){}v20audit('RESTORE','Data','V20 Full Restore সম্পন্ন',null,{sourceVersion:b.version||'unknown'});try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}try{if(typeof refreshAllDependentViews==='function')refreshAllDependentViews();}catch(e){}alert('V20 Restore সফল হয়েছে।');};rd.readAsText(file);};
+/* Data health */
+window.finalHealth=function(){var issues=[],warn=[];V20_KEYS.forEach(function(k){if(k==='bankAccounts'||k==='stockConversionRules'){if(window[k]==null)issues.push(k+' missing');}else if(!Array.isArray(window[k]))issues.push(k+' not array');});v20arr('purchaseList').concat(v20arr('salesList')).forEach(function(r){var total=v20num(r.total),paid=v20num(r.paid),due=v20num(r.due);if(total<0||paid<0||due<0)issues.push('Negative amount: '+String(r.id));if(Math.abs((total-paid)-due)>0.02)warn.push('Total/Paid/Due mismatch: '+String(r.id));});v20arr('bankTransactions').forEach(function(t){if(!t.linkId)warn.push('Bank transaction missing linkId: '+String(t.id));if(!t.accountId)issues.push('Bank transaction missing accountId: '+String(t.id));});alert((issues.length?'❌ সমস্যা: '+issues.length:'✅ Structural errors নেই')+'\n'+(warn.length?'⚠️ সতর্কতা: '+warn.length:'✅ Accounting warnings নেই'));return {issues:issues,warnings:warn};};
+/* Legacy report renderers should use V20 active chronological data. */
+try{window.v19Chrono=function(list){return v20sort(v20active(list));};}catch(e){}
+})();
+</script>
