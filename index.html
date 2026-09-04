@@ -1256,8 +1256,18 @@ body{font-size:13px}
     }
 
     function changeTheme(theme) {
-      if(theme === 'dark') document.body.classList.add('dark-theme');
-      else document.body.classList.remove('dark-theme');
+      /* Always use the final theme controller so the user's manual choice
+         is persistent and is never replaced by the phone/system theme. */
+      if (typeof window.finalTheme === 'function') {
+        window.finalTheme(theme === 'dark' ? 'dark' : 'light');
+      } else {
+        document.body.classList.toggle('dark-theme', theme === 'dark');
+        try { localStorage.setItem('final_theme', theme === 'dark' ? 'dark' : 'light'); } catch(e) {}
+      }
+      var sels=document.querySelectorAll('select');
+      sels.forEach(function(sel){
+        if(sel.getAttribute('onchange') && sel.getAttribute('onchange').indexOf('changeTheme')>=0) sel.value=theme;
+      });
     }
 
     function applyLanguageToCurrentView() {
@@ -4306,8 +4316,8 @@ function saveCore(){
 window.finalPanel=function(t){
  const p=panel(); if(!p)return;
  const views={
- display:`<h3>🎨 Display & Language</h3><p>বর্তমান Settings থেকে ভাষা ও Theme পরিবর্তন করুন।</p>
- <div class="fc-actions"><button onclick="finalTheme('light')">☀️ Light</button><button onclick="finalTheme('dark')">🌙 Dark</button><button onclick="finalTheme('system')">🖥️ System</button></div>`,
+ display:`<h3>🎨 Display & Language</h3><p>আপনার ইচ্ছামতো Light বা Dark নির্বাচন করুন। ফোনের System Theme আর জোর করে পরিবর্তন করবে না।</p>
+ <div class="fc-actions"><button onclick="finalTheme('light')">☀️ Light</button><button onclick="finalTheme('dark')">🌙 Dark</button></div>`,
  business:`<h3>🏢 Business Information</h3><div class="fc-row">
  <label>ব্যবসার নাম<input id="fc-bname"></label><label>মালিকের নাম<input id="fc-owner"></label>
  <label>মোবাইল<input id="fc-phone"></label><label>ঠিকানা<input id="fc-address"></label></div>
@@ -4939,14 +4949,23 @@ window.v17UpdateLiveDue=v17LDUpdate;
     search:function(q,side){return fixedSearch(q,side||'all');}
   };
 
-  /* ---------- Real System theme ---------- */
+  /* ---------- Manual Light/Dark theme ---------- */
   function applyTheme(v){
-    var dark=v==='dark'||(v==='system'&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.body.classList.toggle('dark-theme',!!dark);
-    localStorage.setItem('final_theme',v);
+    v=(v==='dark')?'dark':'light';
+    document.body.classList.toggle('dark-theme',v==='dark');
+    try{localStorage.setItem('final_theme',v);}catch(e){}
+    /* Keep every visible theme selector synchronized. */
+    try{document.querySelectorAll('select').forEach(function(sel){
+      var oc=sel.getAttribute('onchange')||'';
+      if(oc.indexOf('changeTheme')>=0)sel.value=v;
+    });}catch(e){}
   }
-  window.finalTheme=function(v){if(['light','dark','system'].indexOf(v)<0)v='system';applyTheme(v);auditSafe('SETTINGS','Display','Theme: '+v,null,null);};
-  try{var tv=localStorage.getItem('final_theme')||'light';applyTheme(tv);if(window.matchMedia){var mq=window.matchMedia('(prefers-color-scheme: dark)');var cb=function(){if(localStorage.getItem('final_theme')==='system')applyTheme('system');};if(mq.addEventListener)mq.addEventListener('change',cb);else if(mq.addListener)mq.addListener(cb);}}catch(e){}
+  window.finalTheme=function(v){
+    v=(v==='dark')?'dark':'light';
+    applyTheme(v);
+    try{auditSafe('SETTINGS','Display','Theme: '+v,null,null);}catch(e){}
+  };
+  try{applyTheme(localStorage.getItem('final_theme')||'light');}catch(e){applyTheme('light');}
 
   /* ---------- Full backup / safe restore ---------- */
   function backupObject(){
@@ -5006,7 +5025,8 @@ window.v17UpdateLiveDue=v17LDUpdate;
         var cells=(thead.querySelector('tr')||thead).querySelectorAll('th'),di=-1;Array.prototype.forEach.call(cells,function(c,i){var h=norm(c.textContent);if(di<0&&(/তারিখ|date|সময়|time/.test(h)))di=i;});
         if(di>=0){var rows=Array.prototype.slice.call(tbody.querySelectorAll('tr'));rows.sort(function(a,b){var av=a.children[di]?dateValue(a.children[di].textContent):Number.MAX_SAFE_INTEGER,bv=b.children[di]?dateValue(b.children[di].textContent):Number.MAX_SAFE_INTEGER;return av-bv;});rows.forEach(function(r){tbody.appendChild(r);});rows.forEach(function(r,i){var c=r.querySelector('.v18-serial-cell');if(c)c.textContent=String(i+1);});}
       });
-      var st=doc.createElement('style');st.textContent='.v18-serial-cell{width:42px;text-align:center!important;white-space:nowrap}.signature-block{break-inside:avoid}table{page-break-inside:auto}tr{page-break-inside:avoid}';doc.head.appendChild(st);
+      var wide=false;doc.querySelectorAll('table').forEach(function(t){var n=t.querySelectorAll('thead th').length;if(n>=8)wide=true;});
+      var st=doc.createElement('style');st.textContent='.v18-serial-cell{width:42px;min-width:42px;text-align:center!important;white-space:nowrap}.signature-block{break-inside:avoid}table{page-break-inside:auto;table-layout:auto;max-width:100%}tr{page-break-inside:avoid}th,td{white-space:nowrap;word-break:normal;overflow-wrap:normal;vertical-align:middle}@page{size:'+(wide?'A4 landscape':'A4 portrait')+';margin:8mm}';doc.head.appendChild(st);
     }catch(e){console.warn('V18 print preparation failed',e);}
   }
   if(!window.__v18OpenWrapped){
@@ -5021,7 +5041,30 @@ window.v17UpdateLiveDue=v17LDUpdate;
   }
 
   /* ---------- Mobile overflow guard for every dashboard/table ---------- */
-  var style=document.createElement('style');style.id='v18-final-responsive';style.textContent='html,body{max-width:100%;overflow-x:hidden}.table-responsive,.report-table-wrapper,.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.table-responsive table,.report-table-wrapper table{min-width:640px}@media(max-width:700px){.module-grid,.br-filter-grid,.control-grid,.edit-fields{grid-template-columns:1fr!important}.report-section{overflow-x:auto}.report-section table{font-size:8px}.fc-row{grid-template-columns:1fr!important}}';document.head.appendChild(style);
+  var style=document.createElement('style');style.id='v18-final-responsive';style.textContent=`
+html,body{max-width:100%;overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box}
+.table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.table-responsive,.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper,.br-table-wrap,.br-table-wrapper{width:100%;max-width:100%;overflow-x:auto!important;overflow-y:hidden;-webkit-overflow-scrolling:touch;display:block}
+.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table,.br-table-wrap table,.br-table-wrapper table{width:max-content;min-width:760px;max-width:none;table-layout:auto}
+.table-container th,.table-container td,.table-wrapper th,.table-wrapper td,.data-table-container th,.data-table-container td,.report-table-container th,.report-table-container td,.responsive-table th,.responsive-table td,.table-responsive th,.table-responsive td,.ledger-table-wrapper th,.ledger-table-wrapper td,.vehicle-table-wrapper th,.vehicle-table-wrapper td,.boat-table-wrapper th,.boat-table-wrapper td,.report-table-wrapper th,.report-table-wrapper td,.br-table-wrap th,.br-table-wrap td,.br-table-wrapper th,.br-table-wrapper td{white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important;vertical-align:middle}
+.report-section{max-width:100%;overflow:hidden}
+.report-section .table-responsive,.report-section .br-table-wrap,.report-section .br-table-wrapper{max-width:100%;overflow-x:auto!important}
+@media(max-width:700px){
+  .module-grid,.br-filter-grid,.control-grid,.edit-fields{grid-template-columns:1fr!important}
+  .report-section{width:100%;max-width:100%;overflow:hidden}
+  .report-section table{font-size:10px;min-width:900px}
+  #vb-result .report-section table{min-width:1150px}
+  #vb-result .report-section th,#vb-result .report-section td{white-space:nowrap!important;word-break:normal!important;overflow-wrap:normal!important}
+  .fc-row{grid-template-columns:1fr!important}
+}
+@media(max-width:420px){
+  .report-section table{font-size:9px;min-width:900px}
+  #vb-result .report-section table{min-width:1150px}
+}
+/* Never let a wide data table squeeze Bengali text into one character per line. */
+#pvd-result,#vb-result,#br-detail{width:100%;max-width:100%;overflow:hidden}
+#pvd-result .report-section,#vb-result .report-section,#br-detail .report-section{width:100%;max-width:100%;overflow:hidden}
+`;document.head.appendChild(style);
 
   /* Expose a simple health checker for the control center. */
   window.finalHealth=function(){
