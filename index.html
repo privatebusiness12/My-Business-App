@@ -2483,8 +2483,8 @@ body{font-size:13px}
           '<div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="কাস্টমার মোবাইল:" data-en="Customer Mobile:">কাস্টমার মোবাইল:</label><input type="number" id="s-phone" placeholder="017XXXXXXXX"></div><div class="form-group" style="flex: 1;"><label data-bn="ডেলিভারি সাইট:" data-en="Delivery Site:">ডেলিভারি সাইট:</label><input type="text" id="s-site" placeholder="যেমন: শেরপুর"></div></div>' +
           '<div class="form-group"><label style="color: #6f42c1;" data-bn="পরিবহন মাধ্যম (আলাদা হিসাব):" data-en="Transport Method (Separate Account):">পরিবহন মাধ্যম (আলাদা হিসাব):</label><select id="s-transport-mode" onchange="toggleTransportType(\'s\')"><option value="truck" data-bn="গাড়ি / ট্রাক (Truck)" data-en="Vehicle / Truck">গাড়ি / ট্রাক (Truck)</option><option value="bulkhead" data-bn="বালগেট (Bulkhead)" data-en="Bulkhead">বালগেট (Bulkhead)</option></select></div>' +
           
-          '<div id="s-truck-details" class="transport-box"><div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="গাড়ি নাম্বার:" data-en="Vehicle Number:">গাড়ি নাম্বার:</label><input type="text" id="s-vehicle"></div><div class="form-group" style="flex: 1;"><label data-bn="ড্রাইভারের নাম:" data-en="Driver Name:">ড্রাইভারের নাম:</label><input type="text" id="s-driver"></div></div><div class="form-group"><label data-bn="ড্রাইভারের মোবাইল:" data-en="Driver Mobile:">ড্রাইভারের মোবাইল:</label><input type="number" id="s-driver-phone" placeholder="017XXXXXXXX"></div><div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="গাড়ি ভাড়া মোট:" data-en="Total Vehicle Fare:">গাড়ি ভাড়া মোট:</label><input type="number" id="s-truck-fare" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div><div class="form-group" style="flex: 1;"><label data-bn="গাড়ি ভাড়া নগদ প্রদান:" data-en="Vehicle Fare Paid in Cash:">গাড়ি ভাড়া নগদ প্রদান:</label><input type="number" id="s-truck-paid" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div></div></div>' +
-          '<div id="s-bulkhead-details" class="transport-box" style="display: none;"><div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="বালগেটের নাম/নম্বর:" data-en="Bulkhead Name/Number:">বালগেটের নাম/নম্বর:</label><input type="text" id="s-bulkhead-name"></div><div class="form-group" style="flex: 1;"><label data-bn="সুকানীর নাম:" data-en="Boat Operator Name:">সুকানীর নাম:</label><input type="text" id="s-sukani-name"></div></div><div class="form-group"><label data-bn="সুকানীর মোবাইল:" data-en="Boat Operator Mobile:">সুকানীর মোবাইল:</label><input type="number" id="s-sukani-phone" placeholder="017XXXXXXXX"></div><div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="বালগেট ভাড়া মোট:" data-en="Total Bulkhead Fare:">বালগেট ভাড়া মোট:</label><input type="number" id="s-bulkhead-fare" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div><div class="form-group" style="flex: 1;"><label data-bn="বালগেট ভাড়া নগদ প্রদান:" data-en="Bulkhead Fare Paid in Cash:">বালগেট ভাড়া নগদ প্রদান:</label><input type="number" id="s-bulkhead-paid" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div></div></div>' +
+          '<div id="s-truck-details" class="transport-box"><div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="গাড়ি নাম্বার:" data-en="Vehicle Number:">গাড়ি নাম্বার:</label><input type="text" id="s-vehicle"></div><div class="form-group" style="flex: 1;"><label data-bn="ড্রাইভারের নাম:" data-en="Driver Name:">ড্রাইভারের নাম:</label><input type="text" id="s-driver"></div></div><div class="form-group"><label data-bn="ড্রাইভারের মোবাইল:" data-en="Driver Mobile:">ড্রাইভারের মোবাইল:</label><input type="number" id="s-driver-phone" placeholder="017XXXXXXXX"></div><div style="display:flex;gap:10px;flex-wrap:wrap;"><div class="form-group" style="flex:1;min-width:180px;"><label data-bn="গাড়ি ভাড়া মোট:" data-en="Total Vehicle Fare:">গাড়ি ভাড়া মোট:</label><input type="number" id="s-truck-fare" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div><div class="form-group" style="flex:1;min-width:180px;"><label data-bn="কোম্পানি/কাস্টমার দেবে:" data-en="Company/Customer Pays:">কোম্পানি/কাস্টমার দেবে:</label><input type="number" id="s-truck-company-paid" min="0" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div><div class="form-group" style="flex:1;min-width:180px;"><label data-bn="আমি দেব (নগদ):" data-en="I Pay (Cash):">আমি দেব (নগদ):</label><input type="number" id="s-truck-paid" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div></div></div>' +
+          '<div id="s-bulkhead-details" class="transport-box" style="display: none;"><div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="বালগেটের নাম/নম্বর:" data-en="Bulkhead Name/Number:">বালগেটের নাম/নম্বর:</label><input type="text" id="s-bulkhead-name"></div><div class="form-group" style="flex: 1;"><label data-bn="সুকানীর নাম:" data-en="Boat Operator Name:">সুকানীর নাম:</label><input type="text" id="s-sukani-name"></div></div><div class="form-group"><label data-bn="সুকানীর মোবাইল:" data-en="Boat Operator Mobile:">সুকানীর মোবাইল:</label><input type="number" id="s-sukani-phone" placeholder="017XXXXXXXX"></div><div style="display:flex;gap:10px;flex-wrap:wrap;"><div class="form-group" style="flex:1;min-width:180px;"><label data-bn="বালগেট ভাড়া মোট:" data-en="Total Bulkhead Fare:">বালগেট ভাড়া মোট:</label><input type="number" id="s-bulkhead-fare" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div><div class="form-group" style="flex:1;min-width:180px;"><label data-bn="কোম্পানি/কাস্টমার দেবে:" data-en="Company/Customer Pays:">কোম্পানি/কাস্টমার দেবে:</label><input type="number" id="s-bulkhead-company-paid" min="0" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div><div class="form-group" style="flex:1;min-width:180px;"><label data-bn="আমি দেব (নগদ):" data-en="I Pay (Cash):">আমি দেব (নগদ):</label><input type="number" id="s-bulkhead-paid" oninput="calculateTransportFare(\'s\')" placeholder="৳"></div></div></div>' +
           
           '<div class="form-group"><label data-bn="গাড়ি ভাড়া বাকি (স্বয়ংক্রিয়):" data-en="Transport Fare Due (Automatic):">গাড়ি ভাড়া বাকি (স্বয়ংক্রিয়):</label><input type="number" id="s-trans-due" readonly style="background: #f3e5f5; color: #6f42c1; font-weight: bold;"></div>' +
           '<hr style="margin: 15px 0;">' +
@@ -2502,11 +2502,11 @@ body{font-size:13px}
           '</div>' +
           '<div class="form-group"><label id="s-rate-label" data-bn="প্রতি এককের বিক্রি দর (রেট ৳):" data-en="Selling Rate per Unit (৳):">প্রতি এককের বিক্রি দর (রেট ৳):</label><input type="number" id="s-rate" oninput="calculateSalesTotal()" placeholder="৳"></div>' +
           '<div style="display: flex; gap: 10px;"><div class="form-group" style="flex: 1;"><label data-bn="মোট বিক্রয় মূল্য (৳):" data-en="Total Sales Value (৳):">মোট বিক্রয় মূল্য (৳):</label><input type="number" id="s-total" readonly style="background: #e9ecef;"></div><div class="form-group" style="flex: 1;"><label data-bn="নগদ জমা (৳):" data-en="Cash Received (৳):">নগদ জমা (৳):</label><input type="number" id="s-paid" oninput="calculateSalesTotal()" placeholder="৳"></div></div>' +
-          '<div class="form-group"><label data-bn="পণ্যের বাকি টাকা (৳):" data-en="Product Due (৳):">পণ্যের বাকি টাকা (৳):</label><input type="number" id="s-due" readonly style="background: #fff3cd; color: red; font-weight: bold;"></div>' +
+          '<div class="form-group"><label data-bn="কোম্পানি/কাস্টমার কর্তৃক গাড়ি ভাড়া সমন্বয় (৳):" data-en="Company/Customer Vehicle Fare Adjustment (৳):">কোম্পানি/কাস্টমার কর্তৃক গাড়ি ভাড়া সমন্বয় (৳):</label><input type="number" id="s-company-fare-adjustment" readonly style="background:#e8f5e9;color:#198754;font-weight:bold;"></div><div class="form-group"><label data-bn="সমন্বয়ের পর বিক্রয় মূল্য (৳):" data-en="Adjusted Sales Value (৳):">সমন্বয়ের পর বিক্রয় মূল্য (৳):</label><input type="number" id="s-adjusted-total" readonly style="background:#eef6ff;color:#0d6efd;font-weight:bold;"></div><div class="form-group"><label data-bn="পণ্যের বাকি টাকা (৳):" data-en="Product Due (৳):">পণ্যের বাকি টাকা (৳):</label><input type="number" id="s-due" readonly style="background: #fff3cd; color: red; font-weight: bold;"></div>' +
           '<button class="btn-submit" style="background: #2ecc71;" onclick="saveSale()" data-bn="বিক্রয়ের হিসাব সেভ করুন" data-en="Save Sales Entry">বিক্রয়ের হিসাব সেভ করুন</button>' +
         '</div>' +
 
-        '<div class="section-card"><h3 data-bn="মাল বিক্রির ইতিহাস" data-en="Sales History">মাল বিক্রির ইতিহাস</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="মেমো" data-en="Memo">মেমো</th><th data-bn="কাস্টমার" data-en="Customer">কাস্টমার</th><th data-bn="সাইট" data-en="Site">সাইট</th><th data-bn="পরিবহন" data-en="Transport">পরিবহন</th><th data-bn="পণ্য" data-en="Product">পণ্য</th><th data-bn="পরিমাণ" data-en="Quantity">পরিমাণ</th><th data-bn="মোট বিক্রি" data-en="Total Sales">মোট বিক্রি</th><th data-bn="জমা" data-en="Received">জমা</th><th data-bn="বাকি" data-en="Due">বাকি</th></tr></thead><tbody id="sales-records"></tbody></table></div></div>';
+        '<div class="section-card"><h3 data-bn="মাল বিক্রির ইতিহাস" data-en="Sales History">মাল বিক্রির ইতিহাস</h3><div class="table-responsive"><table><thead><tr><th data-bn="তারিখ" data-en="Date">তারিখ</th><th data-bn="মেমো" data-en="Memo">মেমো</th><th data-bn="কাস্টমার" data-en="Customer">কাস্টমার</th><th data-bn="সাইট" data-en="Site">সাইট</th><th data-bn="পরিবহন" data-en="Transport">পরিবহন</th><th data-bn="পণ্য" data-en="Product">পণ্য</th><th data-bn="পরিমাণ" data-en="Quantity">পরিমাণ</th><th data-bn="মোট বিক্রি" data-en="Gross Sales">মোট বিক্রি</th><th data-bn="কোম্পানি ভাড়া" data-en="Company Fare">কোম্পানি ভাড়া</th><th data-bn="সমন্বিত বিক্রি" data-en="Adjusted Sales">সমন্বিত বিক্রি</th><th data-bn="জমা" data-en="Received">জমা</th><th data-bn="বাকি" data-en="Due">বাকি</th></tr></thead><tbody id="sales-records"></tbody></table></div></div>';
 
       updateProductOptions();
       renderSalesTable();
@@ -2611,44 +2611,21 @@ body{font-size:13px}
 
     function calculateSalesTotal() {
       var mode=(document.getElementById('s-pricing-mode')||{}).value||'unit';
-      var paid = parseFloat(document.getElementById('s-paid').value) || 0;
-      var qty=0, rate=0, total=0;
-      if(mode==='vehicle'){
-        var vehicleCount=parseFloat(document.getElementById('s-vehicle-count').value)||0;
-        var qtyPerVehicle=parseFloat(document.getElementById('s-qty-per-vehicle').value)||0;
-        var vehicleUnit=(document.getElementById('s-vehicle-unit')||{}).value||'CFT';
-        rate=parseFloat(document.getElementById('s-rate-per-vehicle').value)||0;
-        qty=vehicleCount*qtyPerVehicle;
-        total=vehicleCount*rate;
-        var pQty=document.getElementById('s-stock-qty-preview');
-        if(pQty) pQty.innerText=qty>0 ? (qtyPerVehicle+' '+vehicleUnit+' × '+vehicleCount+' '+T('গাড়ি','vehicles')+' = '+qty+' '+vehicleUnit) : '0';
-      }else{
-        qty=parseFloat(document.getElementById('s-qty').value)||0;
-        rate=parseFloat(document.getElementById('s-rate').value)||0;
-        total=qty*rate;
-        var pQty2=document.getElementById('s-stock-qty-preview'); if(pQty2)pQty2.innerText='0';
-      }
-      var due=total-paid;
-      document.getElementById('s-total').value=total.toFixed(2);
-      document.getElementById('s-due').value=due.toFixed(2);
+      var paid=parseFloat((document.getElementById('s-paid')||{}).value)||0,qty=0,rate=0,total=0;
+      if(mode==='vehicle'){var vehicleCount=parseFloat((document.getElementById('s-vehicle-count')||{}).value)||0,qtyPerVehicle=parseFloat((document.getElementById('s-qty-per-vehicle')||{}).value)||0,vehicleUnit=(document.getElementById('s-vehicle-unit')||{}).value||'CFT';rate=parseFloat((document.getElementById('s-rate-per-vehicle')||{}).value)||0;qty=vehicleCount*qtyPerVehicle;total=vehicleCount*rate;var pq=document.getElementById('s-stock-qty-preview');if(pq)pq.innerText=qty>0?(qtyPerVehicle+' '+vehicleUnit+' × '+vehicleCount+' '+T('গাড়ি','vehicles')+' = '+qty+' '+vehicleUnit):'0';}
+      else{qty=parseFloat((document.getElementById('s-qty')||{}).value)||0;rate=parseFloat((document.getElementById('s-rate')||{}).value)||0;total=qty*rate;var pq2=document.getElementById('s-stock-qty-preview');if(pq2)pq2.innerText='0';}
+      var tm=(document.getElementById('s-transport-mode')||{}).value||'truck',companyFare=tm==='truck'?parseFloat((document.getElementById('s-truck-company-paid')||{}).value)||0:parseFloat((document.getElementById('s-bulkhead-company-paid')||{}).value)||0;
+      companyFare=Math.max(0,companyFare);var adjusted=Math.max(0,total-companyFare),due=Math.max(0,adjusted-paid);
+      var te=document.getElementById('s-total'),ce=document.getElementById('s-company-fare-adjustment'),ae=document.getElementById('s-adjusted-total'),de=document.getElementById('s-due');
+      if(te)te.value=total.toFixed(2);if(ce)ce.value=companyFare.toFixed(2);if(ae)ae.value=adjusted.toFixed(2);if(de)de.value=due.toFixed(2);
       calculateTransportFare('s');
     }
 
     function calculateTransportFare(prefix) {
-      var mode = document.getElementById(prefix + '-transport-mode').value;
-      var fare = 0;
-      var paid = 0;
-
-      if(mode === 'truck') {
-        fare = parseFloat(document.getElementById(prefix + '-truck-fare').value) || 0;
-        paid = parseFloat(document.getElementById(prefix + '-truck-paid').value) || 0;
-      } else {
-        fare = parseFloat(document.getElementById(prefix + '-bulkhead-fare').value) || 0;
-        paid = parseFloat(document.getElementById(prefix + '-bulkhead-paid').value) || 0;
-      }
-
-      var due = fare - paid;
-      document.getElementById(prefix + '-trans-due').value = due.toFixed(2);
+      var modeEl=document.getElementById(prefix+'-transport-mode');if(!modeEl)return;var mode=modeEl.value,fare=0,companyPaid=0,ownPaid=0;
+      if(mode==='truck'){fare=parseFloat(document.getElementById(prefix+'-truck-fare').value)||0;companyPaid=parseFloat((document.getElementById(prefix+'-truck-company-paid')||{}).value)||0;ownPaid=parseFloat(document.getElementById(prefix+'-truck-paid').value)||0;}
+      else{fare=parseFloat(document.getElementById(prefix+'-bulkhead-fare').value)||0;companyPaid=parseFloat((document.getElementById(prefix+'-bulkhead-company-paid')||{}).value)||0;ownPaid=parseFloat(document.getElementById(prefix+'-bulkhead-paid').value)||0;}
+      var due=Math.max(0,fare-companyPaid-ownPaid),dueEl=document.getElementById(prefix+'-trans-due');if(dueEl)dueEl.value=due.toFixed(2);
     }
 
     function savePurchase() {
@@ -2663,6 +2640,7 @@ body{font-size:13px}
       var transportPhone = '';
       var transportFare = 0;
       var transportPaid = 0;
+      var transportCompanyPaid = 0;
 
       if(transportMode === 'truck') {
         var vehicle = document.getElementById('p-vehicle').value || 'N/A';
@@ -2682,7 +2660,7 @@ body{font-size:13px}
         transportDetails = '<b>বালগেট:</b> ' + bName + '<br><small>সুকানী: ' + sukani + '</small>';
       }
 
-      var transportFareDue = transportFare - transportPaid;
+      var transportFareDue = Math.max(0, transportFare - transportPaid - transportCompanyPaid);
 
       var item = document.getElementById('p-item').value;
       var qty = document.getElementById('p-qty').value || '0';
@@ -2690,6 +2668,9 @@ body{font-size:13px}
       var total = document.getElementById('p-total').value || '0.00';
       var paid = parseFloat(document.getElementById('p-paid').value) || 0;
       var due = parseFloat(document.getElementById('p-due').value) || 0;
+      var grossTotal = parseFloat(total) || 0;
+      var companyFareAdjustment = 0;
+      var adjustedTotal = grossTotal;
 
       var id = Date.now();
 
@@ -2703,7 +2684,11 @@ body{font-size:13px}
         transportPhone: transportPhone,
         transportFare: transportFare,
         transportFarePaid: transportPaid,
+        transportFareCompanyPaid: transportCompanyPaid,
         transportFareDue: transportFareDue,
+        grossTotal: grossTotal,
+        companyFareAdjustment: companyFareAdjustment,
+        adjustedTotal: adjustedTotal,
         item: item, qty: qty, unit: unit, total: total, paid: paid, due: due
       });
 
@@ -2756,12 +2741,14 @@ body{font-size:13px}
       var transportPhone = '';
       var transportFare = 0;
       var transportPaid = 0;
+      var transportCompanyPaid = 0;
 
       if(transportMode === 'truck') {
         var vehicle = document.getElementById('s-vehicle').value || 'N/A';
         var driver = document.getElementById('s-driver').value || 'N/A';
         transportPhone = document.getElementById('s-driver-phone').value || '';
         transportFare = parseFloat(document.getElementById('s-truck-fare').value) || 0;
+        transportCompanyPaid = parseFloat((document.getElementById('s-truck-company-paid')||{}).value) || 0;
         transportPaid = parseFloat(document.getElementById('s-truck-paid').value) || 0;
         transportName = 'গাড়ি: ' + vehicle + ' (' + driver + ')';
         transportDetails = '<b>গাড়ি:</b> ' + vehicle + '<br><small>ড্রাইভার: ' + driver + '</small>';
@@ -2770,12 +2757,13 @@ body{font-size:13px}
         var sukani = document.getElementById('s-sukani-name').value || 'N/A';
         transportPhone = document.getElementById('s-sukani-phone').value || '';
         transportFare = parseFloat(document.getElementById('s-bulkhead-fare').value) || 0;
+        transportCompanyPaid = parseFloat((document.getElementById('s-bulkhead-company-paid')||{}).value) || 0;
         transportPaid = parseFloat(document.getElementById('s-bulkhead-paid').value) || 0;
         transportName = 'বালগেট: ' + bName + ' (' + sukani + ')';
         transportDetails = '<b>বালগেট:</b> ' + bName + '<br><small>সুকানী: ' + sukani + '</small>';
       }
 
-      var transportFareDue = transportFare - transportPaid;
+      var transportFareDue = Math.max(0, transportFare - transportPaid - transportCompanyPaid);
 
       var item = document.getElementById('s-item').value;
       var pricingMode = (document.getElementById('s-pricing-mode')||{}).value || 'unit';
@@ -2787,6 +2775,10 @@ body{font-size:13px}
       var total = document.getElementById('s-total').value || '0.00';
       var paid = parseFloat(document.getElementById('s-paid').value) || 0;
       var due = parseFloat(document.getElementById('s-due').value) || 0;
+      var grossTotal=parseFloat(total)||0,companyFareAdjustment=Math.max(0,transportCompanyPaid),adjustedTotal=Math.max(0,grossTotal-companyFareAdjustment);
+      if(transportCompanyPaid+transportPaid>transportFare+0.005){alert(T('কোম্পানি/কাস্টমার এবং আপনার দেওয়া গাড়ি ভাড়া মোট ভাড়ার চেয়ে বেশি হতে পারবে না।','Company/Customer payment plus your cash payment cannot exceed total transport fare.'));return;}
+      if(paid>adjustedTotal+0.005){alert(T('জমা টাকা সমন্বয়ের পর বিক্রয় মূল্যের চেয়ে বেশি হতে পারবে না।','Received amount cannot exceed the adjusted sales value.'));return;}
+      due=Math.max(0,adjustedTotal-paid);
 
       if(pricingMode==='vehicle' && (vehicleCount<=0 || qtyPerVehicle<=0 || rate<=0)){
         alert(T('গাড়ি সংখ্যা, প্রতি গাড়ির মাল পরিমাণ এবং প্রতি গাড়ির বিক্রি দর সঠিকভাবে দিন।','Enter vehicle count, material quantity per vehicle and selling price per vehicle.'));
@@ -2805,7 +2797,11 @@ body{font-size:13px}
         transportPhone: transportPhone,
         transportFare: transportFare,
         transportFarePaid: transportPaid,
+        transportFareCompanyPaid: transportCompanyPaid,
         transportFareDue: transportFareDue,
+        grossTotal: grossTotal,
+        companyFareAdjustment: companyFareAdjustment,
+        adjustedTotal: adjustedTotal,
         pricingMode: pricingMode,
         saleType: pricingMode==='vehicle' ? 'গাড়ি প্রতি' : 'একক অনুযায়ী',
         vehicleCount: vehicleCount,
@@ -2837,11 +2833,13 @@ body{font-size:13px}
       document.getElementById('s-driver').value = '';
       document.getElementById('s-driver-phone').value = '';
       document.getElementById('s-truck-fare').value = '';
+      if(document.getElementById('s-truck-company-paid')) document.getElementById('s-truck-company-paid').value = '';
       document.getElementById('s-truck-paid').value = '';
       document.getElementById('s-bulkhead-name').value = '';
       document.getElementById('s-sukani-name').value = '';
       document.getElementById('s-sukani-phone').value = '';
       document.getElementById('s-bulkhead-fare').value = '';
+      if(document.getElementById('s-bulkhead-company-paid')) document.getElementById('s-bulkhead-company-paid').value = '';
       document.getElementById('s-bulkhead-paid').value = '';
       document.getElementById('s-trans-due').value = '';
       document.getElementById('s-qty').value = '';
@@ -2855,6 +2853,8 @@ body{font-size:13px}
       document.getElementById('s-total').value = '';
       document.getElementById('s-paid').value = '';
       document.getElementById('s-due').value = '';
+      if(document.getElementById('s-company-fare-adjustment')) document.getElementById('s-company-fare-adjustment').value = '';
+      if(document.getElementById('s-adjusted-total')) document.getElementById('s-adjusted-total').value = '';
     }
 
     /* ===== V20.2 Universal Data Visibility + Chronological Ordering =====
@@ -2921,7 +2921,9 @@ function renderPurchaseTable() {
           '<td>' + data.transportDetails + '<br><small style="color:#6f42c1;">ভাড়া: ' + data.transportFare + '৳ | বাকি: ' + data.transportFareDue + '৳</small></td>' +
           '<td>' + data.item + '</td>' +
           '<td>' + (data.pricingMode==='vehicle' ? '<b>গাড়ি প্রতি</b><br>'+data.vehicleCount+' গাড়ি × '+data.qtyPerVehicle+' '+data.unit+'<br><small>মোট: '+data.qty+' '+data.unit+'</small>' : data.qty + ' ' + data.unit) + '</td>' +
-          '<td>' + data.total + ' ৳</td>' +
+          '<td>' + (data.grossTotal!=null?data.grossTotal:data.total) + ' ৳</td>' +
+          '<td style="color:#198754;">' + (data.companyFareAdjustment||data.transportFareCompanyPaid||0) + ' ৳</td>' +
+          '<td style="color:#0d6efd;font-weight:bold;">' + (data.adjustedTotal!=null?data.adjustedTotal:Math.max(0,(parseFloat(data.total)||0)-(parseFloat(data.transportFareCompanyPaid)||0))) + ' ৳</td>' +
           '<td style="color: green;">' + data.paid + ' ৳</td>' +
           '<td style="color: red; font-weight: bold;">' + data.due + ' ৳</td>' +
         '</tr>';
@@ -3071,7 +3073,7 @@ function renderPurchaseTable() {
     function brVal(x){return x===undefined||x===null?'':String(x);}
     function buildBusinessReportRows(){
       var rows=[];
-      purchaseList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'purchase',typeBn:'ক্রয়',date:x.date||'',ref:x.challan||'',party:x.supplier||'',vehicle:x.transportName||'',site:'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,transportFareDue:x.transportFareDue||0,note:x.transportDetails||'',primary:true});});
+      purchaseList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'purchase',typeBn:'ক্রয়',date:x.date||'',ref:x.challan||'',party:x.supplier||'',vehicle:x.transportName||'',site:'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.qty||'',unit:x.unit||'',amount:(x.adjustedTotal!=null?x.adjustedTotal:Math.max(0,(parseFloat(x.total)||0)-(parseFloat(x.transportFareCompanyPaid)||0))),grossAmount:(x.grossTotal!=null?x.grossTotal:(x.total||0)),companyFareAdjustment:(x.companyFareAdjustment!=null?x.companyFareAdjustment:(x.transportFareCompanyPaid||0)),paid:x.paid||0,due:x.due||0,transportFareDue:x.transportFareDue||0,note:x.transportDetails||'',primary:true});});
       salesList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'sale',typeBn:'বিক্রয়',date:x.date||'',ref:x.memo||'',party:x.customer||'',vehicle:x.transportName||'',site:x.site||'',boat:(x.transportName||'').includes('বালগেট')?x.transportName:'',item:x.item||'',qty:x.pricingMode==='vehicle'?((x.vehicleCount||0)+' গাড়ি × '+(x.qtyPerVehicle||0)+' '+(x.unit||'')+' = '+(x.qty||0)+' '+(x.unit||'')):(x.qty||''),unit:x.unit||'',amount:x.total||0,paid:x.paid||0,due:x.due||0,transportFareDue:x.transportFareDue||0,note:x.transportDetails||'',primary:true});});
       expenseList.forEach(function(x){if(!x||x.deleted===true||x.isDeleted===true)return;rows.push({type:'expense',typeBn:'খরচ',date:x.date||'',ref:'',party:x.title||'',vehicle:'',site:'',boat:'',item:x.category||'',qty:'',unit:'',amount:x.amount||0,paid:x.amount||0,due:0,note:x.note||'',primary:true});});
       (Array.isArray(generalDuePayments)?generalDuePayments:[]).forEach(function(x){
@@ -3357,10 +3359,11 @@ function renderPurchaseTable() {
       var pay=rows.filter(function(r){return r.type==='payment';}).reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0);
       var overallPaid=sumAllRecordedPayments();
       var overallDue=calculateOutstandingDue();
-      m.innerHTML='<span class="br-pill">'+T('মোট রেকর্ড','Records')+': '+rows.length+'</span><span class="br-pill">'+T('মূল লেনদেন','Transaction Value')+': '+total.toFixed(2)+' ৳</span><span class="br-pill">'+T('এই রিপোর্টের পরিশোধ/জমা','Report Paid/Collected')+': '+paid.toFixed(2)+' ৳</span><span class="br-pill">'+T('সকল পেমেন্ট মোট','All Payments Total')+': '+overallPaid.toFixed(2)+' ৳</span><span class="br-pill">'+T('বর্তমান মোট বাকি','Current Total Due')+': '+overallDue.toFixed(2)+' ৳</span><span class="br-pill">'+T('আলাদা পেমেন্ট','Filtered Payments')+': '+pay.toFixed(2)+' ৳</span>';
+      var companyFare=rows.filter(function(r){return r.primary===true;}).reduce(function(a,r){return a+(parseFloat(r.companyFareAdjustment)||0)},0);
+      m.innerHTML='<span class="br-pill">'+T('মোট রেকর্ড','Records')+': '+rows.length+'</span><span class="br-pill">'+T('সমন্বিত লেনদেন','Adjusted Transaction Value')+': '+total.toFixed(2)+' ৳</span><span class="br-pill">'+T('কোম্পানি ভাড়া সমন্বয়','Company Fare Adjustment')+': '+companyFare.toFixed(2)+' ৳</span><span class="br-pill">'+T('এই রিপোর্টের পরিশোধ/জমা','Report Paid/Collected')+': '+paid.toFixed(2)+' ৳</span><span class="br-pill">'+T('সকল পেমেন্ট মোট','All Payments Total')+': '+overallPaid.toFixed(2)+' ৳</span><span class="br-pill">'+T('বর্তমান মোট বাকি','Current Total Due')+': '+overallDue.toFixed(2)+' ৳</span><span class="br-pill">'+T('আলাদা পেমেন্ট','Filtered Payments')+': '+pay.toFixed(2)+' ৳</span>';
       if(!rows.length){d.innerHTML='<div class="pl-empty">'+T('কোনো তথ্য পাওয়া যায়নি। ফিল্টার পরিবর্তন করে আবার চেষ্টা করুন।','No records found. Change the filters and try again.')+'</div>';return;}
-      d.innerHTML='<div class="br-table-wrap"><table><thead><tr><th>'+T('তারিখ','Date')+'</th><th>'+T('ধরন','Type')+'</th><th>'+T('চালান/রেফ.','Challan/Ref.')+'</th><th>'+T('নাম/পক্ষ','Party')+'</th><th>'+T('গাড়ি/পরিবহন','Vehicle')+'</th><th>'+T('জায়গা/সাইট','Site')+'</th><th>'+T('নৌকা/বালগেট','Boat/Bulkhead')+'</th><th>'+T('পণ্য','Item')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('মোট','Amount')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>'+
-        rows.map(function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+esc(currentLang==='en'?({purchase:'Purchase',sale:'Sale',expense:'Expense',payment:'Payment',cash:'Cash',bank:'Bank',invoice:'Invoice',shipment:'Shipment'}[r.type]||r.type):r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';}).join('')+
+      d.innerHTML='<div class="br-table-wrap"><table><thead><tr><th>'+T('তারিখ','Date')+'</th><th>'+T('ধরন','Type')+'</th><th>'+T('চালান/রেফ.','Challan/Ref.')+'</th><th>'+T('নাম/পক্ষ','Party')+'</th><th>'+T('গাড়ি/পরিবহন','Vehicle')+'</th><th>'+T('জায়গা/সাইট','Site')+'</th><th>'+T('নৌকা/বালগেট','Boat/Bulkhead')+'</th><th>'+T('পণ্য','Item')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('মোট','Amount')+'</th><th>'+T('কোম্পানি ভাড়া','Company Fare')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>'+
+        rows.map(function(r){return '<tr><td>'+esc(r.date)+'</td><td>'+esc(currentLang==='en'?({purchase:'Purchase',sale:'Sale',expense:'Expense',payment:'Payment',cash:'Cash',bank:'Bank',invoice:'Invoice',shipment:'Shipment'}[r.type]||r.type):r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.companyFareAdjustment||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';}).join('')+
         '</tbody></table></div>';
     
       try{if(window.V20ReportTotals)window.V20ReportTotals();}catch(e){}}
@@ -3380,6 +3383,7 @@ function renderPurchaseTable() {
       var total=primary.reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0);
       var paid=primary.reduce(function(a,r){return a+(parseFloat(r.paid)||0)},0);
       var due=primary.reduce(function(a,r){return a+(parseFloat(r.due)||0)},0);
+      var companyFare=primary.reduce(function(a,r){return a+(parseFloat(r.companyFareAdjustment)||0)},0);
       var pay=rows.filter(function(r){return r.type==='payment';}).reduce(function(a,r){return a+(parseFloat(r.amount)||0)},0);
       var overallPaid=sumAllRecordedPayments();
       var overallDue=calculateOutstandingDue();
@@ -3417,9 +3421,9 @@ function renderPurchaseTable() {
         html+='<tr><td colspan="5">'+T('মালের পরিমাণের তথ্য নেই','No material quantity data')+'</td></tr>';
       }
       html+='</tbody><tfoot><tr><th class="col-total-label">মোট:</th><th class="col-total">'+totalCft.toFixed(2)+'</th><th class="col-total">'+totalTon.toFixed(2)+'</th><th class="col-total">'+totalPc.toFixed(2)+'</th><th class="col-total">—</th></tr></tfoot></table></div>'+
-        '<table><thead><tr><th>'+T('তারিখ','Date')+'</th><th>'+T('ধরন','Type')+'</th><th>'+T('চালান/রেফ.','Challan/Ref.')+'</th><th>'+T('নাম/পক্ষ','Party')+'</th><th>'+T('গাড়ি/পরিবহন','Vehicle')+'</th><th>'+T('সাইট','Site')+'</th><th>'+T('নৌকা/বালগেট','Boat/Bulkhead')+'</th><th>'+T('পণ্য','Item')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('মোট','Amount')+'</th><th>'+T('পরিশোধ','Paid')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>';
+        '<table><thead><tr><th>'+T('তারিখ','Date')+'</th><th>'+T('ধরন','Type')+'</th><th>'+T('চালান/রেফ.','Challan/Ref.')+'</th><th>'+T('নাম/পক্ষ','Party')+'</th><th>'+T('গাড়ি/পরিবহন','Vehicle')+'</th><th>'+T('সাইট','Site')+'</th><th>'+T('নৌকা/বালগেট','Boat/Bulkhead')+'</th><th>'+T('পণ্য','Item')+'</th><th>'+T('পরিমাণ','Qty')+'</th><th>'+T('মোট','Amount')+'</th><th>'+T('কোম্পানি ভাড়া','Company Fare')+'</th><th>'+T('পরিশোধ','Paid')+'</th><th>'+T('বাকি','Due')+'</th></tr></thead><tbody>';
       rows.forEach(function(r){
-        html+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.paid||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';
+        html+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.companyFareAdjustment||0).toFixed(2)+' ৳</td><td>'+Number(r.paid||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';
       });
       html+='</tbody><tfoot><tr><th class="col-total-label">মোট:</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">'+primary.reduce(function(a,r){return a+(parseFloat(r.qty)||0)},0).toFixed(2)+'</th><th class="col-total">'+total.toFixed(2)+' ৳</th><th class="col-total">'+paid.toFixed(2)+' ৳</th><th class="col-total">'+due.toFixed(2)+' ৳</th></tr></tfoot></table>';
       html+='<div class="signature-block"><div class="sig-line">'+(printSettings.signature?esc(printSettings.signature):'স্বাক্ষর')+'</div></div>';
@@ -4819,7 +4823,7 @@ try{v20NormalizeAllActiveData();v20SortAllDateArrays();}catch(e){}
 /* ---------- Full backup / safe restore ---------- */
   function backupObject(){
     var arrays={};DATA_KEYS.forEach(function(k){arrays[k]=clone(window[k]);});
-    return {format:'PRIVATE-BUSINESS-V20.10',version:20.10,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:getLS('pb_final_business',{}),accounting:getLS('pb_final_accounting',{currency:'৳',decimal:2}),history:clone(getLS(HIST_KEY,[])),trash:clone(trashList())}};
+    return {format:'PRIVATE-BUSINESS-V20.11',version:20.11,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:getLS('pb_final_business',{}),accounting:getLS('pb_final_accounting',{currency:'৳',decimal:2}),history:clone(getLS(HIST_KEY,[])),trash:clone(trashList())}};
   }
   /* V20.9 canonical finalBackup implementation below. */
   /* V20.9 canonical finalRestore implementation below. */
@@ -4922,7 +4926,7 @@ html,body{max-width:100%;overflow-x:hidden}
   function addAfter(tbodyId,boxes,note){var tb=document.getElementById(tbodyId);if(!tb)return;var table=tb.closest('table');if(!table)return;var old=table.parentElement.querySelector('.v20-total-bar');if(old)old.remove();var b=document.createElement('div');b.className='v20-total-bar';b.innerHTML=boxes.map(function(x){return '<div class="v20-total-box"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>';}).join('');if(note){var q=document.createElement('div');q.className='v20-total-note';q.textContent=note;b.appendChild(q);}table.parentElement.appendChild(b);}
   function registerLedgerTotalHook(name,fn){var old=window[name];if(typeof old!=='function'||old.__v20totalWrapped)return;var w=function(){var r=old.apply(this,arguments);try{fn();}catch(e){}return r;};w.__v20totalWrapped=true;window[name]=w;}
   function purchaseTotals(){var e=window.V20AccountingEngine&&window.V20AccountingEngine();var a=active(window.purchaseList),p=e&&e.totals?e.totals.purchase:(e?e.purchase:null)||{total:0,paid:0,due:0};var tf=a.reduce(function(s,x){return s+n(x.transportFare)},0),tp=a.reduce(function(s,x){return s+n(x.transportFarePaid)},0),td=a.reduce(function(s,x){return s+n(x.transportFareDue)},0);addAfter('purchase-records',[['মোট লেনদেন',money(p.total)],['মোট পরিশোধ',money(p.paid)],['মোট বাকি',money(p.due)],['মোট পরিবহন ভাড়া',money(tf)],['ভাড়া পরিশোধ',money(tp)],['ভাড়া বাকি',money(td)]]);} 
-  function salesTotals(){var e=window.V20AccountingEngine&&window.V20AccountingEngine();var a=active(window.salesList),p=e&&e.totals?e.totals.sales:(e?e.sales:null)||{total:0,paid:0,due:0};var tf=a.reduce(function(s,x){return s+n(x.transportFare)},0),tp=a.reduce(function(s,x){return s+n(x.transportFarePaid)},0),td=a.reduce(function(s,x){return s+n(x.transportFareDue)},0);addAfter('sales-records',[['মোট লেনদেন',money(p.total)],['মোট পরিশোধ',money(p.paid)],['মোট বাকি',money(p.due)],['মোট পরিবহন ভাড়া',money(tf)],['ভাড়া পরিশোধ',money(tp)],['ভাড়া বাকি',money(td)]]);} 
+  function salesTotals(){var e=window.V20AccountingEngine&&window.V20AccountingEngine();var a=active(window.salesList),p=e&&e.totals?e.totals.sales:(e?e.sales:null)||{total:0,paid:0,due:0};var gross=a.reduce(function(s,x){return s+n(x.grossTotal!=null?x.grossTotal:x.total)},0),cf=a.reduce(function(s,x){return s+n(x.companyFareAdjustment!=null?x.companyFareAdjustment:x.transportFareCompanyPaid)},0),tf=a.reduce(function(s,x){return s+n(x.transportFare)},0),tp=a.reduce(function(s,x){return s+n(x.transportFarePaid)},0),td=a.reduce(function(s,x){return s+n(x.transportFareDue)},0);addAfter('sales-records',[['মোট বিক্রয় (Gross)',money(gross)],['কোম্পানি ভাড়া সমন্বয়',money(cf)],['সমন্বিত বিক্রয়',money(p.total)],['মোট পরিশোধ',money(p.paid)],['মোট বাকি',money(p.due)],['মোট পরিবহন ভাড়া',money(tf)],['আমি ভাড়া দিয়েছি',money(tp)],['ভাড়া বাকি',money(td)]]);} 
   function paymentTotals(){var e=window.V20AccountingEngine&&window.V20AccountingEngine();var a=active(window.paymentHistory),t=e&&e.totals?e.totals.payments:a.reduce(function(s,x){return s+n(x.amount)},0);addAfter('payment-history-records',[['মোট লেনদেন/পেমেন্ট',money(t)],['মোট রেকর্ড',String(a.length)+' টি']]);}
   function expenseTotals(){var e=window.V20AccountingEngine&&window.V20AccountingEngine();var a=active(window.expenseList),t=e&&e.totals?e.totals.expenses:a.reduce(function(s,x){return s+n(x.amount)},0);addAfter('expense-records',[['মোট লেনদেন/খরচ',money(t)],['মোট রেকর্ড',String(a.length)+' টি']]);}
   function cashTotals(){var e=window.V20AccountingEngine&&window.V20AccountingEngine(),a=active(window.cashList),cin=e&&e.totals?e.totals.cashIn:a.filter(function(x){return String(x.direction||'').toLowerCase()==='in'||x.type==='in'}).reduce(function(s,x){return s+n(x.amount)},0),out=e&&e.totals?e.totals.cashOut:a.filter(function(x){return !(String(x.direction||'').toLowerCase()==='in'||x.type==='in')}).reduce(function(s,x){return s+n(x.amount)},0);addAfter('cash-records',[['মোট ক্যাশ ইন',money(cin)],['মোট ক্যাশ আউট',money(out)],['নিট ক্যাশ',money(cin-out)],['মোট রেকর্ড',String(a.length)+' টি']]);}
@@ -4960,7 +4964,7 @@ html,body{max-width:100%;overflow-x:hidden}
 (function(){
 'use strict';
 /* V20.9 TRUE CLEAN accounting hardening: one canonical ledger-total API and reconciliation helpers. */
-window.V20_ACCOUNTING_VERSION='20.10';
+window.V20_ACCOUNTING_VERSION='20.11';
 /* V20.9 single canonical accounting engine is defined in the final reconciliation layer below. */
 /* V20.9 TRUE CLEAN FINAL
    - unified active-data model (deleted records never participate in ledgers)
@@ -5038,7 +5042,7 @@ function v20relatedFor(type,record){
  return rel;
 }
 function v20removeById(list,ids){var s={};(ids||[]).forEach(function(x){s[String(x&&x.id)] = 1;});return v20arr(list).filter(function(x){return !s[String(x&&x.id)];});}
-function v20putTrash(type,record,index,related){var t=v20trash();var id=String(record&&record.id||'');if(t.some(function(x){return String(x.record&&x.record.id||'')===id&&x.type===type;}))return; t.unshift({trashId:'V20-'+Date.now()+'-'+Math.random(),time:new Date().toISOString(),type:type,list:v20map(type),record:v20clone(record),index:index,related:v20clone(related||{}),version:20.10});v20saveTrash(t);}
+function v20putTrash(type,record,index,related){var t=v20trash();var id=String(record&&record.id||'');if(t.some(function(x){return String(x.record&&x.record.id||'')===id&&x.type===type;}))return; t.unshift({trashId:'V20-'+Date.now()+'-'+Math.random(),time:new Date().toISOString(),type:type,list:v20map(type),record:v20clone(record),index:index,related:v20clone(related||{}),version:20.11});v20saveTrash(t);}
 function v20Delete(type,id,ask){var list=v20map(type),a=v20arr(list),idx=a.findIndex(function(x){return String(x&&x.id)===String(id);});if(idx<0)return false;if(ask&&!confirm('এই রেকর্ডটি Recycle Bin-এ পাঠাবেন? পরে Restore করা যাবে।'))return false;var r=v20clone(a[idx]),rel=v20relatedFor(type,r);
  if(type==='bank'){v20bankReverseGroup(rel.bank||[],true);}
  if(type==='purchase'||type==='sale'||type==='generalDue'){window.paymentHistory=v20removeById('paymentHistory',(rel.payment||[]));window.cashList=v20removeById('cashList',(rel.cash||[]));}
@@ -5106,7 +5110,7 @@ else return alert('অবৈধ ব্যাংক লেনদেন।');v20se
 /* Unified chronological render helpers */
 window.v20Chronological=function(list){return v20sort(v20active(list));};
 /* Full V20 backup/restore */
-window.finalBackup=function(){var arrays={};V20_KEYS.forEach(function(k){arrays[k]=v20clone(window[k]);});var data={format:'PRIVATE-BUSINESS-V20.10',version:20.10,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:(function(){try{return JSON.parse(localStorage.getItem('pb_final_business')||'{}')}catch(e){return{}}})(),accounting:(function(){try{return JSON.parse(localStorage.getItem('pb_final_accounting')||'{"currency":"৳","decimal":2}')}catch(e){return{currency:'৳',decimal:2}}})(),history:(function(){try{return JSON.parse(localStorage.getItem('biz_audit_log')||'[]')}catch(e){return[]}})(),trash:v20trash()}};try{localStorage.setItem('pb_last_backup',JSON.stringify(data));}catch(e){}var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-v20.9-'+Date.now()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);v20audit('BACKUP','Data','V20.9 Full Backup',null,{version:20.10});};
+window.finalBackup=function(){var arrays={};V20_KEYS.forEach(function(k){arrays[k]=v20clone(window[k]);});var data={format:'PRIVATE-BUSINESS-V20.11',version:20.11,createdAt:new Date().toISOString(),arrays:arrays,settings:{business:(function(){try{return JSON.parse(localStorage.getItem('pb_final_business')||'{}')}catch(e){return{}}})(),accounting:(function(){try{return JSON.parse(localStorage.getItem('pb_final_accounting')||'{"currency":"৳","decimal":2}')}catch(e){return{currency:'৳',decimal:2}}})(),history:(function(){try{return JSON.parse(localStorage.getItem('biz_audit_log')||'[]')}catch(e){return[]}})(),trash:v20trash()}};try{localStorage.setItem('pb_last_backup',JSON.stringify(data));}catch(e){}var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='private-business-backup-v20.11-'+Date.now()+'.json';a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},1000);v20audit('BACKUP','Data','V20.11 Full Backup',null,{version:20.11});};
 window.finalRestore=function(file){
   if(!file)return;
   var rd=new FileReader();
@@ -5114,8 +5118,8 @@ window.finalRestore=function(file){
     var b;
     try{b=JSON.parse(rd.result);}catch(e){return alert('সঠিক JSON Backup নয়।');}
     if(!b||!b.arrays)return alert('Backup Data পাওয়া যায়নি।');
-    if(b.version!=null && Number(b.version)>20.10)return alert('এই Backup এই সংস্করণের চেয়ে নতুন। আগে অ্যাপ আপডেট করুন।');
-    /* V20.10 SAFE RESTORE: validate and confirm BEFORE touching current data. */
+    if(b.version!=null && Number(b.version)>20.11)return alert('এই Backup এই সংস্করণের চেয়ে নতুন। আগে অ্যাপ আপডেট করুন।');
+    /* V20.11 SAFE RESTORE: validate and confirm BEFORE touching current data. */
     var invalid=[];
     V20_KEYS.forEach(function(k){
       if(k==='bankAccounts'||k==='stockConversionRules'){
@@ -5131,7 +5135,7 @@ window.finalRestore=function(file){
     restoreWarning+='\n\nRestore-এর আগে বর্তমান ডাটার নিরাপদ Backup রাখা হবে।\n\nচালিয়ে যাবেন?';
     if(!confirm(restoreWarning))return;
     /* Build the safety backup BEFORE replacing anything. Abort if it cannot be stored. */
-    var current={format:'PRIVATE-BUSINESS-V20.10-PRE-RESTORE',version:20.10,createdAt:new Date().toISOString(),arrays:{},settings:{}};
+    var current={format:'PRIVATE-BUSINESS-V20.11-PRE-RESTORE',version:20.11,createdAt:new Date().toISOString(),arrays:{},settings:{}};
     V20_KEYS.forEach(function(k){current.arrays[k]=v20clone(window[k]);});
     try{
       current.settings.business=JSON.parse(localStorage.getItem('pb_final_business')||'{}');
@@ -5170,7 +5174,7 @@ window.finalRestore=function(file){
     if(b.settings&&Array.isArray(b.settings.trash))v20saveTrash(b.settings.trash);else v20saveTrash([]);
     v20setCache();
     try{if(typeof rebuildAllOneTimeAllocations==='function')rebuildAllOneTimeAllocations();}catch(e){}
-    v20audit('RESTORE','Data','V20.9 Full Restore সম্পন্ন',null,{sourceVersion:b.version||'unknown'});
+    v20audit('RESTORE','Data','V20.11 Full Restore সম্পন্ন',null,{sourceVersion:b.version||'unknown'});
     try{if(typeof scheduleCloudSave==='function')scheduleCloudSave();}catch(e){}
     try{if(typeof refreshAllDependentViews==='function')refreshAllDependentViews();}catch(e){}
     alert('V20.9 Restore সফল হয়েছে।');
@@ -5203,7 +5207,7 @@ function totals(){
  var p=active(window.purchaseList),s=active(window.salesList),pay=active(window.paymentHistory),ex=active(window.expenseList),cash=active(window.cashList),bank=active(window.bankTransactions);
  var out={purchase:{total:0,paid:0,due:0},sales:{total:0,paid:0,due:0},payments:0,expenses:0,cashIn:0,cashOut:0,bankIn:0,bankOut:0,stockValue:0};
  p.forEach(function(r){out.purchase.total+=N(r.total);out.purchase.paid+=N(r.paid);out.purchase.due+=N(r.due);});
- s.forEach(function(r){out.sales.total+=N(r.total);out.sales.paid+=N(r.paid);out.sales.due+=N(r.due);});
+ s.forEach(function(r){var gross=N(r.grossTotal!=null?r.grossTotal:r.total),adj=r.adjustedTotal!=null?N(r.adjustedTotal):Math.max(0,gross-N(r.companyFareAdjustment!=null?r.companyFareAdjustment:r.transportFareCompanyPaid));out.sales.total+=adj;out.sales.paid+=N(r.paid);out.sales.due+=Math.max(0,adj-N(r.paid));});
  pay.forEach(function(r){out.payments+=N(r.amount);}); ex.forEach(function(r){out.expenses+=N(r.amount);});
  cash.forEach(function(r){var d=dir(r);if(d==='in')out.cashIn+=N(r.amount);else if(d==='out')out.cashOut+=N(r.amount);});
  bank.forEach(function(r){var d=dir(r);if(d==='in')out.bankIn+=N(r.amount);else if(d==='out')out.bankOut+=N(r.amount);});
@@ -5225,7 +5229,7 @@ function reconcile(){
    }
    if(N(r.amount)<=0)issues.push({type:'invalid-payment-amount',id:key(r)});
  });
- parents.forEach(function(r){var total=N(r.total),paid=N(r.paid),due=N(r.due),linked=paymentByParent[key(r)]||0;if(total<0||paid<0||due<0)issues.push({type:'negative-amount',id:key(r)});if(paid>total+0.005&&total>=0)issues.push({type:'paid-exceeds-total',id:key(r)});if(Math.abs((total-paid)-due)>0.02)warnings.push({type:'due-mismatch',id:key(r)});if(linked>paid+0.02)warnings.push({type:'linked-payment-exceeds-paid',id:key(r)});var tf=N(r.transportFare),tp=N(r.transportFarePaid);if(tf<0||tp<0||tp>tf+0.005)issues.push({type:'transport-paid-invalid',id:key(r)});});
+ parents.forEach(function(r){var rawTotal=N(r.total),isSale=(s.indexOf(r)!==-1),companyFare=isSale?N(r.companyFareAdjustment!=null?r.companyFareAdjustment:r.transportFareCompanyPaid):0,total=isSale?Math.max(0,N(r.adjustedTotal!=null?r.adjustedTotal:rawTotal-companyFare)):rawTotal,paid=N(r.paid),due=N(r.due),linked=paymentByParent[key(r)]||0;if(rawTotal<0||paid<0||due<0||companyFare<0)issues.push({type:'negative-amount',id:key(r)});if(companyFare>rawTotal+0.005)issues.push({type:'company-fare-exceeds-sale',id:key(r)});if(paid>total+0.005&&total>=0)issues.push({type:'paid-exceeds-total',id:key(r)});if(Math.abs((total-paid)-due)>0.02)warnings.push({type:'due-mismatch',id:key(r)});if(linked>paid+0.02)warnings.push({type:'linked-payment-exceeds-paid',id:key(r)});var tf=N(r.transportFare),tp=N(r.transportFarePaid),tcp=isSale?N(r.transportFareCompanyPaid):0;if(tf<0||tp<0||tcp<0||tp+tcp>tf+0.005)issues.push({type:'transport-paid-invalid',id:key(r)});});
  var bankByLink={};
  bank.forEach(function(r){var l=String(r.linkId||'');if(l)(bankByLink[l]||(bankByLink[l]=[])).push(r);if(N(r.amount)<=0)issues.push({type:'invalid-bank-amount',id:key(r)});if(!dir(r))issues.push({type:'invalid-bank-direction',id:key(r)});if(!r.accountId)issues.push({type:'bank-missing-account',id:key(r)});});
  Object.keys(bankByLink).forEach(function(l){var rows=bankByLink[l];var transfers=rows.filter(function(r){return r.transferGroup===true;});if(!transfers.length)return;if(transfers.length!==2){issues.push({type:'invalid-transfer-group',linkId:l,count:transfers.length});return;}var a=transfers[0],b=transfers[1],da=dir(a),db=dir(b);if(da===db)issues.push({type:'transfer-same-direction',linkId:l});if(Math.abs(N(a.amount)-N(b.amount))>0.005)issues.push({type:'transfer-amount-mismatch',linkId:l});if(String(a.accountId)===String(b.accountId))issues.push({type:'transfer-same-account',linkId:l});var outRow=da==='out'?a:(db==='out'?b:null),inRow=da==='in'?a:(db==='in'?b:null);if(outRow&&inRow&&String(outRow.toAccountId||'')!==String(inRow.accountId||''))issues.push({type:'transfer-target-mismatch',linkId:l});});
@@ -5242,18 +5246,18 @@ function reconcile(){
  return {ok:issues.length===0,issues:issues,warnings:warnings,checked:{purchase:p.length,sales:s.length,payments:pay.length,cash:cash.length,bank:bank.length,stock:stock.length,cogs:cogs}};
 }
 function engine(){normalizeBankDirections();var cm=normalizeCashDirections();var t=totals();if(cm&&cm.unknown)t.reconciliation={ok:false,issues:[{type:'cash-direction-missing',count:cm.unknown}],warnings:[]};else t.reconciliation=reconcile();return t;}
-engine.totals=totals;engine.reconcile=reconcile;engine.version='20.10';
-window.V20_ACCOUNTING_VERSION='20.10';
+engine.totals=totals;engine.reconcile=reconcile;engine.version='20.11';
+window.V20_ACCOUNTING_VERSION='20.11';
 window.V20AccountingEngine=engine;
-window.V20AccountingEngine.version='20.10';
+window.V20AccountingEngine.version='20.11';
 })();
 </script>
 
-<!-- V20.10 AUDIT/LOCK MANIFEST: single AccountingEngine; canonical COGS/stock valuation; full reconciliation; explicit bank direction; safe restore warnings. -->
+<!-- V20.11 FREIGHT-ADJUSTMENT AUDIT/LOCK MANIFEST: single AccountingEngine; canonical COGS/stock valuation; full reconciliation; explicit bank direction; safe restore warnings. -->
 
 <script>
 (function(){
-  window.V20AccountingLock={version:20.10,sourceOfTruth:'V20AccountingEngine',reconciliation:'V20AccountingEngine.reconcile',status:'LOCKED'};
+  window.V20AccountingLock={version:20.11,sourceOfTruth:'V20AccountingEngine',reconciliation:'V20AccountingEngine.reconcile',status:'LOCKED'};
 })();
 </script>
 </body>
