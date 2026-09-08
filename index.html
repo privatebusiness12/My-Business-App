@@ -3227,13 +3227,13 @@ function renderPurchaseTable() {
           var key=direction+'|'+it.identity+'|'+normalizePartyName(it.label);
           if(!map[key]) map[key]={direction:direction,identity:it.identity,label:it.label,role:it.role,count:0,amount:0,paid:0,due:0,cft:0,ton:0,pcs:0,dates:[],records:[]};
           var g=map[key],q=parseFloat(x.qty)||0,u=String(x.unit||'').toLowerCase();
-          g.count++;g.amount+=parseFloat(x.total)||0;g.paid+=parseFloat(x.paid)||0;g.due+=Math.max(0,parseFloat(x.due)||0);
+          var gross=parseFloat(x.grossTotal!=null?x.grossTotal:x.total)||0;var companyFare=kind==='sale'?(parseFloat(x.companyFareAdjustment!=null?x.companyFareAdjustment:x.transportFareCompanyPaid)||0):0;var amount=kind==='sale'?Math.max(0,parseFloat(x.adjustedTotal!=null?x.adjustedTotal:(gross-companyFare))):gross;g.count++;g.amount+=amount;g.paid+=parseFloat(x.paid)||0;g.due+=Math.max(0,(kind==='sale'?amount-(parseFloat(x.paid)||0):(parseFloat(x.due)||0))); 
           if(u==='cft')g.cft+=q; else if(u==='ton'||u==='টন')g.ton+=q; else if(/pcs|piece|pieces|পিস|পিচ/i.test(u))g.pcs+=q;
           if(x.date)g.dates.push(x.date);g.records.push(x.id);
         });
       }
-      (Array.isArray(purchaseList)?purchaseList:[]).forEach(function(x){add('purchase',x)});
-      (Array.isArray(salesList)?salesList:[]).forEach(function(x){add('sale',x)});
+      (Array.isArray(purchaseList)?purchaseList:[]).filter(function(x){return x&&!x.deleted&&!x.isDeleted&&!x._deleted&&!x.__deleted;}).forEach(function(x){add('purchase',x)});
+      (Array.isArray(salesList)?salesList:[]).filter(function(x){return x&&!x.deleted&&!x.isDeleted&&!x._deleted&&!x.__deleted;}).forEach(function(x){add('sale',x)});
       /* Keep zero-due groups too: the user asked for total transaction history, not only outstanding debt. */
       return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.due-a.due||b.amount-a.amount;});
     }
@@ -3266,8 +3266,8 @@ function renderPurchaseTable() {
     }
     function printPartyVehicleDueReport(){
       function groups(kind){
-        var arr=kind==='purchase'?(purchaseList||[]):(salesList||[]),map={};
-        arr.forEach(function(x){var d=parseFloat(x.due)||0;if(d<=0)return;var party=kind==='purchase'?x.supplier:x.customer;var vehicle=(x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0].trim();[[kind==='purchase'?'সাপ্লায়ার':'কাস্টমার',party],[ 'গাড়ি/নৌকা',vehicle ]].forEach(function(a){var k=normKey(a[1]);if(!k)return;if(!map[a[0]+'|'+k])map[a[0]+'|'+k]={label:a[1],type:a[0],count:0,total:0,paid:0,due:0};var g=map[a[0]+'|'+k];g.count++;g.total+=parseFloat(x.total)||0;g.paid+=parseFloat(x.paid)||0;g.due+=d;});});return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.due-a.due;});
+        var arr=(kind==='purchase'?(purchaseList||[]):(salesList||[])).filter(function(x){return x&&!x.deleted&&!x.isDeleted&&!x._deleted&&!x.__deleted;}),map={};
+        arr.forEach(function(x){var gross=parseFloat(x.grossTotal!=null?x.grossTotal:x.total)||0;var companyFare=kind==='sale'?(parseFloat(x.companyFareAdjustment!=null?x.companyFareAdjustment:x.transportFareCompanyPaid)||0):0;var adjusted=kind==='sale'?Math.max(0,parseFloat(x.adjustedTotal!=null?x.adjustedTotal:(gross-companyFare))):gross;var d=kind==='sale'?Math.max(0,adjusted-(parseFloat(x.paid)||0)):Math.max(0,parseFloat(x.due)||0);if(d<=0)return;var party=kind==='purchase'?x.supplier:x.customer;var vehicle=(x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0].trim();[[kind==='purchase'?'সাপ্লায়ার':'কাস্টমার',party],[ 'গাড়ি/নৌকা',vehicle ]].forEach(function(a){var k=normKey(a[1]);if(!k)return;if(!map[a[0]+'|'+k])map[a[0]+'|'+k]={label:a[1],type:a[0],count:0,total:0,paid:0,due:0};var g=map[a[0]+'|'+k];g.count++;g.total+=adjusted;g.paid+=parseFloat(x.paid)||0;g.due+=d;});});return Object.keys(map).map(function(k){return map[k];}).sort(function(a,b){return b.due-a.due;});
       }
       var pg=groups('purchase'),sg=groups('sale'),w=window.open('','_blank');if(!w)return;
       function table(title,gs){var h='<h2>'+title+'</h2><table><thead><tr><th>নাম/নম্বর</th><th>ধরন</th><th>মোট রেকর্ড</th><th>মোট টাকা</th><th>মোট পরিশোধ</th><th>বর্তমান বাকি</th></tr></thead><tbody>';gs.forEach(function(g){h+='<tr><td>'+esc(g.label)+'</td><td>'+g.type+'</td><td>'+g.count+'</td><td>'+g.total.toFixed(2)+' ৳</td><td>'+g.paid.toFixed(2)+' ৳</td><td>'+g.due.toFixed(2)+' ৳</td></tr>';});h+='</tbody><tfoot><tr><th>মোট:</th><th>—</th><th>'+gs.reduce(function(a,g){return a+g.count},0)+'</th><th>'+gs.reduce(function(a,g){return a+g.total},0).toFixed(2)+' ৳</th><th>'+gs.reduce(function(a,g){return a+g.paid},0).toFixed(2)+' ৳</th><th>'+gs.reduce(function(a,g){return a+g.due},0).toFixed(2)+' ৳</th></tr></tfoot></table>';return h;}
@@ -3277,7 +3277,7 @@ function renderPurchaseTable() {
     function printSingleBusinessReport(key,asPdf){
       var cfg={
         purchase:{title:'কেনার খাতা',en:'Purchase Ledger',arr:purchaseList,keys:['date','challan','supplier','phone','item','qty','unit','total','paid','due','transportName']},
-        sale:{title:'বেচার খাতা',en:'Sales Ledger',arr:salesList,keys:['date','memo','customer','phone','site','item','saleType','vehicleCount','qtyPerVehicle','qty','unit','rate','total','paid','due','transportName','transportFare','transportFarePaid','transportFareDue']},
+        sale:{title:'বেচার খাতা',en:'Sales Ledger',arr:salesList,keys:['date','memo','customer','phone','site','item','saleType','vehicleCount','qtyPerVehicle','qty','unit','rate','grossTotal','companyFareAdjustment','adjustedTotal','paid','due','transportName','transportFare','transportFareCompanyPaid','transportFarePaid','transportFareDue']},
         expense:{title:'খরচের খাতা',en:'Expense Ledger',arr:expenseList,keys:['date','category','title','method','amount','note']},
         payment:{title:'পেমেন্ট ইতিহাস',en:'Payment History',arr:(paymentHistory||[]),keys:['date','name','typeBn','amount','note']},
          generalDue:{title:'বাকি সমন্বয়',en:'Due Adjustments',arr:(generalDuePayments||[]),keys:['date','name','direction','matchType','amount','note']},
@@ -3425,7 +3425,7 @@ function renderPurchaseTable() {
       rows.forEach(function(r){
         html+='<tr><td>'+esc(r.date)+'</td><td>'+esc(r.typeBn)+'</td><td>'+esc(r.ref)+'</td><td>'+esc(r.party)+'</td><td>'+esc(r.vehicle)+'</td><td>'+esc(r.site)+'</td><td>'+esc(r.boat)+'</td><td>'+esc(r.item)+'</td><td>'+esc(r.qty)+' '+esc(r.unit)+'</td><td>'+Number(r.amount||0).toFixed(2)+' ৳</td><td>'+Number(r.companyFareAdjustment||0).toFixed(2)+' ৳</td><td>'+Number(r.paid||0).toFixed(2)+' ৳</td><td>'+Number(r.due||0).toFixed(2)+' ৳</td></tr>';
       });
-      html+='</tbody><tfoot><tr><th class="col-total-label">মোট:</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">'+primary.reduce(function(a,r){return a+(parseFloat(r.qty)||0)},0).toFixed(2)+'</th><th class="col-total">'+total.toFixed(2)+' ৳</th><th class="col-total">'+paid.toFixed(2)+' ৳</th><th class="col-total">'+due.toFixed(2)+' ৳</th></tr></tfoot></table>';
+      html+='</tbody><tfoot><tr><th class="col-total-label">মোট:</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">—</th><th class="col-total">'+primary.reduce(function(a,r){return a+(parseFloat(r.qty)||0)},0).toFixed(2)+'</th><th class="col-total">'+total.toFixed(2)+' ৳</th><th class="col-total">'+companyFare.toFixed(2)+' ৳</th><th class="col-total">'+paid.toFixed(2)+' ৳</th><th class="col-total">'+due.toFixed(2)+' ৳</th></tr></tfoot></table>';
       html+='<div class="signature-block"><div class="sig-line">'+(printSettings.signature?esc(printSettings.signature):'স্বাক্ষর')+'</div></div>';
 
       w.document.open();
@@ -4058,15 +4058,13 @@ function renderPurchaseTable() {
     }
 
     function printHomeDashboard(){
-      var totalSales = (Array.isArray(salesList)?salesList:[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0);
-      var totalPurchase = (Array.isArray(purchaseList)?purchaseList:[]).reduce(function(a,x){return a+(parseFloat(x.total)||0)},0);
-      var totalExpense = (Array.isArray(expenseList)?expenseList:[]).reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0);
-      var totalPaid = sumAllRecordedPayments();
-      var customerDue = (Array.isArray(salesList)?salesList:[]).reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
-      var supplierDue = (Array.isArray(purchaseList)?purchaseList:[]).reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
+      var ae=window.V20AccountingEngine&&window.V20AccountingEngine(), at=ae&&ae.totals?ae:{purchase:{total:0,due:0},sales:{total:0,paid:0,due:0},expenses:0};
+      var totalSales=Number(at.sales&&at.sales.total||0), totalPurchase=Number(at.purchase&&at.purchase.total||0), totalExpense=Number(at.expenses||0);
+      var totalPaid=Number(at.sales&&at.sales.paid||0)+Number(at.purchase&&at.purchase.paid||0);
+      var customerDue=Number(at.sales&&at.sales.due||0), supplierDue=Number(at.purchase&&at.purchase.due||0);
       var totalOutstandingDue = calculateOutstandingDue();
       var dashPrintSettings=getPrintSettings('dash-print');
-      var net = totalSales - calculateCOGSForPeriod(null, null) - totalExpense;
+      var net = Number(at.netProfitLoss||0);
       var mats = typeof materialQuantitySummary==='function' ? materialQuantitySummary() : [];
       var cft = mats.reduce(function(a,x){return a+x.cft},0);
       var ton = mats.reduce(function(a,x){return a+x.ton},0);
@@ -4192,7 +4190,7 @@ function renderPurchaseTable() {
          Text, dates, phone numbers, IDs, rates and minimum thresholds are not
          added together. */
       var numericKeys = {
-        qty:true,total:true,paid:true,due:true,amount:true,balance:true,
+        qty:true,total:true,grossTotal:true,companyFareAdjustment:true,adjustedTotal:true,paid:true,due:true,amount:true,balance:true,
         salary:true,advance:true,transportFare:true,transportFarePaid:true,
         transportFareDue:true,vehicleCount:true,qtyPerVehicle:true,
         cft:true,cftQty:true,ton:true,tonQty:true,metricTon:true,metric_ton:true,
@@ -4232,7 +4230,7 @@ function renderPurchaseTable() {
       if(!arr || !arr.length) return '<div class="report-section"><h2>'+esc(title)+'</h2><p>'+T('কোনো তথ্য নেই','No records found')+'</p></div>';
       var h='<div class="report-section"><h2>'+esc(title)+'</h2>';
       h+='<table><thead><tr>';
-      var labels={date:'তারিখ',challan:'চালান',supplier:'সাপ্লায়ার',phone:'ফোন',item:'পণ্য',qty:'পরিমাণ',unit:'একক',total:'মোট টাকা',paid:'পরিশোধ',due:'বাকি',memo:'মেমো',customer:'কাস্টমার',site:'সাইট',transportName:'পরিবহন',saleType:'বিক্রয়ের ধরন',vehicleCount:'গাড়ি সংখ্যা',qtyPerVehicle:'প্রতি গাড়ির পরিমাণ',rate:'দর',transportFare:'পরিবহন ভাড়া',transportFarePaid:'ভাড়া পরিশোধ',transportFareDue:'ভাড়া বাকি',amount:'পরিমাণ',balance:'ব্যালেন্স',name:'নাম',type:'ধরন',typeBn:'ধরন',category:'ক্যাটাগরি',title:'বিবরণ',method:'মাধ্যম',note:'নোট',status:'স্ট্যাটাস',trackingNo:'ট্র্যাকিং',customer:'কাস্টমার',transportPhone:'পরিবহন ফোন'};
+      var labels={date:'তারিখ',challan:'চালান',supplier:'সাপ্লায়ার',phone:'ফোন',item:'পণ্য',qty:'পরিমাণ',unit:'একক',total:'মোট টাকা',grossTotal:'মোট বিক্রয় (Gross)',companyFareAdjustment:'কোম্পানি ভাড়া',adjustedTotal:'সমন্বিত বিক্রয়',paid:'পরিশোধ',due:'বাকি',memo:'মেমো',customer:'কাস্টমার',site:'সাইট',transportName:'পরিবহন',saleType:'বিক্রয়ের ধরন',vehicleCount:'গাড়ি সংখ্যা',qtyPerVehicle:'প্রতি গাড়ির পরিমাণ',rate:'দর',transportFare:'পরিবহন ভাড়া',transportFareCompanyPaid:'কোম্পানি ভাড়া দিয়েছে',transportFarePaid:'আমি ভাড়া দিয়েছি',transportFareDue:'ভাড়া বাকি',amount:'পরিমাণ',balance:'ব্যালেন্স',name:'নাম',type:'ধরন',typeBn:'ধরন',category:'ক্যাটাগরি',title:'বিবরণ',method:'মাধ্যম',note:'নোট',status:'স্ট্যাটাস',trackingNo:'ট্র্যাকিং',customer:'কাস্টমার',transportPhone:'পরিবহন ফোন'};
       keys.forEach(function(k){h+='<th>'+esc(labels[k]||k)+'</th>';}); h+='</tr></thead><tbody>';
       arr.forEach(function(x){h+='<tr>';keys.forEach(function(k){var v=x[k];if(k==='qty' && x.pricingMode==='vehicle'){v=(x.vehicleCount||0)+' গাড়ি × '+(x.qtyPerVehicle||0)+' '+(x.unit||'')+' = '+(x.qty||0)+' '+(x.unit||'');}if(v===undefined)v='';if(typeof v==='object')v=JSON.stringify(v);h+='<td>'+esc(v)+'</td>';});h+='</tr>';});
       h+='</tbody>'+reportColumnTotalsHtml(arr,keys)+'</table></div>';
@@ -4241,10 +4239,11 @@ function renderPurchaseTable() {
     function printAllBusinessData(){
       var oldSub=document.getElementById('sub-page-view').classList.contains('active-view');
       var oldHome=document.getElementById('home-view').classList.contains('active-view');
-      var purchase=Array.isArray(purchaseList)?purchaseList:[], sales=Array.isArray(salesList)?salesList:[], expenses=Array.isArray(expenseList)?expenseList:[];
-      var customerDue=sales.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0), supplierDue=purchase.reduce(function(a,x){return a+(parseFloat(x.due)||0)},0);
-      var totalSales=sales.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalPurchase=purchase.reduce(function(a,x){return a+(parseFloat(x.total)||0)},0), totalExpense=expenses.reduce(function(a,x){return a+(parseFloat(x.amount)||0)},0);
-      var net=totalSales-calculateCOGSForPeriod(null,null)-totalExpense;
+      var purchase=(Array.isArray(purchaseList)?purchaseList:[]).filter(function(x){return x&&!x.deleted&&!x.isDeleted&&!x._deleted&&!x.__deleted;}), sales=(Array.isArray(salesList)?salesList:[]).filter(function(x){return x&&!x.deleted&&!x.isDeleted&&!x._deleted&&!x.__deleted;}), expenses=(Array.isArray(expenseList)?expenseList:[]).filter(function(x){return x&&!x.deleted&&!x.isDeleted&&!x._deleted&&!x.__deleted;});
+      var ae=window.V20AccountingEngine&&window.V20AccountingEngine(), at=ae&&ae.totals?ae:{purchase:{total:0},sales:{total:0},expenses:0,cogs:0,netProfitLoss:0};
+      var customerDue=Number(at.sales&&at.sales.due||0), supplierDue=Number(at.purchase&&at.purchase.due||0);
+      var totalSales=Number(at.sales&&at.sales.total||0), totalPurchase=Number(at.purchase&&at.purchase.total||0), totalExpense=Number(at.expenses||0);
+      var net=Number(at.netProfitLoss||0);
       var allPaymentsTotal=sumAllRecordedPayments();
       var currentDue=calculateOutstandingDue();
       var allPrintSettings=(document.getElementById('br-reports')&&document.getElementById('br-reports').classList.contains('active'))?getReportCenterSettings():getPrintSettings('print');
@@ -4258,7 +4257,7 @@ function renderPurchaseTable() {
         '<p style="text-align:center">'+T('প্রিন্ট তারিখ ও সময়','Printed on')+': '+esc(allPrintSettings.generated)+'</p>'+
         materialHtml+
         printTableFromArray(T('কেনার খাতা','Purchase Ledger'),purchase,['date','challan','supplier','phone','item','qty','unit','total','paid','due'])+
-        printTableFromArray(T('বেচার খাতা','Sales Ledger'),sales,['date','memo','customer','phone','site','item','qty','unit','total','paid','due'])+
+        printTableFromArray(T('বেচার খাতা','Sales Ledger'),sales,['date','memo','customer','phone','site','item','qty','unit','grossTotal','companyFareAdjustment','adjustedTotal','paid','due','transportName','transportFare','transportFareCompanyPaid','transportFarePaid','transportFareDue'])+
         printTableFromArray(T('খরচের খাতা','Expense Ledger'),expenses,['date','category','title','method','amount','note'])+
         printTableFromArray(T('পেমেন্ট ইতিহাস','Payment History'),paymentHistory||[],['date','name','type','typeBn','amount','note'])+
         printTableFromArray(T('ক্যাশ খাতা','Cash Ledger'),cashList||[],['date','type','title','amount'])+
@@ -4878,7 +4877,7 @@ try{v20NormalizeAllActiveData();v20SortAllDateArrays();}catch(e){}
   /* Explicitly improve the shared table builder too. */
   if(typeof window.printTableFromArray==='function'&&!window.printTableFromArray.__v20wrapped){
     var oldPT=window.printTableFromArray;window.printTableFromArray=function(title,rows,keys){
-      var a=Array.isArray(rows)?rows.slice():[];var dk=keys&&keys.findIndex(function(k){return /date|time/i.test(k)||k==='তারিখ';});if(dk>=0)a.sort(function(x,y){return dateValue(x[keys[dk]])-dateValue(y[keys[dk]]);});return oldPT(title,a,keys);
+      var a=(Array.isArray(rows)?rows:[]).filter(function(x){return x&&!x.deleted&&!x.isDeleted&&!x._deleted&&!x.__deleted;}).slice();var dk=keys&&keys.findIndex(function(k){return /date|time/i.test(k)||k==='তারিখ';});if(dk>=0)a.sort(function(x,y){return dateValue(x[keys[dk]])-dateValue(y[keys[dk]]);});return oldPT(title,a,keys);
     };window.printTableFromArray.__v20wrapped=true;
   }
 
