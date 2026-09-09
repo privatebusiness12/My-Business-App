@@ -810,7 +810,7 @@ body{font-size:13px}
 </div>
 <script>
 
-    /* ================= Firebase: Auth + Firestore — V20.18 ROOT FIX ================= */
+    /* ================= Firebase: Auth + Firestore — V20.20 DUPLICATE-INIT FIX ================= */
     const firebaseConfig = {
       apiKey: "AIzaSyCcSH15bCRvUG3S-AViJ2neiAOaY1n7jsMs",
       authDomain: "private-business-e85ce.firebaseapp.com",
@@ -1087,38 +1087,6 @@ body{font-size:13px}
       if(cloudAutoSaveStarted)return;
       cloudAutoSaveStarted=true;
       setInterval(function(){ if(firebaseUser&&cloudLoaded) saveCloudData(); },5000);
-    }
-
-    function initFirebaseAuth(){
-      if(!firebaseConfigReady()){
-        document.getElementById('auth-status').style.display='block';
-        document.getElementById('auth-status').innerText='Firebase config বসাতে হবে';
-        return;
-      }
-      firebaseApp=firebase.initializeApp(firebaseConfig);
-      firebaseAuth=firebase.auth();
-      firebaseDb=firebase.firestore();
-      document.getElementById('auth-status').style.display='block';
-      firebaseAuth.onAuthStateChanged(async function(user){
-        firebaseUser=user||null;
-        if(user){
-          document.getElementById('auth-overlay').style.display='none';
-          document.getElementById('app-shell').style.display='block';
-          document.getElementById('auth-status').innerText='';
-          updateDashboardUser(user);
-          await loadCloudData();
-          migrateGeneralDuePayments();
-          initializeAuditSnapshot();
-          updateDashboardQuickStats();
-          startCloudAutoSave();
-        }else{
-          cloudLoaded=false;
-          document.getElementById('app-shell').style.display='none';
-          document.getElementById('auth-overlay').style.display='flex';
-          document.getElementById('login-btn').disabled=false;
-          document.getElementById('login-btn').innerText='লগইন';
-        }
-      });
     }
 
     window.addEventListener('beforeunload',function(){ if(firebaseUser&&cloudLoaded) saveCloudData(); });
