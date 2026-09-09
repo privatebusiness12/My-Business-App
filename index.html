@@ -634,6 +634,24 @@ h1,h2,h3,h4,h5,h6{break-after:avoid!important;page-break-after:avoid!important}
 img{max-width:100%!important;height:auto!important}
 }
 </style>
+
+<style id="v2017-login-diagnostic-style">
+#login-diagnostic{margin-top:14px;border:1px solid #dbe3ee;border-radius:14px;background:#f8fafc;overflow:hidden;text-align:left}
+#login-diagnostic .diag-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:#eef4fb;border-bottom:1px solid #dbe3ee;font-weight:800;color:#1f3b5b;font-size:13px}
+#login-diagnostic .diag-body{padding:10px 12px}
+.v17-diag-row{display:grid;grid-template-columns:108px 1fr;gap:8px;padding:5px 0;border-bottom:1px dashed #dbe3ee;font-size:12px;line-height:1.45}
+.v17-diag-row:last-child{border-bottom:0}
+.v17-diag-label{font-weight:700;color:#526173}
+.v17-diag-value{color:#172033;word-break:break-word}
+.v17-ok{color:#087443!important}.v17-warn{color:#9a5b00!important}.v17-bad{color:#b42318!important}
+#v17-diag-actions{display:flex;flex-wrap:wrap;gap:7px;padding:10px 12px;border-top:1px solid #dbe3ee;background:#fff}
+#v17-diag-actions button{border:1px solid #c9d5e3;background:#fff;border-radius:9px;padding:7px 10px;font-weight:700;font-size:12px;cursor:pointer}
+#v17-diag-actions button:hover{background:#f1f5f9}
+#v17-error-detail{display:none;margin:0 12px 12px;padding:10px;border-radius:10px;background:#fff4f4;border:1px solid #fecaca;color:#7f1d1d;font-size:12px;white-space:pre-wrap;word-break:break-word}
+.v17-file-warning{display:none;margin-top:10px;padding:10px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12px;line-height:1.55}
+@media(max-width:600px){.v17-diag-row{grid-template-columns:88px 1fr}.auth-card{max-width:94vw}}
+</style>
+
 </head>
 <body>
 <!-- Firebase Authentication Login -->
@@ -664,6 +682,30 @@ img{max-width:100%!important;height:auto!important}
 </div>
 <button id="login-btn" onclick="firebaseLogin()"><i class="fa-solid fa-right-to-bracket"></i>  লগইন করুন</button>
 <div class="auth-status" id="auth-status">নিরাপদ সংযোগ হচ্ছে...</div>
+<div class="v17-file-warning" id="v17-file-warning">
+  <strong>⚠️ Local HTML file detected</strong><br>
+  এই পেজটি <code>file://</code> থেকে খোলা হয়েছে। Firebase Web Authentication-এর জন্য একটি HTTP/HTTPS origin ব্যবহার করা সবচেয়ে নির্ভরযোগ্য। একই ফাইল <b>localhost</b> বা আপনার Firebase/অন্য HTTPS hosting domain থেকে খুলুন এবং সেই domain Firebase Authentication-এর <b>Authorized domains</b>-এ যোগ করুন।
+</div>
+<div id="login-diagnostic">
+  <div class="diag-head"><span>🔎 Login Root-Cause Diagnostic</span><span id="v17-diag-badge">CHECKING…</span></div>
+  <div class="diag-body">
+    <div class="v17-diag-row"><span class="v17-diag-label">Page</span><span class="v17-diag-value" id="v17-page-origin">—</span></div>
+    <div class="v17-diag-row"><span class="v17-diag-label">Protocol</span><span class="v17-diag-value" id="v17-page-protocol">—</span></div>
+    <div class="v17-diag-row"><span class="v17-diag-label">Firebase SDK</span><span class="v17-diag-value" id="v17-sdk-status">—</span></div>
+    <div class="v17-diag-row"><span class="v17-diag-label">Firebase App</span><span class="v17-diag-value" id="v17-app-status">—</span></div>
+    <div class="v17-diag-row"><span class="v17-diag-label">Auth</span><span class="v17-diag-value" id="v17-auth-status">—</span></div>
+    <div class="v17-diag-row"><span class="v17-diag-label">Firestore</span><span class="v17-diag-value" id="v17-firestore-status">—</span></div>
+    <div class="v17-diag-row"><span class="v17-diag-label">Project</span><span class="v17-diag-value" id="v17-project-status">—</span></div>
+    <div class="v17-diag-row"><span class="v17-diag-label">Last error</span><span class="v17-diag-value" id="v17-last-error">None</span></div>
+  </div>
+  <div id="v17-error-detail"></div>
+  <div id="v17-diag-actions">
+    <button type="button" onclick="v17RunLoginDiagnostics()">🔄 Re-check</button>
+    <button type="button" onclick="v17ShowFirebaseHelp()">📋 Firebase setup</button>
+    <button type="button" onclick="v17CopyDiagnostics()">📋 Copy diagnostic</button>
+  </div>
+</div>
+
 <div class="auth-secure-note"><i class="fa-solid fa-shield-halved"></i> আপনার হিসাব Firebase নিরাপত্তার মাধ্যমে সুরক্ষিত</div>
 </div>
 </div>
@@ -1102,28 +1144,114 @@ img{max-width:100%!important;height:auto!important}
 
     function firebaseLogin(){
       showAuthError('');
+      v17ClearError();
       var btn=document.getElementById('login-btn');
       try{
-        if(!window.firebase){ showAuthError('Firebase SDK লোড হয়নি। ইন্টারনেট সংযোগ ও Firebase script URL পরীক্ষা করুন।'); return; }
-        if(!firebaseAuth){ showAuthError('Firebase Authentication প্রস্তুত হয়নি। পেজটি একবার Refresh করুন।'); return; }
+        v17RunLoginDiagnostics();
+        if(!window.firebase){
+          v17SetError('SDK_NOT_LOADED','Firebase SDK পাওয়া যায়নি। Network/Content Security/blocked script পরীক্ষা করুন।');
+          showAuthError('Firebase SDK লোড হয়নি। ইন্টারনেট সংযোগ ও Firebase script URL পরীক্ষা করুন।');
+          return;
+        }
+        if(location.protocol==='file:'){
+          v17SetError('FILE_ORIGIN','এই HTML file:// origin থেকে চলছে। প্রথমে localhost বা HTTPS hosting-এ চালিয়ে দেখুন।');
+        }
+        if(!firebaseAuth){
+          v17SetError('AUTH_NOT_READY','Firebase Authentication object প্রস্তুত নয়।');
+          showAuthError('Firebase Authentication প্রস্তুত হয়নি। নিচের Diagnostic দেখুন, তারপর Re-check চাপুন।');
+          return;
+        }
         var email=(document.getElementById('login-email')||{}).value||'';
         var pass=(document.getElementById('login-password')||{}).value||'';
         email=email.trim();
         if(!email||!pass){showAuthError('Email ও Password দুটিই দিন।');return;}
         if(btn){btn.disabled=true; btn.innerText='লগইন হচ্ছে...';}
-        firebaseAuth.signInWithEmailAndPassword(email,pass).then(function(){
+        v17SetDiag('v17-auth-status','Sign-in request চলছে…','v17-warn');
+        firebaseAuth.signInWithEmailAndPassword(email,pass).then(function(cred){
+          v17ClearError();
+          v17SetDiag('v17-auth-status','সফল — '+((cred&&cred.user&&cred.user.email)||email),'v17-ok');
+          v17SetDiag('v17-diag-badge','LOGIN OK','v17-ok');
           if(btn){btn.disabled=false; btn.innerText='লগইন';}
         }).catch(function(err){
           console.error('Firebase login failed:',err);
+          v17RecordFirebaseError('SIGN_IN',err);
           showAuthError(firebaseErrorBangla(err));
           if(btn){btn.disabled=false; btn.innerText='লগইন';}
         });
       }catch(err){
         console.error('Firebase login exception:',err);
+        v17RecordFirebaseError('LOGIN_EXCEPTION',err);
         showAuthError(firebaseErrorBangla(err));
         if(btn){btn.disabled=false; btn.innerText='লগইন';}
       }
     }
+
+    function v17SetDiag(id,text,cls){
+      var el=document.getElementById(id); if(!el)return;
+      el.textContent=text||'—'; el.className='v17-diag-value'+(cls?' '+cls:'');
+    }
+    function v17ClearError(){
+      v17SetDiag('v17-last-error','None','v17-ok');
+      var box=document.getElementById('v17-error-detail'); if(box){box.style.display='none';box.textContent='';}
+      var badge=document.getElementById('v17-diag-badge'); if(badge){badge.textContent='READY';badge.className='v17-ok';}
+    }
+    function v17SetError(code,message,raw){
+      var text=(code||'ERROR')+(message?': '+message:'');
+      v17SetDiag('v17-last-error',text,'v17-bad');
+      var box=document.getElementById('v17-error-detail');
+      if(box){
+        box.style.display='block';
+        box.textContent='Code: '+(code||'unknown')+'\nMessage: '+(message||'')+(raw?'\nRaw: '+raw:'');
+      }
+      var badge=document.getElementById('v17-diag-badge'); if(badge){badge.textContent='ERROR';badge.className='v17-bad';}
+    }
+    function v17RecordFirebaseError(stage,err){
+      var code=String(err&&err.code||'unknown');
+      var msg=String(err&&err.message||err||'Unknown error');
+      v17SetError(stage+' / '+code,msg,JSON.stringify({stage:stage,code:code,message:msg,name:err&&err.name||'',protocol:location.protocol,hostname:location.hostname,origin:location.origin,projectId:firebaseConfig&&firebaseConfig.projectId||''},null,2));
+      v17SetDiag('v17-auth-status','Failed: '+code,'v17-bad');
+    }
+    function v17RunLoginDiagnostics(){
+      try{
+        var protocol=location.protocol||'unknown', host=location.hostname||'(none)', origin=location.origin||'(none)';
+        v17SetDiag('v17-page-origin',origin+' | host='+host,protocol==='file:'?'v17-warn':'');
+        v17SetDiag('v17-page-protocol',protocol,protocol==='file:'?'v17-bad':(protocol==='https:'?'v17-ok':'v17-warn'));
+        var fw=document.getElementById('v17-file-warning'); if(fw)fw.style.display=protocol==='file:'?'block':'none';
+        if(window.firebase){
+          var ver=(firebase.SDK_VERSION||firebase.SDK_VERSION==='')?firebase.SDK_VERSION:'loaded';
+          v17SetDiag('v17-sdk-status','Loaded'+(ver!==''?' — v'+ver:''),'v17-ok');
+        }else v17SetDiag('v17-sdk-status','NOT LOADED','v17-bad');
+        if(window.firebase){
+          try{
+            firebaseApp = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+            v17SetDiag('v17-app-status','Initialized','v17-ok');
+          }catch(e){v17SetDiag('v17-app-status','FAILED — '+(e.code||e.message||e),'v17-bad');v17RecordFirebaseError('APP_INIT',e);return;}
+          try{ firebaseAuth = firebase.auth(); v17SetDiag('v17-auth-status',firebaseAuth?'Ready':'NOT READY',firebaseAuth?'v17-ok':'v17-bad'); }
+          catch(e){v17SetDiag('v17-auth-status','FAILED — '+(e.code||e.message||e),'v17-bad');v17RecordFirebaseError('AUTH_INIT',e);}
+          try{ firebaseDb = firebase.firestore(); v17SetDiag('v17-firestore-status',firebaseDb?'Ready':'NOT READY',firebaseDb?'v17-ok':'v17-warn'); }
+          catch(e){v17SetDiag('v17-firestore-status','FAILED — '+(e.code||e.message||e),'v17-bad');}
+        }else{
+          v17SetDiag('v17-app-status','Waiting for Firebase SDK','v17-warn');
+          v17SetDiag('v17-auth-status','Waiting for Firebase SDK','v17-warn');
+          v17SetDiag('v17-firestore-status','Waiting for Firebase SDK','v17-warn');
+        }
+        v17SetDiag('v17-project-status',(firebaseConfig&&firebaseConfig.projectId)||'Missing config',firebaseConfig&&firebaseConfig.projectId?'v17-ok':'v17-bad');
+        if(protocol==='file:') v17SetError('FILE_ORIGIN','Direct file:// mode detected');
+      }catch(e){v17RecordFirebaseError('DIAGNOSTIC',e);}
+    }
+    function v17ShowFirebaseHelp(){
+      var box=document.getElementById('v17-error-detail'); if(!box)return;
+      box.style.display='block'; box.textContent='Firebase checklist:\n1) Authentication → Sign-in method → Email/Password = Enabled.\n2) Authentication → Settings → Authorized domains → add the hostname used by this page.\n3) Do not use a random file:// location as your production origin; prefer HTTPS hosting.\n4) Authentication → Users → confirm the email account exists and is enabled.\n5) If the diagnostic shows a Firebase error code, that exact code is the root-cause clue.\n\nCurrent page: '+location.href+'\nProject: '+((firebaseConfig&&firebaseConfig.projectId)||'unknown');
+    }
+    function v17CopyDiagnostics(){
+      var rows=document.querySelectorAll('#login-diagnostic .v17-diag-row'), out=['V20.17 LOGIN DIAGNOSTIC'];
+      rows.forEach(function(r){out.push(r.innerText.replace(/\n/g,' = '));});
+      var box=document.getElementById('v17-error-detail'); if(box&&box.style.display!=='none'&&box.textContent)out.push(box.textContent);
+      var text=out.join('\n');
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){showAuthError('Diagnostic তথ্য clipboard-এ কপি হয়েছে।');}).catch(function(){showAuthError('Copy করা যায়নি। Diagnostic-এর তথ্য manually copy করুন।');});}
+      else{window.prompt('Copy diagnostic:',text);}
+    }
+
 
     function firebaseLogout(){ if(firebaseAuth) firebaseAuth.signOut(); }
 
@@ -1298,20 +1426,26 @@ img{max-width:100%!important;height:auto!important}
 
     function initFirebaseAuth(){
       var status=document.getElementById('auth-status');
+      try{v17RunLoginDiagnostics();}catch(diagInitErr){console.warn('V20.17 diagnostic init:',diagInitErr);}
       try{
         if(!window.firebase){
+          v17SetDiag('v17-sdk-status','NOT LOADED','v17-bad');
           if(status){status.style.display='block';status.innerText='Firebase SDK লোড হয়নি';}
           showAuthError('Firebase SDK লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে পেজটি Refresh করুন।');
           return;
         }
         if(!firebaseConfigReady()){
+          v17SetDiag('v17-project-status','Missing/invalid config','v17-bad');
           if(status){status.style.display='block';status.innerText='Firebase config বসাতে হবে';}
           showAuthError('Firebase configuration সঠিকভাবে দেওয়া হয়নি।');
           return;
         }
         firebaseApp = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+        v17SetDiag('v17-app-status','Initialized','v17-ok');
         firebaseAuth = firebase.auth();
+        v17SetDiag('v17-auth-status','Ready','v17-ok');
         firebaseDb = firebase.firestore();
+        v17SetDiag('v17-firestore-status','Ready','v17-ok');
         if(status){status.style.display='block';status.innerText='Firebase সংযোগ প্রস্তুত...';}
         firebaseAuth.onAuthStateChanged(async function(user){
           firebaseUser=user||null;
@@ -1348,6 +1482,7 @@ img{max-width:100%!important;height:auto!important}
         });
       }catch(e){
         console.error('Firebase initialization failed:',e);
+        v17RecordFirebaseError('INIT',e);
         firebaseApp=null; firebaseAuth=null; firebaseDb=null;
         if(status){status.style.display='block';status.innerText='Firebase initialization failed';}
         showAuthError(firebaseErrorBangla(e));
@@ -5511,7 +5646,8 @@ window.V20AccountingEngine.version='20.11';
 })();
 </script>
 
-<!-- V20.16 FULL AUDIT FIX; V20.11 ACCOUNTING ENGINE COMPATIBILITY. -->
+<!-- V20.17 LOGIN ROOT-CAUSE DIAGNOSTIC + FIX
+     V20.16 FULL AUDIT FIX; V20.11 ACCOUNTING ENGINE COMPATIBILITY. -->
 <!-- V20.11 FREIGHT-ADJUSTMENT AUDIT/LOCK MANIFEST: single AccountingEngine; canonical COGS/stock valuation; full reconciliation; explicit bank direction; safe restore warnings. -->
 
 <script>
