@@ -5,7 +5,7 @@
 <!-- V20.9 TRUE CLEAN FINAL: canonical integrity logic; safe restore; final integrity logic is inside <body>. -->
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>বিজনেস একাউন্টিং ড্যাশবোর্ড — V20.18 LOGIN ROOT FIX</title>
+<title>বিজনেস একাউন্টিং ড্যাশবোর্ড</title>
 <!-- FontAwesome Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <!-- Firebase SDK: Authentication + Cloud Firestore -->
@@ -607,7 +607,6 @@ body{font-size:13px}
 }
 
 </style>
-<style id="v20-18-login-fix-style">.auth-status{min-height:20px}.auth-error{white-space:pre-wrap}.cloud-status{display:inline-block;margin:8px 0;padding:6px 9px;border-radius:8px;font-size:12px;background:#eef2f7;color:#475569}.cloud-status.ok{background:#ecfdf3;color:#166534}.cloud-status.error{background:#fef2f2;color:#991b1b}</style>
 </head>
 <body>
 <!-- Firebase Authentication Login -->
@@ -671,7 +670,7 @@ body{font-size:13px}
 </div>
 <div class="dashboard-date" id="dashboard-today"><i class="fa-regular fa-calendar"></i> আজ</div>
 </div>
-<div id="cloud-status" class="cloud-status" style="display:none"></div><div class="quick-stat-grid">
+<div class="quick-stat-grid">
 <div class="quick-stat">
 <div class="quick-stat-icon quick-blue"><i class="fa-solid fa-cart-shopping"></i></div>
 <div><strong id="dash-sales-count">0</strong><span data-bn="বিক্রয় রেকর্ড" data-en="Sales Records">বিক্রয় রেকর্ড</span></div>
@@ -810,138 +809,291 @@ body{font-size:13px}
 </div>
 <script>
 
-    /* ================= Firebase: Auth + Firestore — V20.18 ROOT FIX ================= */
+    /* ================= Firebase: Auth + Firestore =================
+       IMPORTANT: replace the values below with your Firebase Web App config.
+       Firebase Console -> Project settings -> Your apps -> Web app -> Config.
+    */
     const firebaseConfig = {
-      apiKey: "AIzaSyCcSH15bCRvUG3S-AViJ2neiAOaY1n7jsMs",
-      authDomain: "private-business-e85ce.firebaseapp.com",
-      projectId: "private-business-e85ce",
-      storageBucket: "private-business-e85ce.firebasestorage.app",
-      messagingSenderId: "427471953861",
-      appId: "1:427471953861:web:7f563d77c4a217cc62f5ac",
-      measurementId: "G-CRVWWB377L"
-    };
-    var firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseUser=null;
-    var cloudSaveTimer=null, cloudLoaded=false, cloudSaving=false;
-    var firebaseInitPromise=null, firebaseAuthReady=false;
-    function firebaseConfigReady(){return !!(firebaseConfig.apiKey&&!firebaseConfig.apiKey.startsWith('PASTE_')&&firebaseConfig.projectId&&!firebaseConfig.projectId.startsWith('PASTE_'));}
-    function showAuthError(msg){var e=document.getElementById('auth-error');if(!e)return;e.innerText=msg||'';e.style.display=msg?'block':'none';}
-    function setAuthStatus(msg){var e=document.getElementById('auth-status');if(e){e.style.display='block';e.innerText=msg||'';}}
-    function toggleLoginPassword(){var input=document.getElementById('login-password'),eye=document.getElementById('password-eye');if(!input)return;input.type=input.type==='password'?'text':'password';if(eye)eye.className=input.type==='password'?'fa-solid fa-eye':'fa-solid fa-eye-slash';}
-    function firebaseErrorBangla(err){
-      var c=String((err&&err.code)||'').toLowerCase(),m=String((err&&err.message)||'').trim();
-      if(c.indexOf('invalid-credential')>=0||c.indexOf('wrong-password')>=0||c.indexOf('user-not-found')>=0)return 'Email অথবা Password সঠিক নয়।';
-      if(c.indexOf('invalid-email')>=0)return 'Email ঠিকানাটি সঠিক নয়।';
-      if(c.indexOf('user-disabled')>=0)return 'এই Firebase accountটি disabled করা হয়েছে।';
-      if(c.indexOf('too-many-requests')>=0)return 'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।';
-      if(c.indexOf('network-request-failed')>=0)return 'ইন্টারনেট/Firebase server connection সমস্যা হয়েছে।';
-      if(c.indexOf('operation-not-allowed')>=0)return 'Firebase Console → Authentication → Sign-in method-এ Email/Password চালু করুন।';
-      if(c.indexOf('unauthorized-domain')>=0||c.indexOf('app-not-authorized')>=0)return 'business12.github.io Firebase Authentication-এর Authorized Domains-এ যোগ করা হয়নি।';
-      if(c.indexOf('api-key-not-valid')>=0||c.indexOf('invalid-api-key')>=0)return 'Firebase API Key সঠিক নয়।';
-      if(c.indexOf('configuration-not-found')>=0)return 'Firebase Authentication configuration পাওয়া যাচ্ছে না।';
-      if(c.indexOf('internal-error')>=0)return 'Firebase initialization-এর সময় internal error হয়েছে।';
-      return 'Firebase error'+(c?' ['+c+']':'')+(m?': '+m:'।');
+  apiKey: "AIzaSyCcSH15bCRvUG3S-AViJ2nei0aY1n7jsMs",
+  authDomain: "private-business-e85ce.firebaseapp.com",
+  projectId: "private-business-e85ce",
+  storageBucket: "private-business-e85ce.firebasestorage.app",
+  messagingSenderId: "427471953861",
+  appId: "1:427471953861:web:3b1a002219354fe762f5ac",
+  measurementId: "G-BK6LL5ZBT"
+};
+
+    var firebaseApp = null, firebaseAuth = null, firebaseDb = null, firebaseUser = null;
+    var cloudSaveTimer = null, cloudLoaded = false, cloudSaving = false;
+
+    function firebaseConfigReady(){
+      return firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('PASTE_') &&
+             firebaseConfig.projectId && !firebaseConfig.projectId.startsWith('PASTE_');
     }
-    function waitForFirebaseSdk(timeoutMs){
-      timeoutMs=timeoutMs||15000;
-      if(window.firebase && typeof window.firebase.initializeApp==='function' && typeof window.firebase.auth==='function')return Promise.resolve(window.firebase);
-      var started=Date.now();
-      return new Promise(function(resolve,reject){
-        (function check(){
-          if(window.firebase && typeof window.firebase.initializeApp==='function' && typeof window.firebase.auth==='function')return resolve(window.firebase);
-          if(Date.now()-started>=timeoutMs)return reject({code:'sdk-not-loaded',message:'Firebase SDK did not load within '+timeoutMs+'ms.'});
-          setTimeout(check,100);
-        })();
-      });
+
+    function showAuthError(msg){
+      var e=document.getElementById('auth-error'); if(!e)return; e.innerText=msg||''; e.style.display=msg?'block':'none';
     }
-    function initFirebaseAuth(){
-      if(firebaseAuthReady && firebaseAuth)return Promise.resolve(firebaseAuth);
-      if(firebaseInitPromise)return firebaseInitPromise;
-      firebaseInitPromise=(async function(){
-        try{
-          setAuthStatus('Firebase SDK প্রস্তুত হচ্ছে...');
-          await waitForFirebaseSdk(15000);
-          if(!firebaseConfigReady())throw {code:'invalid-config',message:'Firebase config is incomplete.'};
-          if(!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.appId)throw {code:'invalid-config',message:'Firebase web app configuration is incomplete.'};
 
-          setAuthStatus('Firebase App প্রস্তুত হচ্ছে...');
-          if(firebase.apps && firebase.apps.length){
-            firebaseApp=firebase.apps[0];
-          }else{
-            firebaseApp=firebase.initializeApp(firebaseConfig);
-          }
-          if(!firebaseApp)throw {code:'app-init-failed',message:'Firebase App could not be initialized.'};
-
-          setAuthStatus('Firebase Authentication প্রস্তুত হচ্ছে...');
-          firebaseAuth=firebase.auth(firebaseApp);
-          if(!firebaseAuth)throw {code:'auth-init-failed',message:'Firebase Authentication could not be initialized.'};
-          firebaseAuthReady=true;
-          setAuthStatus('Firebase Authentication প্রস্তুত...');
-
-          try{
-            firebaseDb=firebase.firestore(firebaseApp);
-          }catch(dbErr){
-            console.error('Firestore initialization failed; Auth remains usable:',dbErr);
-            firebaseDb=null;
-          }
-
-          firebaseAuth.onAuthStateChanged(async function(user){
-            firebaseUser=user||null;
-            var overlay=document.getElementById('auth-overlay'),shell=document.getElementById('app-shell'),btn=document.getElementById('login-btn');
-            if(user){
-              if(overlay)overlay.style.display='none';
-              if(shell)shell.style.display='block';
-              if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}
-              setAuthStatus('');
-              updateDashboardUser(user);
-              try{
-                await loadCloudData();
-                migrateGeneralDuePayments();
-                initializeAuditSnapshot();
-                updateDashboardQuickStats();
-                startCloudAutoSave();
-              }catch(e){console.error('Post-login initialization failed:',e);}
-            }else{
-              cloudLoaded=false;
-              if(shell)shell.style.display='none';
-              if(overlay)overlay.style.display='flex';
-              if(btn){btn.disabled=!firebaseAuthReady;btn.innerText='লগইন করুন';}
-              if(firebaseAuthReady)setAuthStatus('Firebase Authentication প্রস্তুত');
-            }
-          });
-          return firebaseAuth;
-        }catch(e){
-          console.error('Firebase initialization failed:',e);
-          firebaseApp=null;firebaseAuth=null;firebaseDb=null;firebaseAuthReady=false;
-          firebaseInitPromise=null;
-          setAuthStatus('Firebase প্রস্তুত হয়নি');
-          showAuthError(firebaseErrorBangla(e));
-          throw e;
-        }
-      })();
-      return firebaseInitPromise;
+    function toggleLoginPassword(){
+      var input=document.getElementById('login-password');
+      var eye=document.getElementById('password-eye');
+      if(!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
+      if(eye) eye.className = input.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
     }
-    async function firebaseLogin(){
-      showAuthError('');
-      var btn=document.getElementById('login-btn');
-      try{
-        if(!firebaseAuthReady || !firebaseAuth)await initFirebaseAuth();
-        if(!firebaseAuthReady || !firebaseAuth)throw {code:'auth-init-failed',message:'Firebase Authentication is not ready.'};
-        var email=((document.getElementById('login-email')||{}).value||'').trim();
-        var pass=(document.getElementById('login-password')||{}).value||'';
-        if(!email||!pass){showAuthError('Email ও Password দুটিই দিন।');return;}
-        if(btn){btn.disabled=true;btn.innerText='লগইন হচ্ছে...';}
-        setAuthStatus('Firebase-এ লগইন যাচাই হচ্ছে...');
-        await firebaseAuth.signInWithEmailAndPassword(email,pass);
-      }catch(err){
-        console.error('Firebase login failed:',err);
-        showAuthError(firebaseErrorBangla(err));
-        setAuthStatus(firebaseAuthReady?'Firebase Authentication প্রস্তুত':'Firebase প্রস্তুত হয়নি');
-        if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}
+    function confirmFirebaseLogout(){
+      if(!firebaseAuth) return;
+      var ok = confirm(currentLang === 'en' ? 'Do you want to log out?' : 'আপনি কি লগআউট করতে চান?');
+      if(ok) firebaseLogout();
+    }
+    function updateDashboardUser(user){
+      var email=(user&&user.email)||'';
+      var a=document.getElementById('logged-user-email');
+      var b=document.getElementById('dashboard-account-email');
+      if(a) a.innerText=email||'আপনার অ্যাকাউন্ট';
+      if(b) b.innerText=email||'লগইন করা অ্যাকাউন্ট';
+      var d=document.getElementById('dashboard-today');
+      if(d){
+        var now=new Date();
+        d.innerHTML='<i class="fa-regular fa-calendar"></i> '+now.toLocaleDateString(currentLang==='en'?'en-US':'bn-BD',{day:'numeric',month:'short',year:'numeric'});
       }
     }
-    function firebaseLogout(){if(firebaseAuth)firebaseAuth.signOut();}
-    function confirmFirebaseLogout(){if(!firebaseAuth){showAuthError('Firebase Authentication প্রস্তুত হয়নি।');return;}var ok=confirm(currentLang==='en'?'Do you want to log out?':'আপনি কি লগআউট করতে চান?');if(ok)firebaseLogout();}
-    window.addEventListener('beforeunload',function(){if(firebaseUser&&cloudLoaded)saveCloudData();});
+    function updateDashboardQuickStats(){
+      var s=document.getElementById('dash-sales-count'), p=document.getElementById('dash-stock-count');
+      var d=document.getElementById('dash-due-total'), i=document.getElementById('dash-invoice-count');
+      if(s) s.innerText=Array.isArray(salesList)?salesList.length:0;
+      if(p) p.innerText=Array.isArray(productList)?productList.length:0;
+      var due=calculateOutstandingDue();
+      if(d) d.innerText='৳'+due.toLocaleString('en-US',{maximumFractionDigits:2});
+      if(i) i.innerText=Array.isArray(invoiceList)?invoiceList.length:0;
+    }
+
+    function sumAllRecordedPayments(){
+      return (Array.isArray(paymentHistory)?paymentHistory:[]).reduce(function(sum,x){ return sum + (parseFloat(x.amount)||0); },0);
+    }
+
+    /* ---------------- আলাদা পাওনা / দেনা হিসাব ----------------
+       বিক্রয় বাকি = কাস্টমারের কাছ থেকে আমরা পাবো।
+       ক্রয় বাকি + পরিবহন বাকি = আমাদের দিতে হবে।
+       সাধারণ বাকি পরিশোধও 'আমাদের দিতে হবে' মোট থেকে বাদ যাবে।
+       পুরোনো ডাটার কোনো রেকর্ড মুছে বা বদলে দেওয়া হয় না। */
+    function normalizePartyName(v){
+      return String(v==null?'':v).trim().toLowerCase().replace(/\s+/g,' ');
+    }
+    function transportPersonName(x){
+      if(!x)return '';
+      if(x.transportPersonName) return String(x.transportPersonName).trim();
+      var n=String(x.transportName||'').trim();
+      var m=n.match(/\(([^)]+)\)/);
+      if(m && m[1]) return m[1].trim();
+      var d=String(x.transportDetails||'');
+      var m2=d.match(/(?:ড্রাইভার|সুকানী|সুকানি|Driver|Sukani)\s*:\s*([^<\n]+)/i);
+      return m2&&m2[1]?m2[1].trim():'';
+    }
+    function partyNameMatches(a,b){
+      var x=normalizePartyName(a), y=normalizePartyName(b);
+      return !!x && !!y && x===y;
+    }
+    function generalDueAllocationsTotal(g){
+      return (Array.isArray(g&&g.allocations)?g.allocations:[]).reduce(function(sum,a){return sum+(parseFloat(a.amount)||0);},0);
+    }
+    function calculateLegacyPayableAdjustments(){
+      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
+        if(x.legacyGlobalDeduction) return sum+Math.max(0,parseFloat(x.amount)||0);
+        return sum;
+      },0);
+    }
+    function calculateLegacyReceivableAdjustments(){
+      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
+        if(x.legacyGlobalDeduction && x.direction==='receivable') return sum+Math.max(0,parseFloat(x.amount)||0);
+        return sum;
+      },0);
+    }
+    function calculateCustomerReceivable(){
+      var base=(Array.isArray(salesList)?salesList:[]).reduce(function(sum,x){
+        return sum + Math.max(0,parseFloat(x.due)||0);
+      },0);
+      return Math.max(0,base-calculateLegacyReceivableAdjustments());
+    }
+    function calculateSupplierPayable(){
+      return (Array.isArray(purchaseList)?purchaseList:[]).reduce(function(sum,x){
+        return sum + Math.max(0,parseFloat(x.due)||0);
+      },0);
+    }
+    function calculateTransportPayable(){
+      var due=0;
+      (Array.isArray(salesList)?salesList:[]).forEach(function(x){ due += Math.max(0,parseFloat(x.transportFareDue)||0); });
+      (Array.isArray(purchaseList)?purchaseList:[]).forEach(function(x){ due += Math.max(0,parseFloat(x.transportFareDue)||0); });
+      return due;
+    }
+    function calculateGeneralDuePaid(){
+      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
+        return sum + Math.max(0,parseFloat(x.amount)||0);
+      },0);
+    }
+    function calculateOurPayable(){
+      return Math.max(0, calculateSupplierPayable() + calculateTransportPayable() - calculateLegacyPayableAdjustments());
+    }
+    function calculateOutstandingDue(){
+      return calculateOurPayable();
+    }
+
+    /* এককালীন পেমেন্ট: একই নামের আগের বাকি রেকর্ডগুলোতে FIFO পদ্ধতিতে সমন্বয় */
+    function getOneTimeCandidates(direction,matchType,name){
+      var target=normalizePartyName(name), out=[];
+      if(!target)return out;
+      if(direction==='receivable'){
+        salesList.forEach(function(x){
+          var match=(matchType==='customer' && partyNameMatches(x.customer,target)) ||
+                    (matchType==='site' && partyNameMatches(x.site,target)) ||
+                    (matchType==='vehicle' && partyNameMatches((x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0],target));
+          if(match && (parseFloat(x.due)||0)>0) out.push({type:'sale',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
+        });
+      }else if(direction==='payable'){
+        purchaseList.forEach(function(x){
+          var match=(matchType==='supplier' && partyNameMatches(x.supplier,target)) ||
+                    (matchType==='driver' && partyNameMatches(transportPersonName(x),target)) ||
+                    (matchType==='vehicle' && partyNameMatches((x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0],target));
+          if(match){
+            if(matchType==='supplier' && (parseFloat(x.due)||0)>0) out.push({type:'purchase',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
+            if(matchType==='driver' && (parseFloat(x.transportFareDue)||0)>0) out.push({type:'purchaseTransport',id:x.id,obj:x,field:'transportFareDue',available:parseFloat(x.transportFareDue)||0});
+          }
+        });
+      }
+      out.sort(function(a,b){
+        var ad=String(a.obj.date||''), bd=String(b.obj.date||'');
+        if(ad!==bd)return ad.localeCompare(bd);
+        return (Number(a.id)||0)-(Number(b.id)||0);
+      });
+      return out;
+    }
+    function applyOneTimeAllocations(direction,matchType,name,amount,applyNow){
+      var candidates=getOneTimeCandidates(direction,matchType,name), remaining=Math.max(0,parseFloat(amount)||0), allocations=[];
+      var available=candidates.reduce(function(sum,c){return sum+c.available;},0);
+      if(remaining<=0 || available+0.000001<remaining) return {ok:false,allocations:[],available:available};
+      candidates.forEach(function(c){
+        if(remaining<=0)return;
+        var take=Math.min(remaining,c.available);
+        if(take<=0)return;
+        if(applyNow!==false){
+          if(c.field==='due'){
+            c.obj.paid=(parseFloat(c.obj.paid)||0)+take;
+            c.obj.due=Math.max(0,(parseFloat(c.obj.total)||0)-c.obj.paid).toFixed(2);
+            c.obj.paid=c.obj.paid.toFixed(2);
+          }else if(c.field==='transportFareDue'){
+            c.obj.transportFarePaid=(parseFloat(c.obj.transportFarePaid)||0)+take;
+            c.obj.transportFarePaid=c.obj.transportFarePaid.toFixed(2);
+            c.obj.transportFareDue=Math.max(0,(parseFloat(c.obj.transportFare)||0)-parseFloat(c.obj.transportFarePaid)).toFixed(2);
+          }
+        }
+        allocations.push({sourceType:c.type,sourceId:c.id,field:c.field,amount:take});
+        remaining-=take;
+      });
+      return {ok:remaining<0.000001,allocations:allocations,available:available};
+    }
+    function reverseOneTimeAllocations(g){
+      if(!g || !Array.isArray(g.allocations))return;
+      g.allocations.forEach(function(a){
+        var obj=null;
+        if(a.sourceType==='sale') obj=salesList.find(function(r){return r.id===a.sourceId;});
+        else if(a.sourceType==='purchase'||a.sourceType==='purchaseTransport') obj=purchaseList.find(function(r){return r.id===a.sourceId;});
+        if(!obj)return;
+        var amt=parseFloat(a.amount)||0;
+        if(a.field==='due'){
+          obj.paid=Math.max(0,(parseFloat(obj.paid)||0)-amt).toFixed(2);
+          obj.due=Math.max(0,(parseFloat(obj.total)||0)-parseFloat(obj.paid)).toFixed(2);
+        }else if(a.field==='transportFareDue'){
+          obj.transportFarePaid=Math.max(0,(parseFloat(obj.transportFarePaid)||0)-amt).toFixed(2);
+          obj.transportFareDue=Math.max(0,(parseFloat(obj.transportFare)||0)-parseFloat(obj.transportFarePaid)).toFixed(2);
+        }
+      });
+      g.allocations=[];
+    }
+    /* কেন্দ্রীয় due allocation rebuild: correction-এর পর মূল data থেকে FIFO হিসাব পুনর্গঠন। */
+    function rebuildAllOneTimeAllocations(){
+      try{
+        var gs=Array.isArray(generalDuePayments)?generalDuePayments:[];
+        gs.forEach(function(g){
+          if(Array.isArray(g.allocations)&&g.allocations.length) reverseOneTimeAllocations(g);
+        });
+        gs.forEach(function(g){
+          if(!g||g.legacyGlobalDeduction||g.matchType==='general') return;
+          var direction=g.direction||'payable', matchType=g.matchType||'general';
+          var name=String(g.name||'').trim(), amount=Math.max(0,parseFloat(g.amount)||0);
+          if(!name||amount<=0){g.allocations=[];g.allocationVersion=1;return;}
+          var r=applyOneTimeAllocations(direction,matchType,name,amount,true);
+          g.allocations=r.ok?r.allocations:[];
+          g.allocationVersion=1; g.legacyGlobalDeduction=false;
+        });
+      }catch(e){console.error('One-time due rebuild failed',e);}
+    }
+
+    function inferLegacyPayableMatch(name){
+      var target=normalizePartyName(name), supplierHits=0, driverHits=0, supplierType='';
+      purchaseList.forEach(function(x){
+        if(partyNameMatches(x.supplier,target) && (parseFloat(x.due)||0)>0){supplierHits++;supplierType='supplier';}
+        if(partyNameMatches(transportPersonName(x),target) && (parseFloat(x.transportFareDue)||0)>0){driverHits++;}
+      });
+      if(supplierHits===1 && driverHits===0)return 'supplier';
+      if(driverHits===1 && supplierHits===0)return 'driver';
+      return '';
+    }
+    function migrateGeneralDuePayments(){
+      var changed=false;
+      (Array.isArray(generalDuePayments)?generalDuePayments:[]).forEach(function(g){
+        if(g.allocationVersion)return;
+        if(!g.direction)g.direction='payable';
+        if(!g.matchType || g.matchType==='general'){
+          var inferred=inferLegacyPayableMatch(g.name||'');
+          if(inferred){
+            var r=applyOneTimeAllocations('payable',inferred,g.name,parseFloat(g.amount)||0,true);
+            if(r.ok){g.matchType=inferred;g.allocations=r.allocations;g.legacyGlobalDeduction=false;}
+            else {g.matchType='general';g.allocations=[];g.legacyGlobalDeduction=true;}
+          }else{
+            g.matchType='general';g.allocations=[];g.legacyGlobalDeduction=true;
+          }
+        }
+        g.allocationVersion=1; changed=true;
+      });
+      if(changed){scheduleCloudSave();}
+      return changed;
+    }
+    function getPrintSettings(prefix){
+      var p=prefix||'print';
+      var o=document.getElementById(p+'-orientation');
+      var s=document.getElementById(p+'-signature');
+      if(!o && !s && p==='print'){
+        o=document.getElementById('dash-print-orientation');
+        s=document.getElementById('dash-print-signature');
+      }
+      return {orientation:(o&&o.value==='landscape')?'landscape':'portrait',signature:(s&&s.value||'').trim(),generated:new Date().toLocaleString('bn-BD')};
+    }
+    function setPrintPageStyle(w,orientation){
+      w.document.write('<style id="dynamic-print-style">@page{size:A4 '+orientation+';margin:9mm}</style>');
+    }
+
+    function firebaseLogin(){
+      showAuthError('');
+      if(!firebaseAuth){ showAuthError('Firebase config বসানো হয়নি। নিচের firebaseConfig-এ আপনার Web App config বসান।'); return; }
+      var email=document.getElementById('login-email').value.trim();
+      var pass=document.getElementById('login-password').value;
+      if(!email||!pass){showAuthError('Email ও Password দুটিই দিন।');return;}
+      var btn=document.getElementById('login-btn'); btn.disabled=true; btn.innerText='লগইন হচ্ছে...';
+      firebaseAuth.signInWithEmailAndPassword(email,pass).catch(function(err){
+        showAuthError(firebaseErrorBangla(err)); btn.disabled=false; btn.innerText='লগইন';
+      });
+    }
+
+    function firebaseLogout(){ if(firebaseAuth) firebaseAuth.signOut(); }
+
+    function firebaseErrorBangla(err){
+      var c=err&&err.code||'';
+      if(c.indexOf('invalid-credential')>=0||c.indexOf('wrong-password')>=0||c.indexOf('user-not-found')>=0) return 'Email অথবা Password সঠিক নয়।';
+      if(c.indexOf('too-many-requests')>=0) return 'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।';
+      if(c.indexOf('network-request-failed')>=0) return 'ইন্টারনেট সংযোগ পরীক্ষা করুন।';
+      return 'লগইন করা যায়নি: '+(err&&err.message?err.message:c);
+    }
 
     function getCloudCollections(){
       return {
@@ -4239,22 +4391,12 @@ function renderPurchaseTable() {
     }
 
     /* ==================== V20.12 PRINT/PDF LAYOUT FIX ==================== */
-    function v20GetSelectedPrintOrientation(doc){
-      var rootDoc=doc||document;
+    function v20GetSelectedPrintOrientation(){
       var ids=['rc-print-orientation','br-print-orientation','print-orientation','dash-print-orientation','all-print-orientation'];
       for(var i=0;i<ids.length;i++){
-        var el=rootDoc.getElementById(ids[i]);
+        var el=document.getElementById(ids[i]);
         if(el && (el.value==='portrait'||el.value==='landscape')) return el.value;
       }
-      try{
-        var op=rootDoc.defaultView&&rootDoc.defaultView.opener;
-        if(op && !op.closed){
-          for(var j=0;j<ids.length;j++){
-            var oe=op.document.getElementById(ids[j]);
-            if(oe && (oe.value==='portrait'||oe.value==='landscape')) return oe.value;
-          }
-        }
-      }catch(e){}
       return 'portrait';
     }
 
@@ -4270,7 +4412,7 @@ function renderPurchaseTable() {
 
     function v20FixPrintLayout(doc){
       if(!doc || !doc.head) return;
-      var o=v20GetSelectedPrintOrientation(doc);
+      var o=v20GetSelectedPrintOrientation();
       var old=doc.getElementById('v20-final-print-layout');
       if(old) old.remove();
       var st=doc.createElement('style');
@@ -4300,8 +4442,7 @@ function renderPurchaseTable() {
     }
     /* ================== END V20.12 PRINT/PDF LAYOUT FIX ================== */
 
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){initFirebaseAuth();});
-    else initFirebaseAuth();
+    initFirebaseAuth();
 
     /* ---------------- Android / Mobile Back Button Guard ---------------- */
     (function(){
@@ -4895,7 +5036,7 @@ try{v20NormalizeAllActiveData();v20SortAllDateArrays();}catch(e){}
     }catch(e){console.warn('V20 print preparation failed',e);}
   }
   if(!window.__v20OpenWrapped){
-    var origOpen=window.open;window.open=function(){var w=origOpen.apply(this,arguments);if(!w)return w;try{var origClose=w.document.close.bind(w.document);w.document.close=function(){origClose();setTimeout(function(){try{preparePrintDoc(w.document);}catch(e){}try{v20FixPrintLayout(w.document);}catch(e){}},0);};var origPrint=w.print.bind(w);w.print=function(){try{preparePrintDoc(w.document);}catch(e){}try{v20FixPrintLayout(w.document);}catch(e){}origPrint();};}catch(e){}return w;};window.__v20OpenWrapped=true;
+    var origOpen=window.open;window.open=function(){var w=origOpen.apply(this,arguments);if(!w)return w;try{var origClose=w.document.close.bind(w.document);w.document.close=function(){origClose();setTimeout(function(){preparePrintDoc(w.document);},0);};var origPrint=w.print.bind(w);w.print=function(){preparePrintDoc(w.document);origPrint();};}catch(e){}return w;};window.__v20OpenWrapped=true;
   }
 
   /* Explicitly improve the shared table builder too. */
@@ -5284,30 +5425,4 @@ window.V20AccountingEngine.version='20.11';
 })();
 </script>
 </body>
-<style id="v20-14-print-pdf-final-audit">
-/* V20.14 FINAL PRINT/PDF AUDIT: one pagination policy for every print path. */
-@media print{
-html,body{height:auto!important;min-height:0!important;overflow:visible!important}
-.section,.card,.grid,.head,.footer,.report-section,.report-totals,.report-total-grid,
-.section-card,.module-hero,.pl-hero,.kpi-card,.note-card,.dashboard-section-card,.dashboard-welcome,.quick-stat,
-.print-report-page,.print-report,.report-head,.report-center-card,.report-center-settings,.report-center-note,
-.br-result-meta,.pl-filter-card,.pl-section-card,.pl-two-col,.st-kpi,.stock-mini{
- break-inside:auto!important;page-break-inside:auto!important;overflow:visible!important;max-height:none!important
-}
-table{width:100%!important;max-width:100%!important;min-width:0!important;break-inside:auto!important;page-break-inside:auto!important}
-thead{display:table-header-group!important}tfoot{display:table-footer-group!important}
-tr{break-inside:avoid!important;page-break-inside:avoid!important}
-th,td{max-width:none;overflow-wrap:anywhere!important;word-break:break-word!important;white-space:normal!important}
-.table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.table-responsive,
-.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper,.br-table-wrap,.br-table-wrapper{
- width:100%!important;max-width:100%!important;overflow:visible!important;break-inside:auto!important;page-break-inside:auto!important
-}
-.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,
-.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table,
-.br-table-wrap table,.br-table-wrapper table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
-.signature-block,.print-signature-block,.v20-company-print-header{break-inside:avoid!important;page-break-inside:avoid!important}
-h1,h2,h3,h4,h5,h6{break-after:avoid!important;page-break-after:avoid!important}
-img{max-width:100%!important;height:auto!important}
-}
-</style>
 </html>
