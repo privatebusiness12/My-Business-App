@@ -860,6 +860,7 @@ body{font-size:13px}
         try{
           setAuthStatus('Firebase SDK প্রস্তুত হচ্ছে...');
           await waitForFirebaseSdk(15000);
+          if(!window.firebase)throw {code:'sdk-not-loaded',message:'window.firebase is unavailable.'};
           if(!firebaseConfigReady())throw {code:'invalid-config',message:'Firebase config is incomplete.'};
           if(!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.appId)throw {code:'invalid-config',message:'Firebase web app configuration is incomplete.'};
 
@@ -872,8 +873,18 @@ body{font-size:13px}
           if(!firebaseApp)throw {code:'app-init-failed',message:'Firebase App could not be initialized.'};
 
           setAuthStatus('Firebase Authentication প্রস্তুত হচ্ছে...');
-          firebaseAuth=firebase.auth(firebaseApp);
-          if(!firebaseAuth)throw {code:'auth-init-failed',message:'Firebase Authentication could not be initialized.'};
+          // Compat SDK is safest when Auth is obtained from the global firebase namespace.
+          // Use firebase.auth() first, then fall back to firebase.auth(app).
+          try{
+            firebaseAuth=firebase.auth();
+          }catch(authErr1){
+            console.warn('firebase.auth() failed; retrying with app:',authErr1);
+            firebaseAuth=firebase.auth(firebaseApp);
+          }
+          if(!firebaseAuth || typeof firebaseAuth.signInWithEmailAndPassword!=='function'){
+            var ae={code:'auth-init-failed',message:'Firebase Authentication object was not created. '+(firebaseAuth?'signInWithEmailAndPassword is missing.':'firebase.auth() returned empty.')};
+            throw ae;
+          }
           firebaseAuthReady=true;
           setAuthStatus('Firebase Authentication প্রস্তুত...');
 
@@ -925,7 +936,9 @@ body{font-size:13px}
       var btn=document.getElementById('login-btn');
       try{
         if(!firebaseAuthReady || !firebaseAuth)await initFirebaseAuth();
-        if(!firebaseAuthReady || !firebaseAuth)throw {code:'auth-init-failed',message:'Firebase Authentication is not ready.'};
+        if(!firebaseAuthReady || !firebaseAuth || typeof firebaseAuth.signInWithEmailAndPassword!=='function'){
+          throw {code:'auth-init-failed',message:'Firebase Authentication is not ready after initialization.'};
+        }
         var email=((document.getElementById('login-email')||{}).value||'').trim();
         var pass=(document.getElementById('login-password')||{}).value||'';
         if(!email||!pass){showAuthError('Email ও Password দুটিই দিন।');return;}
