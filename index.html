@@ -817,8 +817,8 @@ body{font-size:13px}
       projectId: "private-business-e85ce",
       storageBucket: "private-business-e85ce.firebasestorage.app",
       messagingSenderId: "427471953861",
-      appId: "1:427471953861:web:3b1a002219354fe762f5ac",
-      measurementId: "G-BK6LL5ZBT"
+      appId: "1:427471953861:web:7f563d77c4a217cc62f5ac",
+      measurementId: "G-CRVWWB377L"
     };
     var firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseUser=null;
     var cloudSaveTimer=null, cloudLoaded=false, cloudSaving=false;
@@ -842,39 +842,102 @@ body{font-size:13px}
       return 'Firebase error'+(c?' ['+c+']':'')+(m?': '+m:'।');
     }
     function waitForFirebaseSdk(timeoutMs){
-      timeoutMs=timeoutMs||15000;if(window.firebase)return Promise.resolve(window.firebase);var started=Date.now();
-      return new Promise(function(resolve,reject){(function check(){if(window.firebase)return resolve(window.firebase);if(Date.now()-started>=timeoutMs)return reject({code:'sdk-not-loaded',message:'Firebase SDK did not load.'});setTimeout(check,100);})();});
+      timeoutMs=timeoutMs||15000;
+      if(window.firebase && typeof window.firebase.initializeApp==='function' && typeof window.firebase.auth==='function')return Promise.resolve(window.firebase);
+      var started=Date.now();
+      return new Promise(function(resolve,reject){
+        (function check(){
+          if(window.firebase && typeof window.firebase.initializeApp==='function' && typeof window.firebase.auth==='function')return resolve(window.firebase);
+          if(Date.now()-started>=timeoutMs)return reject({code:'sdk-not-loaded',message:'Firebase SDK did not load within '+timeoutMs+'ms.'});
+          setTimeout(check,100);
+        })();
+      });
     }
     function initFirebaseAuth(){
+      if(firebaseAuthReady && firebaseAuth)return Promise.resolve(firebaseAuth);
       if(firebaseInitPromise)return firebaseInitPromise;
       firebaseInitPromise=(async function(){
         try{
-          setAuthStatus('Firebase SDK প্রস্তুত হচ্ছে...');await waitForFirebaseSdk(15000);
+          setAuthStatus('Firebase SDK প্রস্তুত হচ্ছে...');
+          await waitForFirebaseSdk(15000);
           if(!firebaseConfigReady())throw {code:'invalid-config',message:'Firebase config is incomplete.'};
+          if(!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId || !firebaseConfig.appId)throw {code:'invalid-config',message:'Firebase web app configuration is incomplete.'};
+
           setAuthStatus('Firebase App প্রস্তুত হচ্ছে...');
-          firebaseApp=(firebase.apps&&firebase.apps.length)?firebase.app():firebase.initializeApp(firebaseConfig);
-          firebaseAuth=firebase.auth();firebaseAuthReady=true;setAuthStatus('Firebase Authentication প্রস্তুত...');
-          try{firebaseDb=firebase.firestore();}catch(dbErr){console.error('Firestore initialization failed; Auth remains usable:',dbErr);firebaseDb=null;}
+          if(firebase.apps && firebase.apps.length){
+            firebaseApp=firebase.apps[0];
+          }else{
+            firebaseApp=firebase.initializeApp(firebaseConfig);
+          }
+          if(!firebaseApp)throw {code:'app-init-failed',message:'Firebase App could not be initialized.'};
+
+          setAuthStatus('Firebase Authentication প্রস্তুত হচ্ছে...');
+          firebaseAuth=firebase.auth(firebaseApp);
+          if(!firebaseAuth)throw {code:'auth-init-failed',message:'Firebase Authentication could not be initialized.'};
+          firebaseAuthReady=true;
+          setAuthStatus('Firebase Authentication প্রস্তুত...');
+
+          try{
+            firebaseDb=firebase.firestore(firebaseApp);
+          }catch(dbErr){
+            console.error('Firestore initialization failed; Auth remains usable:',dbErr);
+            firebaseDb=null;
+          }
+
           firebaseAuth.onAuthStateChanged(async function(user){
-            firebaseUser=user||null;var overlay=document.getElementById('auth-overlay'),shell=document.getElementById('app-shell'),btn=document.getElementById('login-btn');
+            firebaseUser=user||null;
+            var overlay=document.getElementById('auth-overlay'),shell=document.getElementById('app-shell'),btn=document.getElementById('login-btn');
             if(user){
-              if(overlay)overlay.style.display='none';if(shell)shell.style.display='block';if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}setAuthStatus('');updateDashboardUser(user);
-              try{await loadCloudData();migrateGeneralDuePayments();initializeAuditSnapshot();updateDashboardQuickStats();startCloudAutoSave();}catch(e){console.error('Post-login initialization failed:',e);}
+              if(overlay)overlay.style.display='none';
+              if(shell)shell.style.display='block';
+              if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}
+              setAuthStatus('');
+              updateDashboardUser(user);
+              try{
+                await loadCloudData();
+                migrateGeneralDuePayments();
+                initializeAuditSnapshot();
+                updateDashboardQuickStats();
+                startCloudAutoSave();
+              }catch(e){console.error('Post-login initialization failed:',e);}
             }else{
-              cloudLoaded=false;if(shell)shell.style.display='none';if(overlay)overlay.style.display='flex';if(btn){btn.disabled=!firebaseAuthReady;btn.innerText='লগইন করুন';}if(firebaseAuthReady)setAuthStatus('Firebase Authentication প্রস্তুত');
+              cloudLoaded=false;
+              if(shell)shell.style.display='none';
+              if(overlay)overlay.style.display='flex';
+              if(btn){btn.disabled=!firebaseAuthReady;btn.innerText='লগইন করুন';}
+              if(firebaseAuthReady)setAuthStatus('Firebase Authentication প্রস্তুত');
             }
-          });return firebaseAuth;
-        }catch(e){console.error('Firebase initialization failed:',e);firebaseApp=null;firebaseAuth=null;firebaseDb=null;firebaseAuthReady=false;setAuthStatus('Firebase প্রস্তুত হয়নি');showAuthError(firebaseErrorBangla(e));throw e;}
-      })();return firebaseInitPromise;
+          });
+          return firebaseAuth;
+        }catch(e){
+          console.error('Firebase initialization failed:',e);
+          firebaseApp=null;firebaseAuth=null;firebaseDb=null;firebaseAuthReady=false;
+          firebaseInitPromise=null;
+          setAuthStatus('Firebase প্রস্তুত হয়নি');
+          showAuthError(firebaseErrorBangla(e));
+          throw e;
+        }
+      })();
+      return firebaseInitPromise;
     }
     async function firebaseLogin(){
-      showAuthError('');var btn=document.getElementById('login-btn');
+      showAuthError('');
+      var btn=document.getElementById('login-btn');
       try{
-        if(!firebaseAuthReady||!firebaseAuth)await initFirebaseAuth();
-        var email=((document.getElementById('login-email')||{}).value||'').trim(),pass=(document.getElementById('login-password')||{}).value||'';
+        if(!firebaseAuthReady || !firebaseAuth)await initFirebaseAuth();
+        if(!firebaseAuthReady || !firebaseAuth)throw {code:'auth-init-failed',message:'Firebase Authentication is not ready.'};
+        var email=((document.getElementById('login-email')||{}).value||'').trim();
+        var pass=(document.getElementById('login-password')||{}).value||'';
         if(!email||!pass){showAuthError('Email ও Password দুটিই দিন।');return;}
-        if(btn){btn.disabled=true;btn.innerText='লগইন হচ্ছে...';}setAuthStatus('Firebase-এ লগইন যাচাই হচ্ছে...');await firebaseAuth.signInWithEmailAndPassword(email,pass);
-      }catch(err){console.error('Firebase login failed:',err);showAuthError(firebaseErrorBangla(err));setAuthStatus(firebaseAuthReady?'Firebase Authentication প্রস্তুত':'Firebase প্রস্তুত হয়নি');if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}}
+        if(btn){btn.disabled=true;btn.innerText='লগইন হচ্ছে...';}
+        setAuthStatus('Firebase-এ লগইন যাচাই হচ্ছে...');
+        await firebaseAuth.signInWithEmailAndPassword(email,pass);
+      }catch(err){
+        console.error('Firebase login failed:',err);
+        showAuthError(firebaseErrorBangla(err));
+        setAuthStatus(firebaseAuthReady?'Firebase Authentication প্রস্তুত':'Firebase প্রস্তুত হয়নি');
+        if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}
+      }
     }
     function firebaseLogout(){if(firebaseAuth)firebaseAuth.signOut();}
     function confirmFirebaseLogout(){if(!firebaseAuth){showAuthError('Firebase Authentication প্রস্তুত হয়নি।');return;}var ok=confirm(currentLang==='en'?'Do you want to log out?':'আপনি কি লগআউট করতে চান?');if(ok)firebaseLogout();}
