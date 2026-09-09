@@ -5,7 +5,7 @@
 <!-- V20.9 TRUE CLEAN FINAL: canonical integrity logic; safe restore; final integrity logic is inside <body>. -->
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>বিজনেস একাউন্টিং ড্যাশবোর্ড</title>
+<title>বিজনেস একাউন্টিং ড্যাশবোর্ড — V20.18 LOGIN ROOT FIX</title>
 <!-- FontAwesome Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <!-- Firebase SDK: Authentication + Cloud Firestore -->
@@ -292,7 +292,6 @@
   background:rgba(220,38,38,.88);padding:9px 12px;border-radius:11px;font-weight:800;cursor:pointer;
 }
 .logout-btn:hover{background:#dc2626;transform:translateY(-1px)}
-.cloud-status{padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);font-size:.72rem;font-weight:700;white-space:nowrap;position:relative;z-index:1}.cloud-status.error{background:rgba(220,38,38,.18);color:#ffd7d7}.cloud-status.ok{background:rgba(25,135,84,.18);color:#dcffe9}@media(max-width:700px){.cloud-status{font-size:.66rem;padding:6px 8px}}
 .dashboard-welcome{
   padding:18px 20px;margin-bottom:15px;border-radius:18px;background:var(--card-bg);
   border:1px solid rgba(23,105,170,.12);box-shadow:0 5px 18px rgba(0,0,0,.06);
@@ -608,50 +607,7 @@ body{font-size:13px}
 }
 
 </style>
-<style id="v20-14-print-pdf-final-audit">
-/* V20.14 FINAL PRINT/PDF AUDIT: one pagination policy for every print path. */
-@media print{
-html,body{height:auto!important;min-height:0!important;overflow:visible!important}
-.section,.card,.grid,.head,.footer,.report-section,.report-totals,.report-total-grid,
-.section-card,.module-hero,.pl-hero,.kpi-card,.note-card,.dashboard-section-card,.dashboard-welcome,.quick-stat,
-.print-report-page,.print-report,.report-head,.report-center-card,.report-center-settings,.report-center-note,
-.br-result-meta,.pl-filter-card,.pl-section-card,.pl-two-col,.st-kpi,.stock-mini{
- break-inside:auto!important;page-break-inside:auto!important;overflow:visible!important;max-height:none!important
-}
-table{width:100%!important;max-width:100%!important;min-width:0!important;break-inside:auto!important;page-break-inside:auto!important}
-thead{display:table-header-group!important}tfoot{display:table-footer-group!important}
-tr{break-inside:avoid!important;page-break-inside:avoid!important}
-th,td{max-width:none;overflow-wrap:anywhere!important;word-break:break-word!important;white-space:normal!important}
-.table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.table-responsive,
-.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper,.br-table-wrap,.br-table-wrapper{
- width:100%!important;max-width:100%!important;overflow:visible!important;break-inside:auto!important;page-break-inside:auto!important
-}
-.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,
-.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table,
-.br-table-wrap table,.br-table-wrapper table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
-.signature-block,.print-signature-block,.v20-company-print-header{break-inside:avoid!important;page-break-inside:avoid!important}
-h1,h2,h3,h4,h5,h6{break-after:avoid!important;page-break-after:avoid!important}
-img{max-width:100%!important;height:auto!important}
-}
-</style>
-
-<style id="v2017-login-diagnostic-style">
-#login-diagnostic{margin-top:14px;border:1px solid #dbe3ee;border-radius:14px;background:#f8fafc;overflow:hidden;text-align:left}
-#login-diagnostic .diag-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:#eef4fb;border-bottom:1px solid #dbe3ee;font-weight:800;color:#1f3b5b;font-size:13px}
-#login-diagnostic .diag-body{padding:10px 12px}
-.v17-diag-row{display:grid;grid-template-columns:108px 1fr;gap:8px;padding:5px 0;border-bottom:1px dashed #dbe3ee;font-size:12px;line-height:1.45}
-.v17-diag-row:last-child{border-bottom:0}
-.v17-diag-label{font-weight:700;color:#526173}
-.v17-diag-value{color:#172033;word-break:break-word}
-.v17-ok{color:#087443!important}.v17-warn{color:#9a5b00!important}.v17-bad{color:#b42318!important}
-#v17-diag-actions{display:flex;flex-wrap:wrap;gap:7px;padding:10px 12px;border-top:1px solid #dbe3ee;background:#fff}
-#v17-diag-actions button{border:1px solid #c9d5e3;background:#fff;border-radius:9px;padding:7px 10px;font-weight:700;font-size:12px;cursor:pointer}
-#v17-diag-actions button:hover{background:#f1f5f9}
-#v17-error-detail{display:none;margin:0 12px 12px;padding:10px;border-radius:10px;background:#fff4f4;border:1px solid #fecaca;color:#7f1d1d;font-size:12px;white-space:pre-wrap;word-break:break-word}
-.v17-file-warning{display:none;margin-top:10px;padding:10px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12px;line-height:1.55}
-@media(max-width:600px){.v17-diag-row{grid-template-columns:88px 1fr}.auth-card{max-width:94vw}}
-</style>
-
+<style id="v20-18-login-fix-style">.auth-status{min-height:20px}.auth-error{white-space:pre-wrap}.cloud-status{display:inline-block;margin:8px 0;padding:6px 9px;border-radius:8px;font-size:12px;background:#eef2f7;color:#475569}.cloud-status.ok{background:#ecfdf3;color:#166534}.cloud-status.error{background:#fef2f2;color:#991b1b}</style>
 </head>
 <body>
 <!-- Firebase Authentication Login -->
@@ -682,30 +638,6 @@ img{max-width:100%!important;height:auto!important}
 </div>
 <button id="login-btn" onclick="firebaseLogin()"><i class="fa-solid fa-right-to-bracket"></i>  লগইন করুন</button>
 <div class="auth-status" id="auth-status">নিরাপদ সংযোগ হচ্ছে...</div>
-<div class="v17-file-warning" id="v17-file-warning">
-  <strong>⚠️ Local HTML file detected</strong><br>
-  এই পেজটি <code>file://</code> থেকে খোলা হয়েছে। Firebase Web Authentication-এর জন্য একটি HTTP/HTTPS origin ব্যবহার করা সবচেয়ে নির্ভরযোগ্য। একই ফাইল <b>localhost</b> বা আপনার Firebase/অন্য HTTPS hosting domain থেকে খুলুন এবং সেই domain Firebase Authentication-এর <b>Authorized domains</b>-এ যোগ করুন।
-</div>
-<div id="login-diagnostic">
-  <div class="diag-head"><span>🔎 Login Root-Cause Diagnostic</span><span id="v17-diag-badge">CHECKING…</span></div>
-  <div class="diag-body">
-    <div class="v17-diag-row"><span class="v17-diag-label">Page</span><span class="v17-diag-value" id="v17-page-origin">—</span></div>
-    <div class="v17-diag-row"><span class="v17-diag-label">Protocol</span><span class="v17-diag-value" id="v17-page-protocol">—</span></div>
-    <div class="v17-diag-row"><span class="v17-diag-label">Firebase SDK</span><span class="v17-diag-value" id="v17-sdk-status">—</span></div>
-    <div class="v17-diag-row"><span class="v17-diag-label">Firebase App</span><span class="v17-diag-value" id="v17-app-status">—</span></div>
-    <div class="v17-diag-row"><span class="v17-diag-label">Auth</span><span class="v17-diag-value" id="v17-auth-status">—</span></div>
-    <div class="v17-diag-row"><span class="v17-diag-label">Firestore</span><span class="v17-diag-value" id="v17-firestore-status">—</span></div>
-    <div class="v17-diag-row"><span class="v17-diag-label">Project</span><span class="v17-diag-value" id="v17-project-status">—</span></div>
-    <div class="v17-diag-row"><span class="v17-diag-label">Last error</span><span class="v17-diag-value" id="v17-last-error">None</span></div>
-  </div>
-  <div id="v17-error-detail"></div>
-  <div id="v17-diag-actions">
-    <button type="button" onclick="v17RunLoginDiagnostics()">🔄 Re-check</button>
-    <button type="button" onclick="v17ShowFirebaseHelp()">📋 Firebase setup</button>
-    <button type="button" onclick="v17CopyDiagnostics()">📋 Copy diagnostic</button>
-  </div>
-</div>
-
 <div class="auth-secure-note"><i class="fa-solid fa-shield-halved"></i> আপনার হিসাব Firebase নিরাপত্তার মাধ্যমে সুরক্ষিত</div>
 </div>
 </div>
@@ -739,7 +671,7 @@ img{max-width:100%!important;height:auto!important}
 </div>
 <div class="dashboard-date" id="dashboard-today"><i class="fa-regular fa-calendar"></i> আজ</div>
 </div>
-<div class="quick-stat-grid">
+<div id="cloud-status" class="cloud-status" style="display:none"></div><div class="quick-stat-grid">
 <div class="quick-stat">
 <div class="quick-stat-icon quick-blue"><i class="fa-solid fa-cart-shopping"></i></div>
 <div><strong id="dash-sales-count">0</strong><span data-bn="বিক্রয় রেকর্ড" data-en="Sales Records">বিক্রয় রেকর্ড</span></div>
@@ -878,397 +810,75 @@ img{max-width:100%!important;height:auto!important}
 </div>
 <script>
 
-    /* ================= Firebase: Auth + Firestore =================
-       IMPORTANT: replace the values below with your Firebase Web App config.
-       Firebase Console -> Project settings -> Your apps -> Web app -> Config.
-    */
+    /* ================= Firebase: Auth + Firestore — V20.18 ROOT FIX ================= */
     const firebaseConfig = {
-  apiKey: "AIzaSyCcSH15bCRvUG3S-AViJ2nei0aY1n7jsMs",
-  authDomain: "private-business-e85ce.firebaseapp.com",
-  projectId: "private-business-e85ce",
-  storageBucket: "private-business-e85ce.firebasestorage.app",
-  messagingSenderId: "427471953861",
-  appId: "1:427471953861:web:3b1a002219354fe762f5ac",
-  measurementId: "G-BK6LL5ZBT"
-};
-
-    var firebaseApp = null, firebaseAuth = null, firebaseDb = null, firebaseUser = null;
-    var cloudSaveTimer = null, cloudLoaded = false, cloudSaving = false;
-
-    function firebaseConfigReady(){
-      return firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('PASTE_') &&
-             firebaseConfig.projectId && !firebaseConfig.projectId.startsWith('PASTE_');
-    }
-
-    function showAuthError(msg){
-      var e=document.getElementById('auth-error'); if(!e)return; e.innerText=msg||''; e.style.display=msg?'block':'none';
-    }
-
-    function toggleLoginPassword(){
-      var input=document.getElementById('login-password');
-      var eye=document.getElementById('password-eye');
-      if(!input) return;
-      input.type = input.type === 'password' ? 'text' : 'password';
-      if(eye) eye.className = input.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
-    }
-    function confirmFirebaseLogout(){
-      if(!firebaseAuth) return;
-      var ok = confirm(currentLang === 'en' ? 'Do you want to log out?' : 'আপনি কি লগআউট করতে চান?');
-      if(ok) firebaseLogout();
-    }
-    function updateDashboardUser(user){
-      var email=(user&&user.email)||'';
-      var a=document.getElementById('logged-user-email');
-      var b=document.getElementById('dashboard-account-email');
-      if(a) a.innerText=email||'আপনার অ্যাকাউন্ট';
-      if(b) b.innerText=email||'লগইন করা অ্যাকাউন্ট';
-      var d=document.getElementById('dashboard-today');
-      if(d){
-        var now=new Date();
-        d.innerHTML='<i class="fa-regular fa-calendar"></i> '+now.toLocaleDateString(currentLang==='en'?'en-US':'bn-BD',{day:'numeric',month:'short',year:'numeric'});
-      }
-    }
-    function updateDashboardQuickStats(){
-      var s=document.getElementById('dash-sales-count'), p=document.getElementById('dash-stock-count');
-      var d=document.getElementById('dash-due-total'), i=document.getElementById('dash-invoice-count');
-      if(s) s.innerText=Array.isArray(salesList)?salesList.length:0;
-      if(p) p.innerText=Array.isArray(productList)?productList.length:0;
-      var due=calculateOutstandingDue();
-      if(d) d.innerText='৳'+due.toLocaleString('en-US',{maximumFractionDigits:2});
-      if(i) i.innerText=Array.isArray(invoiceList)?invoiceList.length:0;
-    }
-
-    function sumAllRecordedPayments(){
-      return (Array.isArray(paymentHistory)?paymentHistory:[]).reduce(function(sum,x){ return sum + (parseFloat(x.amount)||0); },0);
-    }
-
-    /* ---------------- আলাদা পাওনা / দেনা হিসাব ----------------
-       বিক্রয় বাকি = কাস্টমারের কাছ থেকে আমরা পাবো।
-       ক্রয় বাকি + পরিবহন বাকি = আমাদের দিতে হবে।
-       সাধারণ বাকি পরিশোধও 'আমাদের দিতে হবে' মোট থেকে বাদ যাবে।
-       পুরোনো ডাটার কোনো রেকর্ড মুছে বা বদলে দেওয়া হয় না। */
-    function normalizePartyName(v){
-      return String(v==null?'':v).trim().toLowerCase().replace(/\s+/g,' ');
-    }
-    function transportPersonName(x){
-      if(!x)return '';
-      if(x.transportPersonName) return String(x.transportPersonName).trim();
-      var n=String(x.transportName||'').trim();
-      var m=n.match(/\(([^)]+)\)/);
-      if(m && m[1]) return m[1].trim();
-      var d=String(x.transportDetails||'');
-      var m2=d.match(/(?:ড্রাইভার|সুকানী|সুকানি|Driver|Sukani)\s*:\s*([^<\n]+)/i);
-      return m2&&m2[1]?m2[1].trim():'';
-    }
-    function partyNameMatches(a,b){
-      var x=normalizePartyName(a), y=normalizePartyName(b);
-      return !!x && !!y && x===y;
-    }
-    function generalDueAllocationsTotal(g){
-      return (Array.isArray(g&&g.allocations)?g.allocations:[]).reduce(function(sum,a){return sum+(parseFloat(a.amount)||0);},0);
-    }
-    function calculateLegacyPayableAdjustments(){
-      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
-        if(x.legacyGlobalDeduction) return sum+Math.max(0,parseFloat(x.amount)||0);
-        return sum;
-      },0);
-    }
-    function calculateLegacyReceivableAdjustments(){
-      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
-        if(x.legacyGlobalDeduction && x.direction==='receivable') return sum+Math.max(0,parseFloat(x.amount)||0);
-        return sum;
-      },0);
-    }
-    function calculateCustomerReceivable(){
-      var base=(Array.isArray(salesList)?salesList:[]).reduce(function(sum,x){
-        return sum + Math.max(0,parseFloat(x.due)||0);
-      },0);
-      return Math.max(0,base-calculateLegacyReceivableAdjustments());
-    }
-    function calculateSupplierPayable(){
-      return (Array.isArray(purchaseList)?purchaseList:[]).reduce(function(sum,x){
-        return sum + Math.max(0,parseFloat(x.due)||0);
-      },0);
-    }
-    function calculateTransportPayable(){
-      var due=0;
-      (Array.isArray(salesList)?salesList:[]).forEach(function(x){ due += Math.max(0,parseFloat(x.transportFareDue)||0); });
-      (Array.isArray(purchaseList)?purchaseList:[]).forEach(function(x){ due += Math.max(0,parseFloat(x.transportFareDue)||0); });
-      return due;
-    }
-    function calculateGeneralDuePaid(){
-      return (Array.isArray(generalDuePayments)?generalDuePayments:[]).reduce(function(sum,x){
-        return sum + Math.max(0,parseFloat(x.amount)||0);
-      },0);
-    }
-    function calculateOurPayable(){
-      return Math.max(0, calculateSupplierPayable() + calculateTransportPayable() - calculateLegacyPayableAdjustments());
-    }
-    function calculateOutstandingDue(){
-      return calculateOurPayable();
-    }
-
-    /* এককালীন পেমেন্ট: একই নামের আগের বাকি রেকর্ডগুলোতে FIFO পদ্ধতিতে সমন্বয় */
-    function getOneTimeCandidates(direction,matchType,name){
-      var target=normalizePartyName(name), out=[];
-      if(!target)return out;
-      if(direction==='receivable'){
-        salesList.forEach(function(x){
-          var match=(matchType==='customer' && partyNameMatches(x.customer,target)) ||
-                    (matchType==='site' && partyNameMatches(x.site,target)) ||
-                    (matchType==='vehicle' && partyNameMatches((x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0],target));
-          if(match && (parseFloat(x.due)||0)>0) out.push({type:'sale',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
-        });
-      }else if(direction==='payable'){
-        purchaseList.forEach(function(x){
-          var match=(matchType==='supplier' && partyNameMatches(x.supplier,target)) ||
-                    (matchType==='driver' && partyNameMatches(transportPersonName(x),target)) ||
-                    (matchType==='vehicle' && partyNameMatches((x.transportName||'').replace(/^গাড়ি:\s*/,'').replace(/^বালগেট:\s*/,'').split(' (')[0],target));
-          if(match){
-            if(matchType==='supplier' && (parseFloat(x.due)||0)>0) out.push({type:'purchase',id:x.id,obj:x,field:'due',available:parseFloat(x.due)||0});
-            if(matchType==='driver' && (parseFloat(x.transportFareDue)||0)>0) out.push({type:'purchaseTransport',id:x.id,obj:x,field:'transportFareDue',available:parseFloat(x.transportFareDue)||0});
-          }
-        });
-      }
-      out.sort(function(a,b){
-        var ad=String(a.obj.date||''), bd=String(b.obj.date||'');
-        if(ad!==bd)return ad.localeCompare(bd);
-        return (Number(a.id)||0)-(Number(b.id)||0);
-      });
-      return out;
-    }
-    function applyOneTimeAllocations(direction,matchType,name,amount,applyNow){
-      var candidates=getOneTimeCandidates(direction,matchType,name), remaining=Math.max(0,parseFloat(amount)||0), allocations=[];
-      var available=candidates.reduce(function(sum,c){return sum+c.available;},0);
-      if(remaining<=0 || available+0.000001<remaining) return {ok:false,allocations:[],available:available};
-      candidates.forEach(function(c){
-        if(remaining<=0)return;
-        var take=Math.min(remaining,c.available);
-        if(take<=0)return;
-        if(applyNow!==false){
-          if(c.field==='due'){
-            c.obj.paid=(parseFloat(c.obj.paid)||0)+take;
-            c.obj.due=Math.max(0,(parseFloat(c.obj.total)||0)-c.obj.paid).toFixed(2);
-            c.obj.paid=c.obj.paid.toFixed(2);
-          }else if(c.field==='transportFareDue'){
-            c.obj.transportFarePaid=(parseFloat(c.obj.transportFarePaid)||0)+take;
-            c.obj.transportFarePaid=c.obj.transportFarePaid.toFixed(2);
-            c.obj.transportFareDue=Math.max(0,(parseFloat(c.obj.transportFare)||0)-parseFloat(c.obj.transportFarePaid)).toFixed(2);
-          }
-        }
-        allocations.push({sourceType:c.type,sourceId:c.id,field:c.field,amount:take});
-        remaining-=take;
-      });
-      return {ok:remaining<0.000001,allocations:allocations,available:available};
-    }
-    function reverseOneTimeAllocations(g){
-      if(!g || !Array.isArray(g.allocations))return;
-      g.allocations.forEach(function(a){
-        var obj=null;
-        if(a.sourceType==='sale') obj=salesList.find(function(r){return r.id===a.sourceId;});
-        else if(a.sourceType==='purchase'||a.sourceType==='purchaseTransport') obj=purchaseList.find(function(r){return r.id===a.sourceId;});
-        if(!obj)return;
-        var amt=parseFloat(a.amount)||0;
-        if(a.field==='due'){
-          obj.paid=Math.max(0,(parseFloat(obj.paid)||0)-amt).toFixed(2);
-          obj.due=Math.max(0,(parseFloat(obj.total)||0)-parseFloat(obj.paid)).toFixed(2);
-        }else if(a.field==='transportFareDue'){
-          obj.transportFarePaid=Math.max(0,(parseFloat(obj.transportFarePaid)||0)-amt).toFixed(2);
-          obj.transportFareDue=Math.max(0,(parseFloat(obj.transportFare)||0)-parseFloat(obj.transportFarePaid)).toFixed(2);
-        }
-      });
-      g.allocations=[];
-    }
-    /* কেন্দ্রীয় due allocation rebuild: correction-এর পর মূল data থেকে FIFO হিসাব পুনর্গঠন। */
-    function rebuildAllOneTimeAllocations(){
-      try{
-        var gs=Array.isArray(generalDuePayments)?generalDuePayments:[];
-        gs.forEach(function(g){
-          if(Array.isArray(g.allocations)&&g.allocations.length) reverseOneTimeAllocations(g);
-        });
-        gs.forEach(function(g){
-          if(!g||g.legacyGlobalDeduction||g.matchType==='general') return;
-          var direction=g.direction||'payable', matchType=g.matchType||'general';
-          var name=String(g.name||'').trim(), amount=Math.max(0,parseFloat(g.amount)||0);
-          if(!name||amount<=0){g.allocations=[];g.allocationVersion=1;return;}
-          var r=applyOneTimeAllocations(direction,matchType,name,amount,true);
-          g.allocations=r.ok?r.allocations:[];
-          g.allocationVersion=1; g.legacyGlobalDeduction=false;
-        });
-      }catch(e){console.error('One-time due rebuild failed',e);}
-    }
-
-    function inferLegacyPayableMatch(name){
-      var target=normalizePartyName(name), supplierHits=0, driverHits=0, supplierType='';
-      purchaseList.forEach(function(x){
-        if(partyNameMatches(x.supplier,target) && (parseFloat(x.due)||0)>0){supplierHits++;supplierType='supplier';}
-        if(partyNameMatches(transportPersonName(x),target) && (parseFloat(x.transportFareDue)||0)>0){driverHits++;}
-      });
-      if(supplierHits===1 && driverHits===0)return 'supplier';
-      if(driverHits===1 && supplierHits===0)return 'driver';
-      return '';
-    }
-    function migrateGeneralDuePayments(){
-      var changed=false;
-      (Array.isArray(generalDuePayments)?generalDuePayments:[]).forEach(function(g){
-        if(g.allocationVersion)return;
-        if(!g.direction)g.direction='payable';
-        if(!g.matchType || g.matchType==='general'){
-          var inferred=inferLegacyPayableMatch(g.name||'');
-          if(inferred){
-            var r=applyOneTimeAllocations('payable',inferred,g.name,parseFloat(g.amount)||0,true);
-            if(r.ok){g.matchType=inferred;g.allocations=r.allocations;g.legacyGlobalDeduction=false;}
-            else {g.matchType='general';g.allocations=[];g.legacyGlobalDeduction=true;}
-          }else{
-            g.matchType='general';g.allocations=[];g.legacyGlobalDeduction=true;
-          }
-        }
-        g.allocationVersion=1; changed=true;
-      });
-      if(changed){scheduleCloudSave();}
-      return changed;
-    }
-    function getPrintSettings(prefix){
-      var p=prefix||'print';
-      var o=document.getElementById(p+'-orientation');
-      var s=document.getElementById(p+'-signature');
-      if(!o && !s && p==='print'){
-        o=document.getElementById('dash-print-orientation');
-        s=document.getElementById('dash-print-signature');
-      }
-      return {orientation:(o&&o.value==='landscape')?'landscape':'portrait',signature:(s&&s.value||'').trim(),generated:new Date().toLocaleString('bn-BD')};
-    }
-    function setPrintPageStyle(w,orientation){
-      w.document.write('<style id="dynamic-print-style">@page{size:A4 '+orientation+';margin:9mm}</style>');
-    }
-
-    function firebaseLogin(){
-      showAuthError('');
-      v17ClearError();
-      var btn=document.getElementById('login-btn');
-      try{
-        v17RunLoginDiagnostics();
-        if(!window.firebase){
-          v17SetError('SDK_NOT_LOADED','Firebase SDK পাওয়া যায়নি। Network/Content Security/blocked script পরীক্ষা করুন।');
-          showAuthError('Firebase SDK লোড হয়নি। ইন্টারনেট সংযোগ ও Firebase script URL পরীক্ষা করুন।');
-          return;
-        }
-        if(location.protocol==='file:'){
-          v17SetError('FILE_ORIGIN','এই HTML file:// origin থেকে চলছে। প্রথমে localhost বা HTTPS hosting-এ চালিয়ে দেখুন।');
-        }
-        if(!firebaseAuth){
-          v17SetError('AUTH_NOT_READY','Firebase Authentication object প্রস্তুত নয়।');
-          showAuthError('Firebase Authentication প্রস্তুত হয়নি। নিচের Diagnostic দেখুন, তারপর Re-check চাপুন।');
-          return;
-        }
-        var email=(document.getElementById('login-email')||{}).value||'';
-        var pass=(document.getElementById('login-password')||{}).value||'';
-        email=email.trim();
-        if(!email||!pass){showAuthError('Email ও Password দুটিই দিন।');return;}
-        if(btn){btn.disabled=true; btn.innerText='লগইন হচ্ছে...';}
-        v17SetDiag('v17-auth-status','Sign-in request চলছে…','v17-warn');
-        firebaseAuth.signInWithEmailAndPassword(email,pass).then(function(cred){
-          v17ClearError();
-          v17SetDiag('v17-auth-status','সফল — '+((cred&&cred.user&&cred.user.email)||email),'v17-ok');
-          v17SetDiag('v17-diag-badge','LOGIN OK','v17-ok');
-          if(btn){btn.disabled=false; btn.innerText='লগইন';}
-        }).catch(function(err){
-          console.error('Firebase login failed:',err);
-          v17RecordFirebaseError('SIGN_IN',err);
-          showAuthError(firebaseErrorBangla(err));
-          if(btn){btn.disabled=false; btn.innerText='লগইন';}
-        });
-      }catch(err){
-        console.error('Firebase login exception:',err);
-        v17RecordFirebaseError('LOGIN_EXCEPTION',err);
-        showAuthError(firebaseErrorBangla(err));
-        if(btn){btn.disabled=false; btn.innerText='লগইন';}
-      }
-    }
-
-    function v17SetDiag(id,text,cls){
-      var el=document.getElementById(id); if(!el)return;
-      el.textContent=text||'—'; el.className='v17-diag-value'+(cls?' '+cls:'');
-    }
-    function v17ClearError(){
-      v17SetDiag('v17-last-error','None','v17-ok');
-      var box=document.getElementById('v17-error-detail'); if(box){box.style.display='none';box.textContent='';}
-      var badge=document.getElementById('v17-diag-badge'); if(badge){badge.textContent='READY';badge.className='v17-ok';}
-    }
-    function v17SetError(code,message,raw){
-      var text=(code||'ERROR')+(message?': '+message:'');
-      v17SetDiag('v17-last-error',text,'v17-bad');
-      var box=document.getElementById('v17-error-detail');
-      if(box){
-        box.style.display='block';
-        box.textContent='Code: '+(code||'unknown')+'\nMessage: '+(message||'')+(raw?'\nRaw: '+raw:'');
-      }
-      var badge=document.getElementById('v17-diag-badge'); if(badge){badge.textContent='ERROR';badge.className='v17-bad';}
-    }
-    function v17RecordFirebaseError(stage,err){
-      var code=String(err&&err.code||'unknown');
-      var msg=String(err&&err.message||err||'Unknown error');
-      v17SetError(stage+' / '+code,msg,JSON.stringify({stage:stage,code:code,message:msg,name:err&&err.name||'',protocol:location.protocol,hostname:location.hostname,origin:location.origin,projectId:firebaseConfig&&firebaseConfig.projectId||''},null,2));
-      v17SetDiag('v17-auth-status','Failed: '+code,'v17-bad');
-    }
-    function v17RunLoginDiagnostics(){
-      try{
-        var protocol=location.protocol||'unknown', host=location.hostname||'(none)', origin=location.origin||'(none)';
-        v17SetDiag('v17-page-origin',origin+' | host='+host,protocol==='file:'?'v17-warn':'');
-        v17SetDiag('v17-page-protocol',protocol,protocol==='file:'?'v17-bad':(protocol==='https:'?'v17-ok':'v17-warn'));
-        var fw=document.getElementById('v17-file-warning'); if(fw)fw.style.display=protocol==='file:'?'block':'none';
-        if(window.firebase){
-          var ver=(firebase.SDK_VERSION||firebase.SDK_VERSION==='')?firebase.SDK_VERSION:'loaded';
-          v17SetDiag('v17-sdk-status','Loaded'+(ver!==''?' — v'+ver:''),'v17-ok');
-        }else v17SetDiag('v17-sdk-status','NOT LOADED','v17-bad');
-        if(window.firebase){
-          try{
-            firebaseApp = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
-            v17SetDiag('v17-app-status','Initialized','v17-ok');
-          }catch(e){v17SetDiag('v17-app-status','FAILED — '+(e.code||e.message||e),'v17-bad');v17RecordFirebaseError('APP_INIT',e);return;}
-          try{ firebaseAuth = firebase.auth(); v17SetDiag('v17-auth-status',firebaseAuth?'Ready':'NOT READY',firebaseAuth?'v17-ok':'v17-bad'); }
-          catch(e){v17SetDiag('v17-auth-status','FAILED — '+(e.code||e.message||e),'v17-bad');v17RecordFirebaseError('AUTH_INIT',e);}
-          try{ firebaseDb = firebase.firestore(); v17SetDiag('v17-firestore-status',firebaseDb?'Ready':'NOT READY',firebaseDb?'v17-ok':'v17-warn'); }
-          catch(e){v17SetDiag('v17-firestore-status','FAILED — '+(e.code||e.message||e),'v17-bad');}
-        }else{
-          v17SetDiag('v17-app-status','Waiting for Firebase SDK','v17-warn');
-          v17SetDiag('v17-auth-status','Waiting for Firebase SDK','v17-warn');
-          v17SetDiag('v17-firestore-status','Waiting for Firebase SDK','v17-warn');
-        }
-        v17SetDiag('v17-project-status',(firebaseConfig&&firebaseConfig.projectId)||'Missing config',firebaseConfig&&firebaseConfig.projectId?'v17-ok':'v17-bad');
-        if(protocol==='file:') v17SetError('FILE_ORIGIN','Direct file:// mode detected');
-      }catch(e){v17RecordFirebaseError('DIAGNOSTIC',e);}
-    }
-    function v17ShowFirebaseHelp(){
-      var box=document.getElementById('v17-error-detail'); if(!box)return;
-      box.style.display='block'; box.textContent='Firebase checklist:\n1) Authentication → Sign-in method → Email/Password = Enabled.\n2) Authentication → Settings → Authorized domains → add the hostname used by this page.\n3) Do not use a random file:// location as your production origin; prefer HTTPS hosting.\n4) Authentication → Users → confirm the email account exists and is enabled.\n5) If the diagnostic shows a Firebase error code, that exact code is the root-cause clue.\n\nCurrent page: '+location.href+'\nProject: '+((firebaseConfig&&firebaseConfig.projectId)||'unknown');
-    }
-    function v17CopyDiagnostics(){
-      var rows=document.querySelectorAll('#login-diagnostic .v17-diag-row'), out=['V20.17 LOGIN DIAGNOSTIC'];
-      rows.forEach(function(r){out.push(r.innerText.replace(/\n/g,' = '));});
-      var box=document.getElementById('v17-error-detail'); if(box&&box.style.display!=='none'&&box.textContent)out.push(box.textContent);
-      var text=out.join('\n');
-      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){showAuthError('Diagnostic তথ্য clipboard-এ কপি হয়েছে।');}).catch(function(){showAuthError('Copy করা যায়নি। Diagnostic-এর তথ্য manually copy করুন।');});}
-      else{window.prompt('Copy diagnostic:',text);}
-    }
-
-
-    function firebaseLogout(){ if(firebaseAuth) firebaseAuth.signOut(); }
-
+      apiKey: "AIzaSyCcSH15bCRvUG3S-AViJ2neiAOaY1n7jsMs",
+      authDomain: "private-business-e85ce.firebaseapp.com",
+      projectId: "private-business-e85ce",
+      storageBucket: "private-business-e85ce.firebasestorage.app",
+      messagingSenderId: "427471953861",
+      appId: "1:427471953861:web:3b1a002219354fe762f5ac",
+      measurementId: "G-BK6LL5ZBT"
+    };
+    var firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseUser=null;
+    var cloudSaveTimer=null, cloudLoaded=false, cloudSaving=false;
+    var firebaseInitPromise=null, firebaseAuthReady=false;
+    function firebaseConfigReady(){return !!(firebaseConfig.apiKey&&!firebaseConfig.apiKey.startsWith('PASTE_')&&firebaseConfig.projectId&&!firebaseConfig.projectId.startsWith('PASTE_'));}
+    function showAuthError(msg){var e=document.getElementById('auth-error');if(!e)return;e.innerText=msg||'';e.style.display=msg?'block':'none';}
+    function setAuthStatus(msg){var e=document.getElementById('auth-status');if(e){e.style.display='block';e.innerText=msg||'';}}
+    function toggleLoginPassword(){var input=document.getElementById('login-password'),eye=document.getElementById('password-eye');if(!input)return;input.type=input.type==='password'?'text':'password';if(eye)eye.className=input.type==='password'?'fa-solid fa-eye':'fa-solid fa-eye-slash';}
     function firebaseErrorBangla(err){
-      var c=String(err&&err.code||'').toLowerCase();
-      if(c.indexOf('invalid-credential')>=0||c.indexOf('wrong-password')>=0||c.indexOf('user-not-found')>=0) return 'Email অথবা Password সঠিক নয়।';
-      if(c.indexOf('invalid-email')>=0) return 'সঠিক Email address দিন।';
-      if(c.indexOf('user-disabled')>=0) return 'এই User account নিষ্ক্রিয় করা হয়েছে।';
-      if(c.indexOf('too-many-requests')>=0) return 'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।';
-      if(c.indexOf('network-request-failed')>=0) return 'ইন্টারনেট সংযোগ পরীক্ষা করুন।';
-      if(c.indexOf('operation-not-allowed')>=0) return 'Firebase Console-এ Email/Password Sign-in চালু করা নেই।';
-      if(c.indexOf('app-not-authorized')>=0||c.indexOf('unauthorized-domain')>=0) return 'এই ওয়েবসাইটের Domain Firebase Authentication-এ অনুমোদিত নয়।';
-      if(c.indexOf('api-key-not-valid')>=0||c.indexOf('invalid-api-key')>=0) return 'Firebase API Key সঠিক নয়।';
-      if(c.indexOf('auth/configuration-not-found')>=0) return 'Firebase Authentication configuration পাওয়া যাচ্ছে না।';
-      if(c.indexOf('internal-error')>=0) return 'Firebase-এর অভ্যন্তরীণ ত্রুটি হয়েছে। আবার চেষ্টা করুন।';
-      return 'লগইন করা যায়নি: '+(err&&err.message?err.message:(c||'অজানা Firebase error'));
+      var c=String((err&&err.code)||'').toLowerCase(),m=String((err&&err.message)||'').trim();
+      if(c.indexOf('invalid-credential')>=0||c.indexOf('wrong-password')>=0||c.indexOf('user-not-found')>=0)return 'Email অথবা Password সঠিক নয়।';
+      if(c.indexOf('invalid-email')>=0)return 'Email ঠিকানাটি সঠিক নয়।';
+      if(c.indexOf('user-disabled')>=0)return 'এই Firebase accountটি disabled করা হয়েছে।';
+      if(c.indexOf('too-many-requests')>=0)return 'অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন।';
+      if(c.indexOf('network-request-failed')>=0)return 'ইন্টারনেট/Firebase server connection সমস্যা হয়েছে।';
+      if(c.indexOf('operation-not-allowed')>=0)return 'Firebase Console → Authentication → Sign-in method-এ Email/Password চালু করুন।';
+      if(c.indexOf('unauthorized-domain')>=0||c.indexOf('app-not-authorized')>=0)return 'business12.github.io Firebase Authentication-এর Authorized Domains-এ যোগ করা হয়নি।';
+      if(c.indexOf('api-key-not-valid')>=0||c.indexOf('invalid-api-key')>=0)return 'Firebase API Key সঠিক নয়।';
+      if(c.indexOf('configuration-not-found')>=0)return 'Firebase Authentication configuration পাওয়া যাচ্ছে না।';
+      if(c.indexOf('internal-error')>=0)return 'Firebase initialization-এর সময় internal error হয়েছে।';
+      return 'Firebase error'+(c?' ['+c+']':'')+(m?': '+m:'।');
     }
+    function waitForFirebaseSdk(timeoutMs){
+      timeoutMs=timeoutMs||15000;if(window.firebase)return Promise.resolve(window.firebase);var started=Date.now();
+      return new Promise(function(resolve,reject){(function check(){if(window.firebase)return resolve(window.firebase);if(Date.now()-started>=timeoutMs)return reject({code:'sdk-not-loaded',message:'Firebase SDK did not load.'});setTimeout(check,100);})();});
+    }
+    function initFirebaseAuth(){
+      if(firebaseInitPromise)return firebaseInitPromise;
+      firebaseInitPromise=(async function(){
+        try{
+          setAuthStatus('Firebase SDK প্রস্তুত হচ্ছে...');await waitForFirebaseSdk(15000);
+          if(!firebaseConfigReady())throw {code:'invalid-config',message:'Firebase config is incomplete.'};
+          setAuthStatus('Firebase App প্রস্তুত হচ্ছে...');
+          firebaseApp=(firebase.apps&&firebase.apps.length)?firebase.app():firebase.initializeApp(firebaseConfig);
+          firebaseAuth=firebase.auth();firebaseAuthReady=true;setAuthStatus('Firebase Authentication প্রস্তুত...');
+          try{firebaseDb=firebase.firestore();}catch(dbErr){console.error('Firestore initialization failed; Auth remains usable:',dbErr);firebaseDb=null;}
+          firebaseAuth.onAuthStateChanged(async function(user){
+            firebaseUser=user||null;var overlay=document.getElementById('auth-overlay'),shell=document.getElementById('app-shell'),btn=document.getElementById('login-btn');
+            if(user){
+              if(overlay)overlay.style.display='none';if(shell)shell.style.display='block';if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}setAuthStatus('');updateDashboardUser(user);
+              try{await loadCloudData();migrateGeneralDuePayments();initializeAuditSnapshot();updateDashboardQuickStats();startCloudAutoSave();}catch(e){console.error('Post-login initialization failed:',e);}
+            }else{
+              cloudLoaded=false;if(shell)shell.style.display='none';if(overlay)overlay.style.display='flex';if(btn){btn.disabled=!firebaseAuthReady;btn.innerText='লগইন করুন';}if(firebaseAuthReady)setAuthStatus('Firebase Authentication প্রস্তুত');
+            }
+          });return firebaseAuth;
+        }catch(e){console.error('Firebase initialization failed:',e);firebaseApp=null;firebaseAuth=null;firebaseDb=null;firebaseAuthReady=false;setAuthStatus('Firebase প্রস্তুত হয়নি');showAuthError(firebaseErrorBangla(e));throw e;}
+      })();return firebaseInitPromise;
+    }
+    async function firebaseLogin(){
+      showAuthError('');var btn=document.getElementById('login-btn');
+      try{
+        if(!firebaseAuthReady||!firebaseAuth)await initFirebaseAuth();
+        var email=((document.getElementById('login-email')||{}).value||'').trim(),pass=(document.getElementById('login-password')||{}).value||'';
+        if(!email||!pass){showAuthError('Email ও Password দুটিই দিন।');return;}
+        if(btn){btn.disabled=true;btn.innerText='লগইন হচ্ছে...';}setAuthStatus('Firebase-এ লগইন যাচাই হচ্ছে...');await firebaseAuth.signInWithEmailAndPassword(email,pass);
+      }catch(err){console.error('Firebase login failed:',err);showAuthError(firebaseErrorBangla(err));setAuthStatus(firebaseAuthReady?'Firebase Authentication প্রস্তুত':'Firebase প্রস্তুত হয়নি');if(btn){btn.disabled=false;btn.innerText='লগইন করুন';}}
+    }
+    function firebaseLogout(){if(firebaseAuth)firebaseAuth.signOut();}
+    function confirmFirebaseLogout(){if(!firebaseAuth){showAuthError('Firebase Authentication প্রস্তুত হয়নি।');return;}var ok=confirm(currentLang==='en'?'Do you want to log out?':'আপনি কি লগআউট করতে চান?');if(ok)firebaseLogout();}
+    window.addEventListener('beforeunload',function(){if(firebaseUser&&cloudLoaded)saveCloudData();});
 
     function getCloudCollections(){
       return {
@@ -1301,34 +911,26 @@ img{max-width:100%!important;height:auto!important}
       if(data.stockConversionRules && typeof data.stockConversionRules==='object') stockConversionRules=JSON.parse(JSON.stringify(data.stockConversionRules));
     }
 
-    function loadLocalCoreCache(){
-      var map={purchaseList:'biz_purchase_list',salesList:'biz_sales_list',paymentHistory:'biz_payment_history',generalDuePayments:'biz_general_due_payments',expenseList:'biz_expense_list',cashList:'biz_cash_list',bankAccounts:'biz_bank_accounts',bankTransactions:'biz_bank_transactions'};
-      Object.keys(map).forEach(function(k){try{var raw=localStorage.getItem(map[k]);if(!raw)return;var val=JSON.parse(raw);if(Array.isArray(val))window[k]=val;}catch(e){}});
-    }
-
     async function loadCloudData(){
-      if(!firebaseUser||!firebaseDb)return false;
-      var status=document.getElementById('cloud-status');
-      if(status){status.innerText='☁️ Cloud লোড হচ্ছে...';status.className='cloud-status';}
+      if(!firebaseUser||!firebaseDb)return;
+      var status=document.getElementById('cloud-status'); if(status)status.innerText='Loading...';
       try{
         var ref=firebaseDb.collection('users').doc(firebaseUser.uid).collection('appData').doc('main');
         var snap=await ref.get();
         if(snap.exists){
           applyCloudCollections(snap.data());
-          try{localStorage.setItem('biz_cloud_loaded','1');}catch(e){}
-        }else{
-          loadLocalCoreCache();
+          localStorage.setItem('biz_cloud_loaded','1');
+        } else {
+          /* First-login initialization: mark cloud as loaded before the first save,
+             otherwise saveCloudData() intentionally refuses to write while loading. */
           cloudLoaded=true;
           await saveCloudData();
         }
         cloudLoaded=true;
-        if(status){status.innerText='☁️ Cloud ✓';status.className='cloud-status ok';}
-        return true;
+        if(status)status.innerText='Cloud ✓';
       }catch(e){
-        console.error('Cloud load failed:',e);
-        cloudLoaded=false;
-        if(status){status.innerText='☁️ Cloud error';status.className='cloud-status error';status.title='Cloud sync error: '+(e.message||e);}
-        return false;
+        console.error(e); if(status)status.innerText='Cloud error';
+        showAuthError('Firebase/Firestore থেকে ডেটা পড়া যায়নি: '+e.message);
       }
     }
 
@@ -1425,68 +1027,35 @@ img{max-width:100%!important;height:auto!important}
     }
 
     function initFirebaseAuth(){
-      var status=document.getElementById('auth-status');
-      try{v17RunLoginDiagnostics();}catch(diagInitErr){console.warn('V20.17 diagnostic init:',diagInitErr);}
-      try{
-        if(!window.firebase){
-          v17SetDiag('v17-sdk-status','NOT LOADED','v17-bad');
-          if(status){status.style.display='block';status.innerText='Firebase SDK লোড হয়নি';}
-          showAuthError('Firebase SDK লোড হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে পেজটি Refresh করুন।');
-          return;
-        }
-        if(!firebaseConfigReady()){
-          v17SetDiag('v17-project-status','Missing/invalid config','v17-bad');
-          if(status){status.style.display='block';status.innerText='Firebase config বসাতে হবে';}
-          showAuthError('Firebase configuration সঠিকভাবে দেওয়া হয়নি।');
-          return;
-        }
-        firebaseApp = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
-        v17SetDiag('v17-app-status','Initialized','v17-ok');
-        firebaseAuth = firebase.auth();
-        v17SetDiag('v17-auth-status','Ready','v17-ok');
-        firebaseDb = firebase.firestore();
-        v17SetDiag('v17-firestore-status','Ready','v17-ok');
-        if(status){status.style.display='block';status.innerText='Firebase সংযোগ প্রস্তুত...';}
-        firebaseAuth.onAuthStateChanged(async function(user){
-          firebaseUser=user||null;
-          var overlay=document.getElementById('auth-overlay'), shell=document.getElementById('app-shell'), btn=document.getElementById('login-btn');
-          if(user){
-            if(overlay)overlay.style.display='none';
-            if(shell)shell.style.display='block';
-            if(status)status.innerText='';
-            if(btn){btn.disabled=false;btn.innerText='লগইন';}
-            updateDashboardUser(user);
-            try{
-              var cloudOK=await loadCloudData();
-              migrateGeneralDuePayments();
-              initializeAuditSnapshot();
-              updateDashboardQuickStats();
-              if(cloudOK) startCloudAutoSave();
-              else{
-                var cs=document.getElementById('cloud-status');
-                if(cs){cs.innerText='☁️ Cloud sync বন্ধ';cs.className='cloud-status error';}
-              }
-            }catch(e){
-              console.error('Post-login initialization failed:',e);
-              cloudLoaded=false;
-              var cs2=document.getElementById('cloud-status');
-              if(cs2){cs2.innerText='☁️ Cloud sync বন্ধ';cs2.className='cloud-status error';cs2.title=e.message||String(e);}
-            }
-          }else{
-            cloudLoaded=false;
-            if(shell)shell.style.display='none';
-            if(overlay)overlay.style.display='flex';
-            if(btn){btn.disabled=false;btn.innerText='লগইন';}
-            if(status)status.innerText='Firebase সংযোগ প্রস্তুত';
-          }
-        });
-      }catch(e){
-        console.error('Firebase initialization failed:',e);
-        v17RecordFirebaseError('INIT',e);
-        firebaseApp=null; firebaseAuth=null; firebaseDb=null;
-        if(status){status.style.display='block';status.innerText='Firebase initialization failed';}
-        showAuthError(firebaseErrorBangla(e));
+      if(!firebaseConfigReady()){
+        document.getElementById('auth-status').style.display='block';
+        document.getElementById('auth-status').innerText='Firebase config বসাতে হবে';
+        return;
       }
+      firebaseApp=firebase.initializeApp(firebaseConfig);
+      firebaseAuth=firebase.auth();
+      firebaseDb=firebase.firestore();
+      document.getElementById('auth-status').style.display='block';
+      firebaseAuth.onAuthStateChanged(async function(user){
+        firebaseUser=user||null;
+        if(user){
+          document.getElementById('auth-overlay').style.display='none';
+          document.getElementById('app-shell').style.display='block';
+          document.getElementById('auth-status').innerText='';
+          updateDashboardUser(user);
+          await loadCloudData();
+          migrateGeneralDuePayments();
+          initializeAuditSnapshot();
+          updateDashboardQuickStats();
+          startCloudAutoSave();
+        }else{
+          cloudLoaded=false;
+          document.getElementById('app-shell').style.display='none';
+          document.getElementById('auth-overlay').style.display='flex';
+          document.getElementById('login-btn').disabled=false;
+          document.getElementById('login-btn').innerText='লগইন';
+        }
+      });
     }
 
     window.addEventListener('beforeunload',function(){ if(firebaseUser&&cloudLoaded) saveCloudData(); });
@@ -4668,9 +4237,7 @@ function renderPurchaseTable() {
     }
     /* ================== END V20.12 PRINT/PDF LAYOUT FIX ================== */
 
-    try{loadLocalCoreCache();}catch(e){}
-
-    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initFirebaseAuth);
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){initFirebaseAuth();});
     else initFirebaseAuth();
 
     /* ---------------- Android / Mobile Back Button Guard ---------------- */
@@ -5646,8 +5213,6 @@ window.V20AccountingEngine.version='20.11';
 })();
 </script>
 
-<!-- V20.17 LOGIN ROOT-CAUSE DIAGNOSTIC + FIX
-     V20.16 FULL AUDIT FIX; V20.11 ACCOUNTING ENGINE COMPATIBILITY. -->
 <!-- V20.11 FREIGHT-ADJUSTMENT AUDIT/LOCK MANIFEST: single AccountingEngine; canonical COGS/stock valuation; full reconciliation; explicit bank direction; safe restore warnings. -->
 
 <script>
@@ -5656,5 +5221,30 @@ window.V20AccountingEngine.version='20.11';
 })();
 </script>
 </body>
-
+<style id="v20-14-print-pdf-final-audit">
+/* V20.14 FINAL PRINT/PDF AUDIT: one pagination policy for every print path. */
+@media print{
+html,body{height:auto!important;min-height:0!important;overflow:visible!important}
+.section,.card,.grid,.head,.footer,.report-section,.report-totals,.report-total-grid,
+.section-card,.module-hero,.pl-hero,.kpi-card,.note-card,.dashboard-section-card,.dashboard-welcome,.quick-stat,
+.print-report-page,.print-report,.report-head,.report-center-card,.report-center-settings,.report-center-note,
+.br-result-meta,.pl-filter-card,.pl-section-card,.pl-two-col,.st-kpi,.stock-mini{
+ break-inside:auto!important;page-break-inside:auto!important;overflow:visible!important;max-height:none!important
+}
+table{width:100%!important;max-width:100%!important;min-width:0!important;break-inside:auto!important;page-break-inside:auto!important}
+thead{display:table-header-group!important}tfoot{display:table-footer-group!important}
+tr{break-inside:avoid!important;page-break-inside:avoid!important}
+th,td{max-width:none;overflow-wrap:anywhere!important;word-break:break-word!important;white-space:normal!important}
+.table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.table-responsive,
+.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper,.br-table-wrap,.br-table-wrapper{
+ width:100%!important;max-width:100%!important;overflow:visible!important;break-inside:auto!important;page-break-inside:auto!important
+}
+.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,
+.table-responsive table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table,
+.br-table-wrap table,.br-table-wrapper table{width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important}
+.signature-block,.print-signature-block,.v20-company-print-header{break-inside:avoid!important;page-break-inside:avoid!important}
+h1,h2,h3,h4,h5,h6{break-after:avoid!important;page-break-after:avoid!important}
+img{max-width:100%!important;height:auto!important}
+}
+</style>
 </html>
