@@ -495,118 +495,6 @@ body{font-size:13px}
 .v20-live-due-breakdown{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
 .v20-live-due-chip{padding:5px 9px;border-radius:999px;background:#eef6ff;color:#24527a;font-size:.78em}
 </style>
-<style id="v20-13-print-full-page-fix">
-
-/* V20.13 PRINT/PDF FULL-PAGE FLOW FIX
-   Prevent oversized cards/sections from forcing a premature page break.
-   Tables may continue naturally onto the next page while rows stay intact. */
-@media print{
-  html,body{
-    width:100%!important;
-    max-width:none!important;
-    height:auto!important;
-    min-height:0!important;
-    overflow:visible!important;
-  }
-
-  /* Structural containers must be allowed to flow across pages. */
-  .section-card,
-  .module-hero,
-  .pl-hero,
-  .kpi-card,
-  .note-card,
-  .dashboard-section-card,
-  .dashboard-welcome,
-  .quick-stat,
-  .report-section,
-  .print-report-page,
-  .print-report,
-  .report-head,
-  .report-totals,
-  .v20-report-summary,
-  .br-filter-card,
-  .pl-filter-card,
-  .pl-section-card,
-  .pl-two-col,
-  .st-kpi,
-  .stock-mini,
-  .report-center-card,
-  .report-center-settings,
-  .report-center-note,
-  .br-result-meta,
-  .br-table-wrap,
-  .br-table-wrapper,
-  .table-responsive,
-  .table-container,
-  .table-wrapper,
-  .data-table-container,
-  .report-table-container,
-  .responsive-table,
-  .ledger-table-wrapper,
-  .vehicle-table-wrapper,
-  .boat-table-wrapper,
-  .report-table-wrapper{
-    break-inside:auto!important;
-    page-break-inside:auto!important;
-    overflow:visible!important;
-    max-height:none!important;
-  }
-
-  /* Do not reserve a whole page for a card just because it is taller than
-     the remaining space. This is the main fix for the half-empty page bug. */
-  .section-card,
-  .dashboard-section-card{
-    box-shadow:none!important;
-  }
-
-  table{
-    break-inside:auto!important;
-    page-break-inside:auto!important;
-    width:100%!important;
-    max-width:100%!important;
-  }
-
-  thead{display:table-header-group!important;}
-  tfoot{display:table-footer-group!important;}
-
-  /* Keep individual rows together, but allow the table itself to continue. */
-  tr{
-    break-inside:avoid!important;
-    page-break-inside:avoid!important;
-  }
-
-  h1,h2,h3,h4,h5,h6{
-    break-after:avoid!important;
-    page-break-after:avoid!important;
-  }
-
-  .signature-block,
-  .print-signature-block,
-  .print-signature-block>div{
-    break-inside:avoid!important;
-    page-break-inside:avoid!important;
-  }
-
-  /* Never let mobile/table overflow rules create a giant print canvas. */
-  .table-container table,
-  .table-wrapper table,
-  .data-table-container table,
-  .report-table-container table,
-  .responsive-table table,
-  .table-responsive table,
-  .ledger-table-wrapper table,
-  .vehicle-table-wrapper table,
-  .boat-table-wrapper table,
-  .report-table-wrapper table,
-  .br-table-wrap table,
-  .br-table-wrapper table{
-    min-width:0!important;
-    width:100%!important;
-    max-width:100%!important;
-  }
-}
-
-</style>
 </head>
 <body>
 <!-- Firebase Authentication Login -->
@@ -4427,11 +4315,10 @@ function renderPurchaseTable() {
         'table{width:100%!important;max-width:100%!important;border-collapse:collapse!important;box-sizing:border-box!important;table-layout:fixed!important}'+
         'th,td{box-sizing:border-box!important;overflow-wrap:anywhere!important;word-break:break-word!important;white-space:normal!important;vertical-align:top!important}'+
         'img{max-width:100%!important;height:auto!important}'+
-        '.report-section{max-width:100%!important;overflow:visible!important;break-inside:auto!important;page-break-inside:auto!important}'+
+        '.report-section{max-width:100%!important;overflow:visible!important;break-inside:auto!important}'+
         '.report-section table,.table-responsive table,.br-table-wrap table,.br-table-wrapper table{width:100%!important;max-width:100%!important;min-width:0!important}'+
         '.table-responsive,.br-table-wrap,.br-table-wrapper{width:100%!important;max-width:100%!important;overflow:visible!important}'+
         '.signature-block{break-inside:avoid!important}'+
-        '.section-card,.module-hero,.pl-hero,.kpi-card,.note-card,.dashboard-section-card,.dashboard-welcome,.quick-stat,.report-section,.print-report-page,.print-report,.report-totals,.report-center-card,.report-center-settings{break-inside:auto!important;page-break-inside:auto!important;overflow:visible!important;max-height:none!important}'+
         '@media print{body{padding:0!important}table{page-break-inside:auto!important}thead{display:table-header-group!important}tfoot{display:table-footer-group!important}tr{break-inside:avoid!important;page-break-inside:avoid!important}th,td{font-size:'+(o==='landscape'?'8px':'8.5px')+'!important;padding:'+(o==='landscape'?'3px 3px':'3px 4px')+'!important;line-height:1.15!important}.v20-company-print-header{break-inside:avoid!important;page-break-inside:avoid!important}}';
       doc.head.appendChild(st);
       v20CompanyPrintHeader(doc);
