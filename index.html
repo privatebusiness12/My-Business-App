@@ -607,6 +607,38 @@ body{font-size:13px}
 }
 
 </style>
+<style id="v20-14-print-page-flow-lock">
+/* V20.14 PRINT/PDF PAGE-FLOW LOCK
+   Structural wrappers must flow continuously; only individual table rows and
+   signature blocks are kept together. This prevents half-empty pages caused by
+   inherited break-inside/page-break rules. */
+@media print{
+  html,body{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important}
+  .section-card,.module-hero,.pl-hero,.kpi-card,.note-card,.dashboard-section-card,.dashboard-welcome,.quick-stat,
+  .report-section,.print-report-page,.print-report,.report-head,.report-totals,.v20-report-summary,
+  .br-filter-card,.pl-filter-card,.pl-section-card,.pl-two-col,.st-kpi,.stock-mini,
+  .report-center-card,.report-center-settings,.report-center-note,.br-result-meta,
+  .br-table-wrap,.br-table-wrapper,.table-responsive,.table-container,.table-wrapper,.data-table-container,
+  .report-table-container,.responsive-table,.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper{
+    break-before:auto!important;page-break-before:auto!important;
+    break-after:auto!important;page-break-after:auto!important;
+    break-inside:auto!important;page-break-inside:auto!important;
+    overflow:visible!important;max-height:none!important;
+  }
+  table{break-before:auto!important;page-break-before:auto!important;break-after:auto!important;page-break-after:auto!important;
+    break-inside:auto!important;page-break-inside:auto!important;width:100%!important;max-width:100%!important}
+  tbody{break-before:auto!important;break-after:auto!important;break-inside:auto!important;page-break-inside:auto!important}
+  tr{break-before:auto!important;break-after:auto!important;break-inside:avoid!important;page-break-inside:avoid!important}
+  thead{display:table-header-group!important;break-after:auto!important;page-break-after:auto!important}
+  tfoot{display:table-footer-group!important;break-before:auto!important;page-break-before:auto!important}
+  h1,h2,h3,h4,h5,h6{break-before:auto!important;page-break-before:auto!important;break-after:avoid!important;page-break-after:avoid!important}
+  .signature-block,.print-signature-block,.print-signature-block>div{break-inside:avoid!important;page-break-inside:avoid!important}
+  .table-responsive,.br-table-wrap,.br-table-wrapper,.table-container,.table-wrapper,.data-table-container,.report-table-container,.responsive-table,.ledger-table-wrapper,.vehicle-table-wrapper,.boat-table-wrapper,.report-table-wrapper{
+    display:block!important;width:100%!important;max-width:100%!important;overflow:visible!important}
+  .table-responsive table,.br-table-wrap table,.br-table-wrapper table,.table-container table,.table-wrapper table,.data-table-container table,.report-table-container table,.responsive-table table,.ledger-table-wrapper table,.vehicle-table-wrapper table,.boat-table-wrapper table,.report-table-wrapper table{
+    min-width:0!important;max-width:100%!important;width:100%!important}
+}
+</style>
 </head>
 <body>
 <!-- Firebase Authentication Login -->
@@ -4431,8 +4463,8 @@ function renderPurchaseTable() {
         '.report-section table,.table-responsive table,.br-table-wrap table,.br-table-wrapper table{width:100%!important;max-width:100%!important;min-width:0!important}'+
         '.table-responsive,.br-table-wrap,.br-table-wrapper{width:100%!important;max-width:100%!important;overflow:visible!important}'+
         '.signature-block{break-inside:avoid!important}'+
-        '.section-card,.module-hero,.pl-hero,.kpi-card,.note-card,.dashboard-section-card,.dashboard-welcome,.quick-stat,.report-section,.print-report-page,.print-report,.report-totals,.report-center-card,.report-center-settings{break-inside:auto!important;page-break-inside:auto!important;overflow:visible!important;max-height:none!important}'+
-        '@media print{body{padding:0!important}table{page-break-inside:auto!important}thead{display:table-header-group!important}tfoot{display:table-footer-group!important}tr{break-inside:avoid!important;page-break-inside:avoid!important}th,td{font-size:'+(o==='landscape'?'8px':'8.5px')+'!important;padding:'+(o==='landscape'?'3px 3px':'3px 4px')+'!important;line-height:1.15!important}.v20-company-print-header{break-inside:avoid!important;page-break-inside:avoid!important}}';
+        '.section-card,.module-hero,.pl-hero,.kpi-card,.note-card,.dashboard-section-card,.dashboard-welcome,.quick-stat,.report-section,.print-report-page,.print-report,.report-totals,.report-center-card,.report-center-settings{break-inside:auto!important;page-break-inside:auto!important;break-before:auto!important;page-break-before:auto!important;break-after:auto!important;page-break-after:auto!important;overflow:visible!important;max-height:none!important}'+
+        '@media print{body{padding:0!important}table{break-before:auto!important;break-after:auto!important;break-inside:auto!important;page-break-before:auto!important;page-break-after:auto!important;page-break-inside:auto!important}thead{display:table-header-group!important}tfoot{display:table-footer-group!important}tbody,tr{break-before:auto!important;break-after:auto!important}tr{break-inside:avoid!important;page-break-inside:avoid!important}th,td{font-size:'+(o==='landscape'?'8px':'8.5px')+'!important;padding:'+(o==='landscape'?'3px 3px':'3px 4px')+'!important;line-height:1.15!important}.v20-company-print-header{break-inside:avoid!important;page-break-inside:avoid!important}}';
       doc.head.appendChild(st);
       v20CompanyPrintHeader(doc);
     }
